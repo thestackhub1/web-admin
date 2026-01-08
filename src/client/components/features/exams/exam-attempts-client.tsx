@@ -4,35 +4,29 @@
 
 import { useState, useMemo } from "react";
 import { clsx } from "clsx";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import {
   ClipboardList,
   Clock,
   CheckCircle2,
   AlertCircle,
-  Calendar,
   Search,
   X,
   SlidersHorizontal,
-  BookOpen,
   Target,
-  TrendingUp,
-  TrendingDown,
   Award,
-  Timer,
-  FileText,
-  Trash2,
-  Eye,
   AlertTriangle,
-  Check,
   Square,
   CheckSquare,
+  LayoutGrid,
+  LayoutList,
+  Trash2,
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { EmptyState } from '@/client/components/ui/premium';
 import { useDeleteExamAttempt, useBulkDeleteExamAttempts } from "@/client/hooks";
+import { ExamAttemptsListView } from "./exam-attempts-list-view";
+import { ExamAttemptsGridView } from "./exam-attempts-grid-view";
 
 // ============================================
 // Types
@@ -84,29 +78,29 @@ const statusConfig: Record<string, {
   completed: { 
     label: "Completed", 
     icon: CheckCircle2,
-    color: "text-green-600 dark:text-green-400",
-    bgColor: "bg-green-50 dark:bg-green-900/30",
-    dotColor: "bg-green-500"
+    color: "text-success-600 dark:text-success-400",
+    bgColor: "bg-success-50 dark:bg-success-900/30",
+    dotColor: "bg-success-500"
   },
   in_progress: { 
     label: "In Progress", 
     icon: Clock,
-    color: "text-amber-600 dark:text-amber-400",
-    bgColor: "bg-amber-50 dark:bg-amber-900/30",
-    dotColor: "bg-amber-500"
+    color: "text-warning-600 dark:text-warning-400",
+    bgColor: "bg-warning-50 dark:bg-warning-900/30",
+    dotColor: "bg-warning-500"
   },
   abandoned: { 
     label: "Abandoned", 
     icon: AlertCircle,
-    color: "text-red-600 dark:text-red-400",
-    bgColor: "bg-red-50 dark:bg-red-900/30",
-    dotColor: "bg-red-500"
+    color: "text-error-600 dark:text-error-400",
+    bgColor: "bg-error-50 dark:bg-error-900/30",
+    dotColor: "bg-error-500"
   },
 };
 
 const defaultStatus = { 
   label: "Unknown", 
-  icon: FileText,
+  icon: ClipboardList,
   color: "text-neutral-500",
   bgColor: "bg-neutral-100 dark:bg-neutral-800",
   dotColor: "bg-neutral-400"
@@ -120,40 +114,38 @@ function StatCard({
   label, 
   icon: Icon, 
   color,
-  trend,
   active,
   onClick 
 }: { 
   value: number | string; 
   label: string; 
   icon: React.ElementType;
-  color: "blue" | "green" | "amber" | "purple" | "gray";
-  trend?: { value: number; positive: boolean };
+  color: "primary" | "success" | "warning" | "insight" | "neutral";
   active?: boolean;
   onClick?: () => void;
 }) {
   const colorClasses = {
-    blue: {
-      icon: "bg-blue-100 dark:bg-blue-900/50",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      ring: "ring-blue-400"
+    primary: {
+      icon: "bg-primary-100 dark:bg-primary-900/50",
+      iconColor: "text-primary-600 dark:text-primary-400",
+      ring: "ring-primary-400"
     },
-    green: {
-      icon: "bg-green-100 dark:bg-green-900/50",
-      iconColor: "text-green-600 dark:text-green-400",
-      ring: "ring-green-400"
+    success: {
+      icon: "bg-success-100 dark:bg-success-900/50",
+      iconColor: "text-success-600 dark:text-success-400",
+      ring: "ring-success-400"
     },
-    amber: {
-      icon: "bg-amber-100 dark:bg-amber-900/50",
-      iconColor: "text-amber-600 dark:text-amber-400",
-      ring: "ring-amber-400"
+    warning: {
+      icon: "bg-warning-100 dark:bg-warning-900/50",
+      iconColor: "text-warning-600 dark:text-warning-400",
+      ring: "ring-warning-400"
     },
-    purple: {
-      icon: "bg-purple-100 dark:bg-purple-900/50",
-      iconColor: "text-purple-600 dark:text-purple-400",
-      ring: "ring-purple-400"
+    insight: {
+      icon: "bg-insight-100 dark:bg-insight-900/50",
+      iconColor: "text-insight-600 dark:text-insight-400",
+      ring: "ring-insight-400"
     },
-    gray: {
+    neutral: {
       icon: "bg-neutral-100 dark:bg-neutral-800",
       iconColor: "text-neutral-600 dark:text-neutral-400",
       ring: "ring-neutral-400"
@@ -185,270 +177,8 @@ function StatCard({
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{label}</p>
           </div>
         </div>
-        {trend && (
-          <div className={clsx(
-            "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
-            trend.positive 
-              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-          )}>
-            {trend.positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {trend.value}%
-          </div>
-        )}
       </div>
     </button>
-  );
-}
-
-// ============================================
-// Exam Attempt Card
-// ============================================
-function ExamAttemptCard({ 
-  exam, 
-  isStudent,
-  isSelected,
-  onSelect,
-  onDelete,
-  isDeleting,
-}: { 
-  exam: ExamAttempt; 
-  isStudent: boolean;
-  isSelected?: boolean;
-  onSelect?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  isDeleting?: boolean;
-}) {
-  const status = statusConfig[exam.status] || defaultStatus;
-  // Use the stored percentage field for consistency
-  // Fallback to calculating from score/total_marks only if percentage is not stored
-  const scorePercentage = exam.percentage !== null && exam.percentage !== undefined
-    ? Math.round(exam.percentage)
-    : (exam.total_marks > 0 && exam.score !== null 
-        ? Math.round((exam.score / exam.total_marks) * 100) 
-        : null);
-  const isPassing = scorePercentage !== null && scorePercentage >= 35;
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return null;
-    const mins = Math.floor(seconds / 60);
-    const hrs = Math.floor(mins / 60);
-    if (hrs > 0) return `${hrs}h ${mins % 60}m`;
-    return `${mins}m`;
-  };
-
-  const getInitials = (name: string | null, email: string | null) => {
-    if (name) return name.charAt(0).toUpperCase();
-    if (email) return email.charAt(0).toUpperCase();
-    return "S";
-  };
-
-  const getGradient = (name: string | null) => {
-    const gradients = [
-      "from-blue-400 to-indigo-500",
-      "from-purple-400 to-pink-500",
-      "from-green-400 to-teal-500",
-      "from-brand-blue-400 to-red-500",
-      "from-cyan-400 to-blue-500",
-    ];
-    const index = (name?.charCodeAt(0) || 0) % gradients.length;
-    return gradients[index];
-  };
-
-  return (
-    <div className={clsx(
-      "group relative overflow-hidden rounded-2xl border transition-all duration-300",
-      "bg-white dark:bg-neutral-900",
-      isSelected 
-        ? "border-blue-400 ring-2 ring-blue-200 dark:border-blue-600 dark:ring-blue-800"
-        : "border-neutral-200/60 hover:border-neutral-300 dark:border-neutral-700/60 dark:hover:border-neutral-600",
-      "hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-neutral-900/50",
-      isDeleting && "opacity-50 pointer-events-none"
-    )}>
-      {/* Score indicator strip */}
-      {exam.status === "completed" && scorePercentage !== null && (
-        <div className={clsx(
-          "absolute left-0 top-0 h-full w-1.5",
-          isPassing ? "bg-green-500" : "bg-red-500"
-        )} />
-      )}
-
-      <div className="p-5 pl-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Left: Selection + User info */}
-          <div className="flex items-center gap-4">
-            {/* Selection Checkbox (admin only) */}
-            {!isStudent && onSelect && (
-              <button
-                onClick={() => onSelect(exam.id)}
-                className={clsx(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all",
-                  isSelected
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-neutral-300 hover:border-blue-400 dark:border-neutral-600"
-                )}
-              >
-                {isSelected && <Check className="h-3 w-3" />}
-              </button>
-            )}
-
-            {/* Avatar - clickable to user profile */}
-            <Link 
-              href={`/dashboard/users/${exam.user_id}`}
-              className="shrink-0 transition-transform hover:scale-105"
-            >
-              {exam.profiles?.avatar_url ? (
-                <img
-                  src={exam.profiles.avatar_url}
-                  alt=""
-                  className="h-12 w-12 rounded-full object-cover ring-2 ring-white dark:ring-neutral-800"
-                />
-              ) : (
-                <div className={clsx(
-                  "flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white",
-                  "bg-linear-to-br shadow-lg",
-                  getGradient(exam.profiles?.name || null)
-                )}>
-                  {getInitials(exam.profiles?.name || null, exam.profiles?.email || null)}
-                </div>
-              )}
-            </Link>
-
-            <div className="min-w-0">
-              <Link 
-                href={`/dashboard/users/${exam.user_id}`}
-                className="font-semibold text-neutral-900 dark:text-white truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                {exam.profiles?.name || exam.profiles?.email || "Student"}
-              </Link>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                <Link 
-                  href={`/dashboard/subjects/${exam.subjects?.id}`}
-                  className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  {exam.subjects?.name_en || "Unknown Subject"}
-                </Link>
-                {exam.scheduled_exams?.name_en && exam.scheduled_exams?.id && (
-                  <>
-                    <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                    <Link 
-                      href={`/dashboard/scheduled-exams/${exam.scheduled_exams.id}`}
-                      className="text-neutral-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      {exam.scheduled_exams.name_en}
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Score, Date, Status */}
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-            {/* Score (if completed) */}
-            {exam.status === "completed" && exam.score !== null && (
-              <div className="flex items-center gap-3">
-                <div className={clsx(
-                  "flex h-14 w-14 flex-col items-center justify-center rounded-xl",
-                  isPassing 
-                    ? "bg-green-50 dark:bg-green-900/30" 
-                    : "bg-red-50 dark:bg-red-900/30"
-                )}>
-                  <span className={clsx(
-                    "text-lg font-bold",
-                    isPassing ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                  )}>
-                    {scorePercentage}%
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-neutral-900 dark:text-white">
-                    {exam.score}/{exam.total_marks}
-                  </p>
-                  <p className="text-neutral-500">marks</p>
-                </div>
-              </div>
-            )}
-
-            {/* Duration (calculated from started_at to completed_at) */}
-            {exam.completed_at && (() => {
-              const startTime = new Date(exam.started_at).getTime();
-              const endTime = new Date(exam.completed_at).getTime();
-              const durationSeconds = Math.floor((endTime - startTime) / 1000);
-              return (
-                <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                  <Timer className="h-4 w-4" />
-                  {formatDuration(durationSeconds)}
-                </div>
-              );
-            })()}
-
-            {/* Date */}
-            <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-              <Calendar className="h-4 w-4" />
-              {new Date(exam.started_at).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </div>
-
-            {/* Status Badge */}
-            <div className={clsx(
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium",
-              status.bgColor, status.color
-            )}>
-              <span className={clsx("h-2 w-2 rounded-full animate-pulse", status.dotColor)} />
-              {status.label}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {/* View Details */}
-              <Link
-                href={`/dashboard/exams/${exam.id}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-              >
-                <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline">Details</span>
-              </Link>
-
-              {/* Delete (admin only) */}
-              {!isStudent && onDelete && (
-                <button
-                  onClick={() => onDelete(exam.id)}
-                  disabled={isDeleting}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-all hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                >
-                  {isDeleting ? (
-                    <LoaderSpinner size="sm" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Blueprint info */}
-        {exam.exam_structures?.name_en && (
-          <div className="mt-3 flex items-center gap-2">
-            <Link 
-              href={`/dashboard/exam-structures/${exam.exam_structures.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors"
-            >
-              <Target className="h-3 w-3" />
-              {exam.exam_structures.name_en}
-            </Link>
-            <span className="text-xs text-neutral-400">
-              {exam.total_marks} marks total
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -461,6 +191,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -587,7 +318,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           value={stats.total}
           label="Total Attempts"
           icon={ClipboardList}
-          color="blue"
+          color="primary"
           active={!statusFilter}
           onClick={() => setStatusFilter(null)}
         />
@@ -595,7 +326,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           value={stats.completed}
           label="Completed"
           icon={CheckCircle2}
-          color="green"
+          color="success"
           active={statusFilter === "completed"}
           onClick={() => setStatusFilter(statusFilter === "completed" ? null : "completed")}
         />
@@ -603,7 +334,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           value={stats.inProgress}
           label="In Progress"
           icon={Clock}
-          color="amber"
+          color="warning"
           active={statusFilter === "in_progress"}
           onClick={() => setStatusFilter(statusFilter === "in_progress" ? null : "in_progress")}
         />
@@ -611,14 +342,13 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           value={`${stats.avgScore}%`}
           label="Avg Score"
           icon={Target}
-          color="purple"
+          color="insight"
         />
         <StatCard
           value={`${stats.passRate}%`}
           label="Pass Rate"
           icon={Award}
-          color="green"
-          trend={stats.passRate > 50 ? { value: stats.passRate - 50, positive: true } : undefined}
+          color="success"
         />
       </div>
 
@@ -637,7 +367,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
                 "w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm",
                 "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900",
                 "placeholder:text-neutral-400",
-                "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
               )}
             />
             {searchQuery && (
@@ -656,18 +386,46 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
             className={clsx(
               "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
               showFilters || activeFiltersCount > 0
-                ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-400"
                 : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             )}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeFiltersCount > 0 && (
-              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-xs text-white">
+              <span className="rounded-full bg-primary-600 px-1.5 py-0.5 text-xs text-white">
                 {activeFiltersCount}
               </span>
             )}
           </button>
+
+          {/* View Toggle */}
+          <div className="flex rounded-xl border border-neutral-200 bg-white p-1 dark:border-neutral-700 dark:bg-neutral-900">
+            <button
+              onClick={() => setViewMode("list")}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                viewMode === "list"
+                  ? "bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400"
+                  : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              )}
+            >
+              <LayoutList className="h-4 w-4" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                viewMode === "grid"
+                  ? "bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400"
+                  : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+          </div>
         </div>
 
         {/* Expandable Filters */}
@@ -686,7 +444,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
                     className={clsx(
                       "w-full rounded-xl border px-3 py-2 text-sm",
                       "border-neutral-200 bg-white dark:border-neutral-600 dark:bg-neutral-900",
-                      "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                     )}
                   >
                     <option value="">All Statuses</option>
@@ -707,7 +465,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
                     className={clsx(
                       "w-full rounded-xl border px-3 py-2 text-sm",
                       "border-neutral-200 bg-white dark:border-neutral-600 dark:bg-neutral-900",
-                      "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                     )}
                   >
                     <option value="">All Subjects</option>
@@ -722,7 +480,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
                   <div className="flex items-end">
                     <button
                       onClick={clearAllFilters}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-error-200 bg-error-50 px-3 py-2 text-sm font-medium text-error-600 hover:bg-error-100 dark:border-error-800 dark:bg-error-900/30 dark:text-error-400"
                     >
                       <X className="h-4 w-4" />
                       Clear all
@@ -776,9 +534,9 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
               className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
             >
               {selectedIds.size === filteredExams.length ? (
-                <CheckSquare className="h-5 w-5 text-blue-600" />
+                <CheckSquare className="h-5 w-5 text-primary-600" />
               ) : selectedIds.size > 0 ? (
-                <div className="h-5 w-5 rounded border-2 border-blue-600 bg-blue-600/30" />
+                <div className="h-5 w-5 rounded border-2 border-primary-600 bg-primary-600/30" />
               ) : (
                 <Square className="h-5 w-5" />
               )}
@@ -794,7 +552,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
         {!isStudent && selectedIds.size > 0 && (
           <button
             onClick={handleBulkDeleteClick}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-red-700 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg bg-error-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-error-700 shadow-sm"
           >
             <Trash2 className="h-4 w-4" />
             Delete {selectedIds.size} selected
@@ -802,7 +560,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
         )}
       </div>
 
-      {/* Exams List */}
+      {/* Exams Content */}
       {filteredExams.length === 0 ? (
         <EmptyState
           icon={searchQuery || activeFiltersCount > 0 ? Search : ClipboardList}
@@ -826,20 +584,28 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
             ) : undefined
           }
         />
+      ) : viewMode === "grid" ? (
+        <ExamAttemptsGridView
+          exams={filteredExams}
+          isLoading={false}
+          pageSize={12}
+          isStudent={isStudent}
+          selectedIds={selectedIds}
+          onSelect={!isStudent ? toggleSelect : undefined}
+          onDelete={!isStudent ? handleDeleteClick : undefined}
+          deletingId={isDeleting ? (deleteTarget === "bulk" ? undefined : deleteTarget ?? undefined) : undefined}
+        />
       ) : (
-        <div className="space-y-3">
-          {filteredExams.map((exam) => (
-            <ExamAttemptCard 
-              key={exam.id} 
-              exam={exam} 
-              isStudent={isStudent}
-              isSelected={selectedIds.has(exam.id)}
-              onSelect={!isStudent ? toggleSelect : undefined}
-              onDelete={!isStudent ? handleDeleteClick : undefined}
-              isDeleting={isDeleting && (deleteTarget === exam.id || (deleteTarget === "bulk" && selectedIds.has(exam.id)))}
-            />
-          ))}
-        </div>
+        <ExamAttemptsListView
+          exams={filteredExams}
+          isLoading={false}
+          pageSize={15}
+          isStudent={isStudent}
+          selectedIds={selectedIds}
+          onSelect={!isStudent ? toggleSelect : undefined}
+          onDelete={!isStudent ? handleDeleteClick : undefined}
+          deletingId={isDeleting ? (deleteTarget === "bulk" ? undefined : deleteTarget ?? undefined) : undefined}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
@@ -847,8 +613,8 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="mx-4 w-full max-w-md animate-in fade-in zoom-in-95 duration-200 rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-error-100 dark:bg-error-900/30">
+                <AlertTriangle className="h-6 w-6 text-error-600 dark:text-error-400" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
@@ -881,7 +647,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-error-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-error-700 disabled:opacity-50"
               >
                 {isDeleting ? (
                   <>
