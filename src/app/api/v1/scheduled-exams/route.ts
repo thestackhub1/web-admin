@@ -13,22 +13,22 @@ import { ScheduledExamsService, ExamStructuresService } from '@/lib/services';
 import { z } from 'zod';
 
 const createScheduledExamSchema = z.object({
-  name_en: z.string().min(1),
-  name_mr: z.string().min(1),
-  description_en: z.string().nullable().optional(),
-  description_mr: z.string().nullable().optional(),
-  class_level_id: z.string().uuid(),
-  subject_id: z.string().uuid(),
-  exam_structure_id: z.string().uuid().nullable().optional(),
-  total_marks: z.number().int().positive(),
-  duration_minutes: z.number().int().positive(),
-  scheduled_date: z.string().nullable().optional(),
-  scheduled_time: z.string().nullable().optional(),
-  status: z.string().optional(),
-  order_index: z.number().int().optional(),
-  is_active: z.boolean().optional(),
-  publish_results: z.boolean().optional(),
-  max_attempts: z.number().int().min(0).optional(),
+    name_en: z.string().min(1),
+    name_mr: z.string().min(1),
+    description_en: z.string().nullable().optional(),
+    description_mr: z.string().nullable().optional(),
+    class_level_id: z.string().uuid(),
+    subject_id: z.string().uuid(),
+    exam_structure_id: z.string().uuid().nullable().optional(),
+    total_marks: z.number().int().positive(),
+    duration_minutes: z.number().int().positive(),
+    scheduled_date: z.string().nullable().optional(),
+    scheduled_time: z.string().nullable().optional(),
+    status: z.string().optional(),
+    order_index: z.number().int().optional(),
+    is_active: z.boolean().optional(),
+    publish_results: z.boolean().optional(),
+    max_attempts: z.number().int().min(0).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -43,9 +43,19 @@ export async function GET(request: NextRequest) {
         const subjectId = url.searchParams.get('subject_id') || undefined;
         const subjectSlug = url.searchParams.get('subject_slug') || undefined;
         const classLevelId = url.searchParams.get('class_level_id') || undefined;
-        const status = url.searchParams.get('status') || 'published';
+        const status = url.searchParams.get('status') || 'all';
+
+        // Check if user is admin
+        const isAdmin = ['admin', 'super_admin'].includes(authResult.profile.role);
 
         // Use service to fetch scheduled exams
+        // Bypass RLS for admins to ensure they see all seeded data and other users' drafts
+        const rlsContext = isAdmin ? undefined : {
+            userId: authResult.user.id,
+            role: authResult.profile.role,
+            email: authResult.user.email,
+        };
+
         const exams = await ScheduledExamsService.getAll(
             {
                 subjectId,
@@ -53,11 +63,7 @@ export async function GET(request: NextRequest) {
                 classLevelId,
                 status,
             },
-            {
-                userId: authResult.user.id,
-                role: authResult.profile.role,
-                email: authResult.user.email,
-            }
+            rlsContext
         );
 
         // Get user's attempt counts for each exam

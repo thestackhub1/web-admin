@@ -31,7 +31,7 @@ export class ScheduledExamsService {
         .from(subjects)
         .where(and(eq(subjects.slug, options.subjectSlug), eq(subjects.isActive, true)))
         .limit(1);
-      
+
       if (subject) {
         resolvedSubjectId = subject.id;
       }
@@ -83,7 +83,7 @@ export class ScheduledExamsService {
       .leftJoin(examStructures, eq(scheduledExams.examStructureId, examStructures.id));
 
     // Apply filters
-    const conditions: ReturnType<typeof eq>[] = [eq(scheduledExams.isActive, true)];
+    const conditions: any[] = []; // Allow inactive exams for admin view
 
     if (resolvedSubjectId) {
       conditions.push(eq(scheduledExams.subjectId, resolvedSubjectId));

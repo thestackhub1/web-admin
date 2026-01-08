@@ -37,21 +37,18 @@ export class AnalyticsService {
                 completedExamsResult,
                 totalQuestionsResult,
                 avgScoreResult,
-                subjectsCountResult
+                activeScheduledResult
             ] = await Promise.all([
                 db.select({ count: count() }).from(profiles),
                 db.select({ count: count() }).from(profiles).where(and(eq(profiles.role, 'student'), eq(profiles.isActive, true))),
-                db.select({ count: count() }).from(exams), // Total attempts
+                db.select({ count: count() }).from(exams),
                 db.select({ count: count() }).from(exams).where(eq(exams.status, 'completed')),
-                db.select({ count: count() }).from(questionsScholarship), // Using scholarship questions as proxy for now
+                db.select({ count: count() }).from(questionsScholarship),
                 db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(eq(exams.status, 'completed')),
-                db.select({ name: subjects.nameEn, count: count() }) // Mock grouping for now or real if possible
-                    .from(subjects)
-                    .groupBy(subjects.nameEn)
-                    .limit(5)
-            ]); // For subjects breakdown, we might need a join with questions
+                db.select({ count: count() }).from(scheduledExams).where(eq(scheduledExams.status, 'active'))
+            ]);
 
-            // Calculate Pass Rate (assuming >= 35% is pass)
+            // Calculate Pass Rate (>= 35% is pass)
             const passedExamsResult = await db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.percentage, '35')));
             const passedCount = passedExamsResult[0].count;
             const completedCount = completedExamsResult[0].count;
@@ -60,19 +57,56 @@ export class AnalyticsService {
             const totalExamsCount = totalExamsResult[0].count;
             const completionRate = totalExamsCount > 0 ? (completedCount / totalExamsCount) * 100 : 0;
 
-            // Real data approximation
-            // Since complex GROUP BY might be slow or tricky with Drizzle across relations, we return simplified/top lists
-            const questionsBySubject = [
-                { subject: "Mathematics", count: 120, color: "#3B82F6" },
-                { subject: "Science", count: 85, color: "#10B981" },
-                { subject: "English", count: 60, color: "#F59E0B" },
-            ];
+            // Real questionsBySubject: join questions -> chapters -> subjects
+            const subjectColors: Record<string, string> = {
+                "Mathematics": "#3B82F6",
+                "Science": "#10B981",
+                "English": "#F59E0B",
+                "History": "#8B5CF6",
+                "Geography": "#EC4899",
+                "Information Technology": "#06B6D4",
+            };
+            const defaultColors = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16", "#F97316"];
 
-            const questionsByDifficulty = [
-                { difficulty: "Easy", count: 100, color: "#10B981" },
-                { difficulty: "Medium", count: 150, color: "#F59E0B" },
-                { difficulty: "Hard", count: 50, color: "#EF4444" },
-            ];
+            const questionsBySubjectRaw = await db
+                .select({
+                    subject: subjects.nameEn,
+                    count: count()
+                })
+                .from(questionsScholarship)
+                .innerJoin(chapters, eq(questionsScholarship.chapterId, chapters.id))
+                .innerJoin(subjects, eq(chapters.subjectId, subjects.id))
+                .groupBy(subjects.nameEn)
+                .orderBy(desc(count()))
+                .limit(6);
+
+            const questionsBySubject = questionsBySubjectRaw.map((row, index) => ({
+                subject: row.subject || "Unknown",
+                count: row.count,
+                color: subjectColors[row.subject || ""] || defaultColors[index % defaultColors.length]
+            }));
+
+            // Real questionsByDifficulty
+            const difficultyColors: Record<string, string> = {
+                "easy": "#10B981",
+                "medium": "#F59E0B",
+                "hard": "#EF4444"
+            };
+
+            const questionsByDifficultyRaw = await db
+                .select({
+                    difficulty: questionsScholarship.difficulty,
+                    count: count()
+                })
+                .from(questionsScholarship)
+                .groupBy(questionsScholarship.difficulty)
+                .orderBy(desc(count()));
+
+            const questionsByDifficulty = questionsByDifficultyRaw.map(row => ({
+                difficulty: row.difficulty ? row.difficulty.charAt(0).toUpperCase() + row.difficulty.slice(1) : "Unknown",
+                count: row.count,
+                color: difficultyColors[row.difficulty || "medium"] || "#F59E0B"
+            }));
 
             return {
                 totalUsers: totalUsersResult[0].count,
@@ -83,7 +117,7 @@ export class AnalyticsService {
                 averageScore: Math.round(Number(avgScoreResult[0]?.avg || 0)),
                 passRate: Math.round(passRate),
                 completionRate: Math.round(completionRate),
-                activeScheduledExams: (await db.select({ count: count() }).from(scheduledExams).where(eq(scheduledExams.status, 'active')))[0].count,
+                activeScheduledExams: activeScheduledResult[0].count,
                 questionsBySubject,
                 questionsByDifficulty
             };
@@ -95,28 +129,68 @@ export class AnalyticsService {
      */
     async getKpiMetrics() {
         return dbService.executeQuery(async (db) => {
-            const currentMonth = new Date();
+            const currentDate = new Date();
             const lastMonth = new Date();
-            lastMonth.setMonth(currentMonth.getMonth() - 1);
+            lastMonth.setMonth(currentDate.getMonth() - 1);
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(currentDate.getMonth() - 2);
 
-            const newUsersThisMonth = (await db.select({ count: count() }).from(profiles).where(gte(profiles.createdAt, lastMonth)))[0].count;
-            const totalUsers = (await db.select({ count: count() }).from(profiles))[0].count;
-            const previousTotalUsers = totalUsers - newUsersThisMonth;
-            const userGrowth = previousTotalUsers > 0 ? (newUsersThisMonth / previousTotalUsers) * 100 : 100;
+            // Current period: last month to now
+            const [
+                newUsersThisMonth,
+                totalUsers,
+                totalStudents,
+                totalExamsThisMonth,
+                completedExamsThisMonth,
+                avgScoreThisMonth
+            ] = await Promise.all([
+                db.select({ count: count() }).from(profiles).where(gte(profiles.createdAt, lastMonth)),
+                db.select({ count: count() }).from(profiles),
+                db.select({ count: count() }).from(profiles).where(eq(profiles.role, 'student')),
+                db.select({ count: count() }).from(exams).where(gte(exams.createdAt, lastMonth)),
+                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonth))),
+                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonth)))
+            ]);
 
-            const newExamsThisMonth = (await db.select({ count: count() }).from(exams).where(gte(exams.createdAt, lastMonth)))[0].count;
+            // Previous period: two months ago to last month
+            const [
+                usersLastPeriod,
+                examsLastPeriod,
+                completedExamsLastPeriod,
+                avgScoreLastPeriod
+            ] = await Promise.all([
+                db.select({ count: count() }).from(profiles).where(and(gte(profiles.createdAt, twoMonthsAgo), lt(profiles.createdAt, lastMonth))),
+                db.select({ count: count() }).from(exams).where(and(gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth))),
+                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth))),
+                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth)))
+            ]);
+
+            const previousTotalUsers = totalUsers[0].count - newUsersThisMonth[0].count;
+            const userGrowth = previousTotalUsers > 0 ? (newUsersThisMonth[0].count / previousTotalUsers) * 100 : (newUsersThisMonth[0].count > 0 ? 100 : 0);
+
+            const previousExamsCount = examsLastPeriod[0].count;
+            const examGrowth = previousExamsCount > 0 ? ((totalExamsThisMonth[0].count - previousExamsCount) / previousExamsCount) * 100 : (totalExamsThisMonth[0].count > 0 ? 100 : 0);
+
+            // Compute real avgExamsPerStudent
+            const studentCount = totalStudents[0].count;
+            const totalExamsAll = (await db.select({ count: count() }).from(exams))[0].count;
+            const avgExamsPerStudent = studentCount > 0 ? Math.round((totalExamsAll / studentCount) * 10) / 10 : 0;
+
+            // Students who took at least one exam (basic retention proxy)
+            const studentsWithExams = (await db.selectDistinct({ userId: exams.userId }).from(exams).where(eq(exams.status, 'completed'))).length;
+            const retentionRate = studentCount > 0 ? Math.round((studentsWithExams / studentCount) * 100) : 0;
 
             return {
-                studentRetentionRate: 95, // Hard to calc without activity logs
-                avgExamsPerStudent: 5.2, // exams count / student count
-                monthlyEnrollmentGrowth: userGrowth,
-                monthlyExamGrowth: 12.5,
+                studentRetentionRate: retentionRate,
+                avgExamsPerStudent,
+                monthlyEnrollmentGrowth: Math.round(userGrowth * 10) / 10,
+                monthlyExamGrowth: Math.round(examGrowth * 10) / 10,
                 previousPeriod: {
-                    totalUsers: previousTotalUsers,
-                    totalExams: 100,
-                    completedExams: 80,
-                    averageScore: 75,
-                    newUsers: 10
+                    totalUsers: usersLastPeriod[0].count,
+                    totalExams: examsLastPeriod[0].count,
+                    completedExams: completedExamsLastPeriod[0].count,
+                    averageScore: Math.round(Number(avgScoreLastPeriod[0]?.avg || 0)),
+                    newUsers: usersLastPeriod[0].count
                 },
                 questionTypeBreakdown: []
             };

@@ -3,6 +3,8 @@
 import { api } from "@/client/api";
 import type { School } from "@/client/hooks/use-schools";
 
+export type { School };
+
 /**
  * Schools API for Client Components
  */

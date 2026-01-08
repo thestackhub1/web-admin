@@ -342,6 +342,10 @@ interface SmartFilterBarProps {
   onRefresh?: () => void;
   isLoading?: boolean;
   className?: string;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  placeholder?: string;
+  hideFilters?: boolean;
 }
 
 const DIFFICULTY_OPTIONS: FilterOption[] = [
@@ -381,6 +385,10 @@ export function SmartFilterBar({
   onRefresh,
   isLoading = false,
   className,
+  searchQuery,
+  onSearchChange,
+  placeholder,
+  hideFilters = false,
 }: SmartFilterBarProps) {
   const activeFilterCount = [
     filters.classLevelId,
@@ -444,60 +452,62 @@ export function SmartFilterBar({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-        <SelectFilter
-          label="Class Level"
-          value={filters.classLevelId}
-          options={classLevels}
-          onChange={(v) => onChange({ ...filters, classLevelId: v })}
-          placeholder="All Classes"
-          showCount
-        />
-
-        <SelectFilter
-          label="Subject"
-          value={filters.subjectId}
-          options={subjects}
-          onChange={(v) => onChange({ ...filters, subjectId: v })}
-          placeholder="All Subjects"
-          showCount
-        />
-
-        <DateRangePicker
-          value={filters.dateRange || { from: null, to: null, preset: "all" }}
-          onChange={(range) => onChange({ ...filters, dateRange: range })}
-        />
-
-        {showDifficulty && (
+      {!hideFilters && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <SelectFilter
-            label="Difficulty"
-            value={filters.difficulty}
-            options={DIFFICULTY_OPTIONS}
-            onChange={(v) => onChange({ ...filters, difficulty: v })}
-            placeholder="All Difficulties"
+            label="Class Level"
+            value={filters.classLevelId}
+            options={classLevels}
+            onChange={(v) => onChange({ ...filters, classLevelId: v })}
+            placeholder="All Classes"
+            showCount
           />
-        )}
 
-        {showQuestionType && (
           <SelectFilter
-            label="Question Type"
-            value={filters.questionType}
-            options={QUESTION_TYPE_OPTIONS}
-            onChange={(v) => onChange({ ...filters, questionType: v })}
-            placeholder="All Types"
+            label="Subject"
+            value={filters.subjectId}
+            options={subjects}
+            onChange={(v) => onChange({ ...filters, subjectId: v })}
+            placeholder="All Subjects"
+            showCount
           />
-        )}
 
-        {showStatus && (
-          <SelectFilter
-            label="Status"
-            value={filters.status}
-            options={STATUS_OPTIONS}
-            onChange={(v) => onChange({ ...filters, status: v })}
-            placeholder="All Statuses"
+          <DateRangePicker
+            value={filters.dateRange || { from: null, to: null, preset: "all" }}
+            onChange={(range) => onChange({ ...filters, dateRange: range })}
           />
-        )}
-      </div>
+
+          {showDifficulty && (
+            <SelectFilter
+              label="Difficulty"
+              value={filters.difficulty}
+              options={DIFFICULTY_OPTIONS}
+              onChange={(v) => onChange({ ...filters, difficulty: v })}
+              placeholder="All Difficulties"
+            />
+          )}
+
+          {showQuestionType && (
+            <SelectFilter
+              label="Question Type"
+              value={filters.questionType}
+              options={QUESTION_TYPE_OPTIONS}
+              onChange={(v) => onChange({ ...filters, questionType: v })}
+              placeholder="All Types"
+            />
+          )}
+
+          {showStatus && (
+            <SelectFilter
+              label="Status"
+              value={filters.status}
+              options={STATUS_OPTIONS}
+              onChange={(v) => onChange({ ...filters, status: v })}
+              placeholder="All Statuses"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

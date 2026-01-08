@@ -12,3 +12,4 @@ export { ScheduledExamActions } from "./scheduled-exam-actions";
 export { ScheduledExamsDashboard } from "./scheduled-exams-dashboard";
 export { ExamAttemptDetailsClient } from "./exam-attempt-details-client";
 export { ExamPreviewClient } from "./exam-preview-client";
+export { CalendarView } from "./calendar-view";

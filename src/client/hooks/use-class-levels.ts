@@ -25,7 +25,7 @@ export interface ClassLevel {
 export function useClassLevels() {
   return useApi<ClassLevel[]>(async () => {
     return api.get<ClassLevel[]>('/api/v1/class-levels');
-  });
+  }, true);
 }
 
 export function useClassLevel(slug: string) {

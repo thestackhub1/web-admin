@@ -106,7 +106,7 @@ export function AnalyticsClient() {
   // Generate insights
   const insights = useMemo(() => {
     const result: Array<{ type: "success" | "info" | "danger" | "warning"; title: string; description: string; action?: { label: string; href: string } }> = [];
-    
+
     if (statsData.activeStudents < 10) {
       result.push({
         type: "info",
@@ -148,7 +148,7 @@ export function AnalyticsClient() {
   }, [statsData, kpisData, classAnalytics]);
 
   // Prepare chart data
-  const questionsBySubject = useMemo(() => 
+  const questionsBySubject = useMemo(() =>
     (statsData.questionsBySubject || []).map((q: { subject: string; count: number; color?: string }) => ({
       name: q.subject,
       value: q.count,
@@ -156,7 +156,7 @@ export function AnalyticsClient() {
     })), [statsData.questionsBySubject]
   );
 
-  const questionsByDifficulty = useMemo(() => 
+  const questionsByDifficulty = useMemo(() =>
     (statsData.questionsByDifficulty || []).map((d: { difficulty: string; count: number; color?: string }) => ({
       name: d.difficulty,
       value: d.count,
@@ -176,18 +176,18 @@ export function AnalyticsClient() {
   }
 
   const {
-  activeStudents,
-  totalExams,
-  completedExams,
-  averageScore,
-  passRate,
-  completionRate,
+    activeStudents,
+    totalExams,
+    completedExams,
+    averageScore,
+    passRate,
+    completionRate,
   } = statsData;
 
   const {
     studentRetentionRate: retentionRate,
-  monthlyExamGrowth,
-  previousPeriod,
+    monthlyExamGrowth,
+    previousPeriod,
   } = kpisData;
 
   // Ensure previousPeriod has all fields with defaults
@@ -218,11 +218,11 @@ export function AnalyticsClient() {
     incorrect: qt.total - qt.correct,
   }));
 
-  // Prepare class comparison data
+  // Prepare class comparison data (previous period data not available, showing current only)
   const classComparisonData = (classAnalytics || []).map((c: ClassLevelAnalytics) => ({
     name: c.classLevel,
     current: c.averageScore,
-    previous: Math.max(0, c.averageScore - Math.floor(Math.random() * 10)),
+    previous: 0, // Previous period data requires separate API endpoint
   }));
 
   const activeFiltersCount = [
@@ -671,50 +671,36 @@ export function AnalyticsClient() {
               <div className="mb-6 flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-500" />
                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                  Question Effectiveness
+                  Question Distribution
                 </h3>
               </div>
               <div className="space-y-3">
-                {[
-                  {
-                    label: "Easy questions accuracy",
-                    value: 85,
-                    ideal: "70-90%",
-                    status: "success" as const,
-                  },
-                  {
-                    label: "Medium questions accuracy",
-                    value: 62,
-                    ideal: "50-70%",
-                    status: "success" as const,
-                  },
-                  {
-                    label: "Hard questions accuracy",
-                    value: 28,
-                    ideal: "20-40%",
-                    status: "warning" as const,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800/50"
-                  >
-                    <div>
-                      <p className="font-medium text-neutral-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Ideal range: {item.ideal}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-neutral-900 dark:text-white">
-                        {item.value}%
-                      </span>
-                      {item.status === "success" ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      )}
-                    </div>
+                {questionsByDifficulty.length > 0 ? (
+                  questionsByDifficulty.map((item: { name: string; value: number }) => {
+                    const total = questionsByDifficulty.reduce((sum: number, q: { value: number }) => sum + q.value, 0);
+                    const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                    return (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800/50"
+                      >
+                        <div>
+                          <p className="font-medium text-neutral-900 dark:text-white capitalize">{item.name} Questions</p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{item.value} questions</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-bold text-neutral-900 dark:text-white">
+                            {percentage}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
+                    No question data available
                   </div>
-                ))}
+                )}
               </div>
             </GlassCard>
           </div>
