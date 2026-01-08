@@ -428,70 +428,6 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           </div>
         </div>
 
-        {/* Expandable Filters */}
-        {showFilters && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="rounded-2xl border border-neutral-200 bg-neutral-50/50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
-              <div className="flex flex-wrap gap-4">
-                {/* Status Filter */}
-                <div className="min-w-45">
-                  <label className="mb-2 block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Status
-                  </label>
-                  <select
-                    value={statusFilter || ""}
-                    onChange={(e) => setStatusFilter(e.target.value || null)}
-                    className={clsx(
-                      "w-full rounded-xl border px-3 py-2 text-sm",
-                      "border-neutral-200 bg-white dark:border-neutral-600 dark:bg-neutral-900",
-                      "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    )}
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="completed">Completed</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="abandoned">Abandoned</option>
-                  </select>
-                </div>
-
-                {/* Subject Filter */}
-                <div className="min-w-45">
-                  <label className="mb-2 block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Subject
-                  </label>
-                  <select
-                    value={subjectFilter || ""}
-                    onChange={(e) => setSubjectFilter(e.target.value || null)}
-                    className={clsx(
-                      "w-full rounded-xl border px-3 py-2 text-sm",
-                      "border-neutral-200 bg-white dark:border-neutral-600 dark:bg-neutral-900",
-                      "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    )}
-                  >
-                    <option value="">All Subjects</option>
-                    {subjects.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name_en}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Clear Filters */}
-                {activeFiltersCount > 0 && (
-                  <div className="flex items-end">
-                    <button
-                      onClick={clearAllFilters}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-error-200 bg-error-50 px-3 py-2 text-sm font-medium text-error-600 hover:bg-error-100 dark:border-error-800 dark:bg-error-900/30 dark:text-error-400"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear all
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Quick Status Filters */}
         <div className="flex flex-wrap gap-2">
           {Object.entries(statusConfig).map(([key, config]) => {
@@ -523,6 +459,114 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
           })}
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      {showFilters && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setShowFilters(false)} 
+          />
+
+          {/* Dialog */}
+          <div className="relative z-10 w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-200 rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/50">
+                  <SlidersHorizontal className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                    Filter Attempts
+                  </h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    Narrow down exam attempts
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Filter Options */}
+            <div className="space-y-4">
+              {/* Status Filter */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Status
+                </label>
+                <select
+                  value={statusFilter || ""}
+                  onChange={(e) => setStatusFilter(e.target.value || null)}
+                  className={clsx(
+                    "w-full rounded-xl border px-4 py-2.5 text-sm",
+                    "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800",
+                    "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  )}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="completed">Completed</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="abandoned">Abandoned</option>
+                </select>
+              </div>
+
+              {/* Subject Filter */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Subject
+                </label>
+                <select
+                  value={subjectFilter || ""}
+                  onChange={(e) => setSubjectFilter(e.target.value || null)}
+                  className={clsx(
+                    "w-full rounded-xl border px-4 py-2.5 text-sm",
+                    "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800",
+                    "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  )}
+                >
+                  <option value="">All Subjects</option>
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name_en}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+              {activeFiltersCount > 0 ? (
+                <button
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400"
+                >
+                  <X className="h-4 w-4" />
+                  Clear all filters
+                </button>
+              ) : (
+                <div />
+              )}
+              <button
+                onClick={() => setShowFilters(false)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary-700"
+              >
+                Apply Filters
+                {activeFiltersCount > 0 && (
+                  <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-xs">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results Count & Selection Controls */}
       <div className="flex items-center justify-between">
