@@ -31,6 +31,7 @@ import type {
   ScheduledExamStatus,
   ClassLevel,
 } from "@/client/types/class-levels";
+import type { ExamStructure } from "@/client/types/exam-structures";
 import {
   scheduledExamStatusLabels,
 } from "@/client/types/class-levels";
@@ -46,7 +47,7 @@ interface ScheduledExamsDashboardProps {
     name_mr: string;
     slug: string;
   };
-  availableStructures?: any[];
+  availableStructures?: ExamStructure[];
 }
 
 const statusIcons: Record<ScheduledExamStatus, React.ElementType> = {
@@ -185,11 +186,11 @@ export function ScheduledExamsDashboard({
                   <Target className="h-4 w-4 text-primary-500" />
                   <span>{exam.total_marks} marks</span>
                   <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                  <Clock className="h-4 w-4 text-amber-500" />
+                  <Clock className="h-4 w-4 text-warning-500" />
                   <span>{exam.duration_minutes} min</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-                  <Calendar className="h-4 w-4 text-emerald-500" />
+                  <Calendar className="h-4 w-4 text-success-500" />
                   <span>{formatDate(exam.scheduled_date ?? null)}</span>
                 </div>
               </div>
@@ -197,14 +198,14 @@ export function ScheduledExamsDashboard({
               {/* Exam Structure Badge */}
               <div className="mt-4">
                 {exam.exam_structure ? (
-                  <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/50">
+                  <div className="rounded-xl bg-success-50 p-3 dark:bg-success-900/20 border border-success-200/50 dark:border-success-800/50">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <FileText className="h-4 w-4 text-success-600 dark:text-success-400" />
+                      <span className="text-sm font-medium text-success-700 dark:text-success-300">
                         {exam.exam_structure.name_en}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                    <p className="mt-1 text-xs text-success-600 dark:text-success-400">
                       {exam.exam_structure.sections?.length || 0} sections •{" "}
                       {exam.total_marks} marks
                     </p>

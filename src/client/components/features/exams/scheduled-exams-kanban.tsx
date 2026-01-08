@@ -7,14 +7,14 @@ import {
     MoreHorizontal,
     Plus,
     Calendar,
-    Clock,
     Users,
     AlertCircle,
     CheckCircle2,
     FileText,
     PlayCircle,
-    Archive,
-    Loader2
+    CalendarRange,
+    ChevronDown,
+    X,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useUpdateScheduledExamStatus } from "@/client/hooks/use-scheduled-exams";
@@ -26,6 +26,50 @@ import { ScheduledExam } from './types';
 
 interface ScheduledExamsKanbanProps {
     exams: ScheduledExam[];
+}
+
+interface DateRange {
+    start: Date | null;
+    end: Date | null;
+    label: string;
+}
+
+// ============================================
+// Date Range Presets
+// ============================================
+
+const DATE_RANGE_PRESETS = [
+    { label: "All Time", days: null },
+    { label: "Last 7 Days", days: 7 },
+    { label: "Last 30 Days", days: 30 },
+    { label: "Last 90 Days", days: 90 },
+    { label: "This Month", days: "thisMonth" as const },
+    { label: "This Year", days: "thisYear" as const },
+] as const;
+
+function getDateRangeFromPreset(preset: typeof DATE_RANGE_PRESETS[number]): DateRange {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    
+    if (preset.days === null) {
+        return { start: null, end: null, label: preset.label };
+    }
+    
+    if (preset.days === "thisMonth") {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { start, end: now, label: preset.label };
+    }
+    
+    if (preset.days === "thisYear") {
+        const start = new Date(now.getFullYear(), 0, 1);
+        return { start, end: now, label: preset.label };
+    }
+    
+    const start = new Date();
+    start.setDate(now.getDate() - preset.days);
+    start.setHours(0, 0, 0, 0);
+    
+    return { start, end: now, label: preset.label };
 }
 
 // ============================================
@@ -45,27 +89,105 @@ const COLUMNS = [
         id: "scheduled",
         label: "Scheduled",
         icon: Calendar,
-        color: "text-blue-500",
-        bgColor: "bg-blue-50 dark:bg-blue-900/20",
-        borderColor: "border-blue-200 dark:border-blue-800",
+        color: "text-primary-500",
+        bgColor: "bg-primary-50 dark:bg-primary-900/20",
+        borderColor: "border-primary-200 dark:border-primary-800",
     },
     {
         id: "active",
         label: "Active",
         icon: PlayCircle,
-        color: "text-amber-500",
-        bgColor: "bg-amber-50 dark:bg-amber-900/20",
-        borderColor: "border-amber-200 dark:border-amber-800",
+        color: "text-warning-500",
+        bgColor: "bg-warning-50 dark:bg-warning-900/20",
+        borderColor: "border-warning-200 dark:border-warning-800",
     },
     {
         id: "completed",
         label: "Completed",
         icon: CheckCircle2,
-        color: "text-emerald-500",
-        bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
-        borderColor: "border-emerald-200 dark:border-emerald-800",
+        color: "text-success-500",
+        bgColor: "bg-success-50 dark:bg-success-900/20",
+        borderColor: "border-success-200 dark:border-success-800",
     },
 ];
+
+// ============================================
+// Date Range Selector Component
+// ============================================
+
+interface DateRangeSelectorProps {
+    dateRange: DateRange;
+    onDateRangeChange: (range: DateRange) => void;
+}
+
+function DateRangeSelector({ dateRange, onDateRangeChange }: DateRangeSelectorProps) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const formatDateRange = () => {
+        if (!dateRange.start || !dateRange.end) {
+            return dateRange.label;
+        }
+        
+        const formatDate = (date: Date) => date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+        });
+        
+        return `${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`;
+    };
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={clsx(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm font-medium",
+                    "bg-white dark:bg-neutral-900",
+                    isOpen 
+                        ? "border-primary-500 ring-2 ring-primary-500/20"
+                        : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
+                )}
+            >
+                <CalendarRange className="h-4 w-4 text-neutral-500" />
+                <span className="text-neutral-700 dark:text-neutral-300">{formatDateRange()}</span>
+                <ChevronDown className={clsx(
+                    "h-4 w-4 text-neutral-400 transition-transform",
+                    isOpen && "rotate-180"
+                )} />
+            </button>
+
+            {isOpen && (
+                <>
+                    <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsOpen(false)} 
+                    />
+                    <div className="absolute top-full left-0 mt-2 z-50 min-w-[180px] rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-xl shadow-neutral-200/50 dark:shadow-neutral-900/50 overflow-hidden">
+                        <div className="p-2">
+                            {DATE_RANGE_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.label}
+                                    onClick={() => {
+                                        onDateRangeChange(getDateRangeFromPreset(preset));
+                                        setIsOpen(false);
+                                    }}
+                                    className={clsx(
+                                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                                        dateRange.label === preset.label
+                                            ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400 font-medium"
+                                            : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                                    )}
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 // ============================================
 // Components
@@ -92,13 +214,13 @@ function KanbanCard({ exam, index }: { exam: ScheduledExam; index: number }) {
                         "group block rounded-xl border p-3 transition-all",
                         "bg-white dark:bg-neutral-900",
                         snapshot.isDragging
-                            ? "border-blue-500 shadow-lg shadow-blue-500/10 rotate-2 z-50 ring-2 ring-blue-500/20"
-                            : "border-neutral-200 hover:border-blue-300 dark:border-neutral-700 dark:hover:border-blue-700 hover:shadow-md hover:shadow-blue-500/5"
+                            ? "border-primary-500 shadow-lg shadow-primary-500/10 rotate-2 z-50 ring-2 ring-primary-500/20"
+                            : "border-neutral-200 hover:border-primary-300 dark:border-neutral-700 dark:hover:border-primary-700 hover:shadow-md hover:shadow-primary-500/5"
                     )}
                 >
                     <Link href={`/dashboard/scheduled-exams/${exam.id}`} className="block">
                         <div className="flex items-start justify-between gap-2">
-                            <h4 className="line-clamp-2 text-sm font-semibold text-neutral-900 group-hover:text-blue-600 dark:text-neutral-100 dark:group-hover:text-blue-400">
+                            <h4 className="line-clamp-2 text-sm font-semibold text-neutral-900 group-hover:text-primary-600 dark:text-neutral-100 dark:group-hover:text-primary-400">
                                 {exam.name_en}
                             </h4>
                             <button className="opacity-0 transition-opacity group-hover:opacity-100">
@@ -123,7 +245,7 @@ function KanbanCard({ exam, index }: { exam: ScheduledExam; index: number }) {
                                         <span>{formatDate(exam.scheduled_date)}</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-500">
+                                    <div className="flex items-center gap-1 text-warning-600 dark:text-warning-500">
                                         <AlertCircle className="h-3 w-3" />
                                         <span>Unscheduled</span>
                                     </div>
@@ -131,7 +253,7 @@ function KanbanCard({ exam, index }: { exam: ScheduledExam; index: number }) {
                             </div>
 
                             {exam.attempts_count ? (exam.attempts_count > 0 && (
-                                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                                <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400">
                                     <Users className="h-3 w-3" />
                                     <span className='font-medium'>{exam.attempts_count}</span>
                                 </div>
@@ -145,8 +267,29 @@ function KanbanCard({ exam, index }: { exam: ScheduledExam; index: number }) {
 }
 
 export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanbanProps) {
+    // Default to "Last 30 Days" filter
+    const [dateRange, setDateRange] = useState<DateRange>(() => 
+        getDateRangeFromPreset(DATE_RANGE_PRESETS[2]) // Last 30 Days
+    );
     const [exams, setExams] = useState<ScheduledExam[]>(initialExams);
     const [isClient, setIsClient] = useState(false);
+
+    // Filter exams by date range
+    const filteredExams = useMemo(() => {
+        if (!dateRange.start || !dateRange.end) {
+            return exams; // No filter, show all
+        }
+        
+        return exams.filter((exam) => {
+            if (!exam.scheduled_date) {
+                // Include unscheduled exams (drafts typically don't have dates)
+                return true;
+            }
+            
+            const examDate = new Date(exam.scheduled_date);
+            return examDate >= dateRange.start! && examDate <= dateRange.end!;
+        });
+    }, [exams, dateRange]);
 
     // Sync props to state, but only if not currently dragging/etc (simple sync for now)
     // Using simple useEffect might overwrite optimistic updates if rapid re-fetch happens, 
@@ -170,7 +313,7 @@ export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanb
             completed: [],
         };
 
-        exams.forEach((exam) => {
+        filteredExams.forEach((exam) => {
             // Map 'published' to 'scheduled' for Kanban simplicity
             const statusKey = exam.status === "published" ? "scheduled" : exam.status;
             if (groups[statusKey]) {
@@ -183,7 +326,11 @@ export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanb
         });
 
         return groups;
-    }, [exams]);
+    }, [filteredExams]);
+
+    // Calculate total count for display
+    const filteredCount = filteredExams.length;
+    const totalCount = exams.length;
 
     const onDragEnd = async (result: DropResult) => {
         const { destination, source, draggableId } = result;
@@ -238,8 +385,36 @@ export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanb
     if (!isClient) return null; // Avoid hydration mismatch for DnD
 
     return (
-        <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex h-full gap-4 overflow-x-auto pb-4 items-start">
+        <div className="flex flex-col h-full">
+            {/* Kanban Header with Date Range Filter */}
+            <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-3">
+                    <DateRangeSelector 
+                        dateRange={dateRange} 
+                        onDateRangeChange={setDateRange} 
+                    />
+                    {dateRange.start && (
+                        <button
+                            onClick={() => setDateRange(getDateRangeFromPreset(DATE_RANGE_PRESETS[0]))}
+                            className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                            <span>Clear filter</span>
+                        </button>
+                    )}
+                </div>
+                <p className="text-sm text-neutral-500">
+                    Showing <span className="font-medium text-neutral-900 dark:text-white">{filteredCount}</span>
+                    {filteredCount !== totalCount && (
+                        <span> of <span className="font-medium text-neutral-900 dark:text-white">{totalCount}</span></span>
+                    )}
+                    {" "}exams
+                </p>
+            </div>
+
+            {/* Kanban Board */}
+            <DragDropContext onDragEnd={onDragEnd}>
+                <div className="flex flex-1 gap-4 overflow-x-auto pb-4 items-start">
                 {COLUMNS.map((col) => {
                     const Icon = col.icon;
                     const colExams = groupedExams[col.id] || [];
@@ -307,7 +482,8 @@ export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanb
                         </div>
                     );
                 })}
-            </div>
-        </DragDropContext>
+                </div>
+            </DragDropContext>
+        </div>
     );
 }

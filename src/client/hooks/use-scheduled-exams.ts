@@ -64,7 +64,7 @@ export function useScheduledExams(filters?: {
       ? `/api/v1/scheduled-exams?${params.toString()}`
       : '/api/v1/scheduled-exams';
     return api.get<ScheduledExam[]>(url);
-  });
+  }, true); // Auto-execute on mount
 }
 
 export function useScheduledExam(id: string) {

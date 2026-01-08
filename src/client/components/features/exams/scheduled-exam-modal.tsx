@@ -3,7 +3,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Calendar, Clock, Target } from "lucide-react";
 import { Loader, LoaderSpinner } from '@/client/components/ui/loader';
@@ -31,7 +30,6 @@ export function ScheduledExamModal({
   exam: initialExam,
   examId,
 }: ScheduledExamModalProps) {
-  const router = useRouter();
   const [exam, setExam] = useState<ScheduledExamWithDetails | null>(initialExam || null);
   const [isLoading, setIsLoading] = useState(false);
   const isEditing = !!exam || !!examId;
@@ -167,7 +165,7 @@ export function ScheduledExamModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Name (English) <span className="text-red-500">*</span>
+                Name (English) <span className="text-error-500">*</span>
               </label>
               <TextInput
                 value={nameEn}
@@ -224,7 +222,7 @@ export function ScheduledExamModal({
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(parseInt(e.target.value) || 0)}
                 min={1}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-brand-blue-500 focus:outline-none focus:ring-2 focus:ring-brand-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
             <div>
@@ -237,7 +235,7 @@ export function ScheduledExamModal({
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
                 min={1}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-brand-blue-500 focus:outline-none focus:ring-2 focus:ring-brand-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
             <div>
@@ -250,7 +248,7 @@ export function ScheduledExamModal({
                 value={maxAttempts}
                 onChange={(e) => setMaxAttempts(parseInt(e.target.value) || 0)}
                 min={0}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-brand-blue-500 focus:outline-none focus:ring-2 focus:ring-brand-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
           </div>
@@ -266,7 +264,7 @@ export function ScheduledExamModal({
                 type="date"
                 value={scheduledDate}
                 onChange={(e) => setScheduledDate(e.target.value)}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-brand-blue-500 focus:outline-none focus:ring-2 focus:ring-brand-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
             <div>
@@ -278,7 +276,7 @@ export function ScheduledExamModal({
                 type="time"
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-brand-blue-500 focus:outline-none focus:ring-2 focus:ring-brand-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
           </div>
@@ -305,7 +303,7 @@ export function ScheduledExamModal({
                 type="checkbox"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-brand-blue-600 focus:ring-brand-blue-500"
+                className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-neutral-700 dark:text-neutral-300">Active</span>
             </label>
@@ -314,7 +312,7 @@ export function ScheduledExamModal({
                 type="checkbox"
                 checked={publishResults}
                 onChange={(e) => setPublishResults(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-brand-blue-600 focus:ring-brand-blue-500"
+                className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-neutral-700 dark:text-neutral-300">Publish Results</span>
             </label>

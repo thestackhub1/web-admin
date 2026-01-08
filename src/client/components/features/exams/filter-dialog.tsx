@@ -7,10 +7,8 @@ import {
     Calendar,
     Filter,
     Check,
-    ChevronDown,
     Sparkles,
     SlidersHorizontal,
-    RefreshCw
 } from "lucide-react";
 import { clsx } from "clsx";
 import { DateRangePicker, type DateRange } from "@/client/components/ui/smart-filters";
@@ -168,7 +166,7 @@ export function FilterDialog({
                     >
                         {/* Header */}
                         <div className="relative px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
-                            <div className="absolute inset-0 bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 opacity-50" />
+                            <div className="absolute inset-0 bg-linear-to-r from-primary-50 to-insight-50 dark:from-primary-900/10 dark:to-insight-900/10 opacity-50" />
                             <div className="relative flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-xs dark:bg-neutral-800">
@@ -216,7 +214,7 @@ export function FilterDialog({
                                             className={clsx(
                                                 "flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all border",
                                                 localFilters.classLevelId === cl.value
-                                                    ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500"
+                                                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500"
                                                     : "border-neutral-200 bg-white hover:border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-600"
                                             )}
                                         >

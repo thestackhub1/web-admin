@@ -189,7 +189,7 @@ export function ScheduledExamInlineEditor({
       <GlassCard>
         <div className="flex items-center justify-between mb-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
-            <FileText className="h-5 w-5 text-brand-blue-500" />
+            <FileText className="h-5 w-5 text-primary-500" />
             Exam Configuration
           </h2>
           <button
@@ -233,24 +233,24 @@ export function ScheduledExamInlineEditor({
 
         {/* Marks & Duration */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-          <div className="rounded-xl border border-neutral-100 bg-linear-to-br from-brand-blue-50 to-brand-purple-50 p-4 dark:border-neutral-700 dark:from-brand-blue-900/20 dark:to-brand-purple-900/20">
+          <div className="rounded-xl border border-neutral-100 bg-linear-to-br from-primary-50 to-insight-50 p-4 dark:border-neutral-700 dark:from-primary-900/20 dark:to-insight-900/20">
             <div className="flex items-center gap-2 mb-2">
-              <Target className="h-4 w-4 text-brand-blue-500" />
+              <Target className="h-4 w-4 text-primary-500" />
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Marks</p>
             </div>
-            <p className="text-2xl font-bold text-brand-blue-600 dark:text-brand-blue-400">
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {hasExamStructure ? structureMarks : exam.total_marks}
             </p>
             {hasExamStructure && (
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">From Blueprint</p>
             )}
           </div>
-          <div className="rounded-xl border border-neutral-100 bg-linear-to-br from-blue-50 to-cyan-50 p-4 dark:border-neutral-700 dark:from-blue-900/20 dark:to-cyan-900/20">
+          <div className="rounded-xl border border-neutral-100 bg-linear-to-br from-primary-50 to-primary-100 p-4 dark:border-neutral-700 dark:from-primary-900/20 dark:to-primary-800/20">
             <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-primary-500" />
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Duration</p>
             </div>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {hasExamStructure ? structureDuration : exam.duration_minutes} <span className="text-sm font-normal">min</span>
             </p>
             {hasExamStructure && (
@@ -282,8 +282,8 @@ export function ScheduledExamInlineEditor({
           <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-                  <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <div className="rounded-lg bg-success-100 p-2 dark:bg-success-900/30">
+                  <FileText className="h-4 w-4 text-success-600 dark:text-success-400" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Exam Blueprint</p>
@@ -310,11 +310,11 @@ export function ScheduledExamInlineEditor({
             <span className="text-sm text-neutral-500 dark:text-neutral-400">Status:</span>
             <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
               status === "published" 
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                 : status === "completed"
-                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                ? "bg-insight-100 text-insight-700 dark:bg-insight-900/30 dark:text-insight-400"
                 : status === "in_progress"
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
                 : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
             }`}>
               {scheduledExamStatusLabels[status]}
@@ -324,7 +324,7 @@ export function ScheduledExamInlineEditor({
             <span className="text-sm text-neutral-500 dark:text-neutral-400">Active:</span>
             <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
               isActive 
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                 : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
             }`}>
               {isActive ? "Yes" : "No"}
@@ -334,7 +334,7 @@ export function ScheduledExamInlineEditor({
             <span className="text-sm text-neutral-500 dark:text-neutral-400">Results Published:</span>
             <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
               publishResults 
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                 : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
             }`}>
               {publishResults ? "Yes" : "No"}
@@ -342,7 +342,7 @@ export function ScheduledExamInlineEditor({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-neutral-500 dark:text-neutral-400">Max Attempts:</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-insight-100 px-3 py-1 text-sm font-medium text-insight-700 dark:bg-insight-900/30 dark:text-insight-400">
               <Repeat className="h-3 w-3" />
               {maxAttempts === 0 ? "Unlimited" : maxAttempts}
             </span>
@@ -357,7 +357,7 @@ export function ScheduledExamInlineEditor({
     <GlassCard>
       <div className="flex items-center justify-between mb-6">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
-          <Edit2 className="h-5 w-5 text-brand-blue-500" />
+          <Edit2 className="h-5 w-5 text-primary-500" />
           Edit Exam Configuration
         </h2>
         <div className="flex items-center gap-2">
@@ -372,7 +372,7 @@ export function ScheduledExamInlineEditor({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-brand-blue-500 to-brand-purple-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-brand-blue-600 hover:to-brand-purple-600 hover:shadow-md disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary-500 to-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-md disabled:opacity-50"
           >
             {isSaving ? (
               <LoaderSpinner size="sm" />
@@ -389,7 +389,7 @@ export function ScheduledExamInlineEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Name (English) <span className="text-red-500">*</span>
+              Name (English) <span className="text-error-500">*</span>
             </label>
             <TextInput
               value={nameEn}
@@ -438,7 +438,7 @@ export function ScheduledExamInlineEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              <Target className="h-4 w-4 text-brand-blue-500" />
+              <Target className="h-4 w-4 text-primary-500" />
               Total Marks
               {hasExamStructure && (
                 <span className="text-xs text-neutral-500">(Overridden by Blueprint)</span>
@@ -454,7 +454,7 @@ export function ScheduledExamInlineEditor({
           </div>
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-primary-500" />
               Duration (minutes)
               {hasExamStructure && (
                 <span className="text-xs text-neutral-500">(Overridden by Blueprint)</span>
@@ -474,7 +474,7 @@ export function ScheduledExamInlineEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              <Repeat className="h-4 w-4 text-purple-500" />
+              <Repeat className="h-4 w-4 text-insight-500" />
               Max Attempts
               <span className="text-xs text-neutral-500">(0 = Unlimited)</span>
             </label>
@@ -534,7 +534,7 @@ export function ScheduledExamInlineEditor({
           </div>
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              <FileText className="h-4 w-4 text-green-500" />
+              <FileText className="h-4 w-4 text-success-500" />
               Exam Blueprint
             </label>
             <Select
@@ -563,7 +563,7 @@ export function ScheduledExamInlineEditor({
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="h-5 w-5 rounded border-neutral-300 text-brand-blue-500 focus:ring-brand-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+              className="h-5 w-5 rounded border-neutral-300 text-primary-500 focus:ring-primary-500 dark:border-neutral-600 dark:bg-neutral-800"
             />
             <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Active</span>
           </label>
@@ -572,7 +572,7 @@ export function ScheduledExamInlineEditor({
               type="checkbox"
               checked={publishResults}
               onChange={(e) => setPublishResults(e.target.checked)}
-              className="h-5 w-5 rounded border-neutral-300 text-brand-blue-500 focus:ring-brand-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+              className="h-5 w-5 rounded border-neutral-300 text-primary-500 focus:ring-primary-500 dark:border-neutral-600 dark:bg-neutral-800"
             />
             <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Publish Results</span>
           </label>

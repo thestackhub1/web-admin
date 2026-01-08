@@ -120,7 +120,7 @@ export function ScheduledExamActions({
           {/* Preview Button - Link to separate page */}
           <Link
             href={`/dashboard/scheduled-exams/${examId}/preview`}
-            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-blue-500 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-600 hover:shadow-md active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-md active:scale-[0.98]"
           >
             <Eye className="h-4 w-4" />
             Preview
@@ -131,7 +131,7 @@ export function ScheduledExamActions({
           <button
             onClick={() => handleStatusChange("published")}
             disabled={isUpdatingStatus}
-            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-emerald-500 to-green-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-emerald-600 hover:to-green-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-success-500 to-success-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-success-600 hover:to-success-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50"
           >
             {isUpdatingStatus ? (
               <LoaderSpinner size="sm" />
@@ -161,7 +161,7 @@ export function ScheduledExamActions({
           <button
             onClick={() => handleStatusChange("archived")}
             disabled={isUpdatingStatus}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-100 px-4 py-2.5 text-sm font-medium text-amber-700 transition-all hover:bg-amber-200 active:scale-[0.98] dark:bg-amber-900/30 dark:text-amber-400 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-warning-100 px-4 py-2.5 text-sm font-medium text-warning-700 transition-all hover:bg-warning-200 active:scale-[0.98] dark:bg-warning-900/30 dark:text-warning-400 disabled:opacity-50"
           >
             {isUpdatingStatus ? (
               <LoaderSpinner size="sm" />
@@ -190,21 +190,21 @@ export function ScheduledExamActions({
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 transition-all hover:bg-red-100 active:scale-[0.98] dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+            className="inline-flex items-center gap-2 rounded-xl bg-error-50 px-4 py-2.5 text-sm font-medium text-error-600 transition-all hover:bg-error-100 active:scale-[0.98] dark:bg-error-900/20 dark:text-error-400 dark:hover:bg-error-900/30"
           >
             <Trash2 className="h-4 w-4" />
             Delete
           </button>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 dark:bg-red-900/20">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            <span className="text-sm font-medium text-red-600 dark:text-red-400">
+          <div className="flex items-center gap-2 rounded-xl bg-error-50 px-3 py-2 dark:bg-error-900/20">
+            <AlertTriangle className="h-4 w-4 text-error-500" />
+            <span className="text-sm font-medium text-error-600 dark:text-error-400">
               Delete?
             </span>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-50"
+              className="rounded-lg bg-error-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-error-700 active:scale-[0.98] disabled:opacity-50"
             >
               {isDeleting ? (
                 <LoaderSpinner size="sm" />
@@ -214,7 +214,7 @@ export function ScheduledExamActions({
             </button>
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="rounded-lg p-1 text-red-500 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+              className="rounded-lg p-1 text-error-500 transition-colors hover:bg-error-100 dark:text-error-400 dark:hover:bg-error-900/30"
             >
               <X className="h-4 w-4" />
             </button>
@@ -262,7 +262,7 @@ export function ScheduledExamActions({
         {currentStatus === "draft" && (
           <Button
             variant="primary"
-            className="w-full justify-start bg-green-600 hover:bg-green-700"
+            className="w-full justify-start bg-success-600 hover:bg-success-700"
             onClick={() => handleStatusChange("published")}
             disabled={isUpdatingStatus}
           >
@@ -310,7 +310,7 @@ export function ScheduledExamActions({
 
       {/* Danger Zone */}
       <div className="border-t border-neutral-200 pt-3 dark:border-neutral-700">
-        <p className="mb-2 text-xs font-medium uppercase text-red-500">Danger Zone</p>
+        <p className="mb-2 text-xs font-medium uppercase text-error-500">Danger Zone</p>
 
         {!showDeleteConfirm ? (
           <Button
@@ -322,14 +322,14 @@ export function ScheduledExamActions({
             Delete Exam
           </Button>
         ) : (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+          <div className="rounded-lg border border-error-200 bg-error-50 p-4 dark:border-error-900/50 dark:bg-error-900/20">
             <div className="mb-3 flex items-start gap-2">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" />
+              <AlertTriangle className="h-5 w-5 shrink-0 text-error-500" />
               <div>
-                <p className="font-medium text-red-800 dark:text-red-200">
+                <p className="font-medium text-error-800 dark:text-error-200">
                   Delete this exam?
                 </p>
-                <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+                <p className="mt-1 text-sm text-error-600 dark:text-error-300">
                   This action cannot be undone. All exam data will be permanently removed.
                 </p>
               </div>
