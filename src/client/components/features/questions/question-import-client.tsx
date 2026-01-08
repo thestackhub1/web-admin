@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, CheckCircle, AlertCircle, Download, X, Loader2 } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Download, X } from "lucide-react";
+import { Loader, LoadingComponent } from "@/client/components/ui/loader";
 import { toast } from "sonner";
 import { PageHeader, GlassCard, Badge } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
@@ -12,11 +13,11 @@ import { QuestionImportReviewTable } from '@/client/components/features/question
 import { subjectDisplayMap } from "@/client/types/questions";
 import type { ParsedQuestion } from "@/lib/pdf/pdf-parser";
 import { useChaptersBySubject } from "@/client/hooks";
-import { 
-  useImportPdf, 
-  useImportCsv, 
-  useSaveImportDraft, 
-  useCommitImport 
+import {
+  useImportPdf,
+  useImportCsv,
+  useSaveImportDraft,
+  useCommitImport
 } from "@/client/hooks/use-question-import";
 
 type Step = "upload" | "processing" | "review";
@@ -247,7 +248,7 @@ export function QuestionImportClient() {
       <div className="flex items-center justify-center gap-4">
         {[
           { key: "upload", label: "Upload", icon: Upload },
-          { key: "processing", label: "Processing", icon: Loader2 },
+          { key: "processing", label: "Processing", icon: Loader },
           { key: "review", label: "Review", icon: CheckCircle },
         ].map((s, idx) => {
           const Icon = s.icon;
@@ -263,7 +264,7 @@ export function QuestionImportClient() {
                   ${isCompleted ? "border-green-500 bg-green-500 text-white" : "border-neutral-300 text-neutral-400"}
                 `}
               >
-                <Icon className={`h-5 w-5 ${isActive && s.key === "processing" ? "animate-spin" : ""}`} />
+                <Icon className={`h-5 w-5 ${isActive && s.key === "processing" ? "animate-spin-slow" : ""}`} />
               </div>
               <span
                 className={`text-sm font-medium ${isActive ? "text-brand-blue-600 dark:text-brand-blue-400" : "text-neutral-500"}`}
@@ -292,8 +293,8 @@ export function QuestionImportClient() {
               <button
                 onClick={() => setImportType("pdf")}
                 className={`flex-1 rounded-lg border-2 p-4 transition-colors ${importType === "pdf"
-                    ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
-                    : "border-neutral-200 dark:border-neutral-700"
+                  ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
+                  : "border-neutral-200 dark:border-neutral-700"
                   }`}
               >
                 <FileText className="mx-auto h-8 w-8 text-brand-blue-500" />
@@ -303,8 +304,8 @@ export function QuestionImportClient() {
               <button
                 onClick={() => setImportType("csv")}
                 className={`flex-1 rounded-lg border-2 p-4 transition-colors ${importType === "csv"
-                    ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
-                    : "border-neutral-200 dark:border-neutral-700"
+                  ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
+                  : "border-neutral-200 dark:border-neutral-700"
                   }`}
               >
                 <Download className="mx-auto h-8 w-8 text-brand-blue-500" />
@@ -519,7 +520,7 @@ export function QuestionImportClient() {
       {step === "processing" && (
         <GlassCard>
           <div className="py-12 text-center">
-            <Loader2 className="mx-auto h-12 w-12 animate-spin text-brand-blue-500" />
+            <LoadingComponent size="lg" message="Reading file and preparing import..." />
             <p className="mt-4 text-lg font-medium text-neutral-900 dark:text-white">
               {processingMessage || "Processing file..."}
             </p>
@@ -624,7 +625,7 @@ export function QuestionImportClient() {
                 <Button variant="secondary" onClick={handleSaveDraft} disabled={isSaving}>
                   {isSaving ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader size="sm" variant="white" className="mr-2" />
                       Saving...
                     </>
                   ) : (
@@ -638,7 +639,7 @@ export function QuestionImportClient() {
                 <Button onClick={handleCommit} disabled={isCommitting || parsedQuestions.length === 0}>
                   {isCommitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader size="sm" variant="white" className="mr-2" />
                       Importing...
                     </>
                   ) : (

@@ -8,16 +8,18 @@
  * Premium SaaS table design with consistent styling.
  */
 
-import { useState } from "react";
-import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Edit, Trash2, PlusCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Trash2, PlusCircle } from "lucide-react";
 import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell } from '@/client/components/ui/premium';
 import { SmartFilterChips } from '@/client/components/ui/question-components';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
+import { LoadingComponent } from '@/client/components/ui/loader';
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/client/utils";
-import { AddUserModal, EditUserModal } from "./user-modals";
-import { useDeleteUser } from "@/client/hooks/use-users";
+import { AddUserModal } from "./user-modals";
+import { useDeleteUser, useUsers } from "@/client/hooks/use-users";
 
 interface User {
   id: string;
@@ -54,26 +56,62 @@ const roleLabels: Record<string, string> = {
 };
 
 export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
-  const [users] = useState(initialUsers);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initial values from URL or defaults
+  const initialRole = searchParams.get("role") || "all";
+  const initialSearch = searchParams.get("search") || "";
+  const schoolId = searchParams.get("schoolId") || undefined;
+
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [roleFilter, setRoleFilter] = useState(initialRole);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // Sync debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch users based on filters
+  const { data, loading, execute: fetchUsers } = useUsers({
+    role: roleFilter,
+    search: debouncedSearch,
+    schoolId,
+    pageSize: 100
+  });
+
+  const users = (data?.items || initialUsers) as User[];
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (roleFilter !== "all") {
+      params.set("role", roleFilter);
+    } else {
+      params.delete("role");
+    }
+
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+    } else {
+      params.delete("search");
+    }
+
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
+
+    if (newQuery !== currentQuery) {
+      router.push(`${pathname}?${newQuery}`, { scroll: false });
+    }
+  }, [roleFilter, debouncedSearch, pathname, router, searchParams]);
 
   const { mutate: deleteUser, loading: deleting } = useDeleteUser();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // Helper to get user's display name
-  const getUserName = (user: User) => user.name || "";
-
-  const filteredUsers = users.filter((user) => {
-    const userName = getUserName(user);
-    const matchesSearch =
-      user.email.toLowerCase().includes(search.toLowerCase()) ||
-      userName.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
 
   const handleDelete = async (userId: string) => {
     const confirmed = window.confirm('Are you sure you want to delete this user? This action cannot be undone.');
@@ -82,7 +120,7 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
       const result = await deleteUser({ userId, hardDelete: false }); // Soft delete by default
       setDeletingId(null);
       if (result) {
-        window.location.reload();
+        fetchUsers();
       }
     }
   };
@@ -115,18 +153,22 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
             </div>
             <SmartFilterChips
               chips={[
-                { id: "all", label: "All", isActive: roleFilter === "all", count: users.length },
-                { id: "admin", label: "Admins", isActive: roleFilter === "admin", count: users.filter(u => u.role === "admin" || u.role === "super_admin").length },
-                { id: "teacher", label: "Teachers", isActive: roleFilter === "teacher", count: users.filter(u => u.role === "teacher").length },
-                { id: "student", label: "Students", isActive: roleFilter === "student", count: users.filter(u => u.role === "student").length },
+                { id: "all", label: "All", isActive: roleFilter === "all", count: data?.pagination?.totalItems || users.length },
+                { id: "admin", label: "Admins", isActive: roleFilter === "admin", count: roleFilter === "admin" ? data?.pagination.totalItems : totalUsersCount(users, "admin") },
+                { id: "teacher", label: "Teachers", isActive: roleFilter === "teacher", count: roleFilter === "teacher" ? data?.pagination.totalItems : totalUsersCount(users, "teacher") },
+                { id: "student", label: "Students", isActive: roleFilter === "student", count: roleFilter === "student" ? data?.pagination.totalItems : totalUsersCount(users, "student") },
               ]}
               onSelect={(id) => setRoleFilter(id)}
             />
           </div>
         </div>
 
-        {/* Table */}
-        {filteredUsers.length === 0 ? (
+        {/* Table Content */}
+        {loading && users.length === 0 ? (
+          <div className="py-20 flex justify-center">
+            <LoadingComponent size="lg" />
+          </div>
+        ) : users.length === 0 ? (
           <div className="p-8">
             <EmptyState
               icon={UserCircle}
@@ -135,114 +177,113 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
             />
           </div>
         ) : (
-          <DataTable>
-            <DataTableHead>
-              <tr>
-                <DataTableHeadCell>User</DataTableHeadCell>
-                <DataTableHeadCell>Role</DataTableHeadCell>
-                <DataTableHeadCell>Status</DataTableHeadCell>
-                <DataTableHeadCell>Language</DataTableHeadCell>
-                <DataTableHeadCell>Joined</DataTableHeadCell>
-                <DataTableHeadCell>Actions</DataTableHeadCell>
-              </tr>
-            </DataTableHead>
-            <DataTableBody>
-              {filteredUsers.map((user) => (
-                <DataTableRow key={user.id}>
-                  <DataTableCell>
-                    <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 group/user">
-                      {user.avatar_url ? (
-                        <img
-                          src={user.avatar_url}
-                          alt={user.name || ""}
-                          className="h-10 w-10 rounded-xl object-cover ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-insight-600 text-sm font-semibold text-white ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all">
-                          {(user.name || user.email).charAt(0).toUpperCase()}
+          <div className="relative">
+            {loading && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                <LoadingComponent size="md" />
+              </div>
+            )}
+            <DataTable>
+              <DataTableHead>
+                <tr>
+                  <DataTableHeadCell>User</DataTableHeadCell>
+                  <DataTableHeadCell>Role</DataTableHeadCell>
+                  <DataTableHeadCell>Status</DataTableHeadCell>
+                  <DataTableHeadCell>Language</DataTableHeadCell>
+                  <DataTableHeadCell>Joined</DataTableHeadCell>
+                  <DataTableHeadCell className="text-right">Actions</DataTableHeadCell>
+                </tr>
+              </DataTableHead>
+              <DataTableBody>
+                {users.map((user) => (
+                  <DataTableRow key={user.id}>
+                    <DataTableCell>
+                      <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 group/user">
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.name || ""}
+                            className="h-10 w-10 rounded-xl object-cover ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-insight-600 text-sm font-semibold text-white ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all">
+                            {(user.name || user.email).charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-neutral-900 dark:text-white group-hover/user:text-primary-600 dark:group-hover/user:text-primary-400 transition-colors">
+                            {user.name || "No name"}
+                          </p>
+                          <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                            <Mail className="h-3 w-3" />
+                            {user.email}
+                          </p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-neutral-900 dark:text-white group-hover/user:text-primary-600 dark:group-hover/user:text-primary-400 transition-colors">
-                          {user.name || "No name"}
-                        </p>
-                        <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                          <Mail className="h-3 w-3" />
-                          {user.email}
-                        </p>
-                      </div>
-                    </Link>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Badge variant={roleVariants[user.role] || "default"}>
-                      {roleIcons[user.role]} {roleLabels[user.role] || user.role}
-                    </Badge>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="flex items-center gap-2">
-                      {user.is_active ? (
-                        <>
-                          <ToggleRight className="h-5 w-5 text-success-500" />
-                          <span className="text-sm font-medium text-success-600 dark:text-success-400">Active</span>
-                        </>
-                      ) : (
-                        <>
-                          <ToggleLeft className="h-5 w-5 text-neutral-400" />
-                          <span className="text-sm text-neutral-500">Inactive</span>
-                        </>
-                      )}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <span className="text-sm text-neutral-600 uppercase dark:text-neutral-400 font-medium">
-                      {user.preferred_language || "en"}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(user.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingUser(user)}
-                        className="h-8 w-8 p-0 text-neutral-500 hover:text-brand-blue-600"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(user.id)}
-                        disabled={deletingId === user.id}
-                        className="h-8 w-8 p-0 text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Link href={`/dashboard/users/${user.id}`}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-neutral-500">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
                       </Link>
-                    </div>
-                  </DataTableCell>
-                </DataTableRow>
-              ))}
-            </DataTableBody>
-          </DataTable>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge variant={roleVariants[user.role] || "default"}>
+                        {roleIcons[user.role]} {roleLabels[user.role] || user.role}
+                      </Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <div className="flex items-center gap-2">
+                        {user.is_active ? (
+                          <>
+                            <ToggleRight className="h-5 w-5 text-success-500" />
+                            <span className="text-sm font-medium text-success-600 dark:text-success-400">Active</span>
+                          </>
+                        ) : (
+                          <>
+                            <ToggleLeft className="h-5 w-5 text-neutral-400" />
+                            <span className="text-sm text-neutral-500">Inactive</span>
+                          </>
+                        )}
+                      </div>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className="text-sm text-neutral-600 uppercase dark:text-neutral-400 font-medium">
+                        {user.preferred_language || "en"}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(user.created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </div>
+                    </DataTableCell>
+                    <DataTableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(user.id)}
+                          disabled={deletingId === user.id}
+                          className="h-8 w-8 p-0 text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Link href={`/dashboard/users/${user.id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-neutral-500">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </DataTableCell>
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </DataTable>
+          </div>
         )}
 
         <div className="px-6 py-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Showing <span className="font-medium text-neutral-700 dark:text-neutral-300">{filteredUsers.length}</span> of <span className="font-medium text-neutral-700 dark:text-neutral-300">{users.length}</span> users
+            Showing <span className="font-medium text-neutral-700 dark:text-neutral-300">{users.length}</span> of <span className="font-medium text-neutral-700 dark:text-neutral-300">{data?.pagination?.totalItems || users.length}</span> users
           </p>
         </div>
       </DataTableContainer>
@@ -253,21 +294,16 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={() => {
             setIsAddModalOpen(false);
-            window.location.reload();
-          }}
-        />
-      )}
-
-      {editingUser && (
-        <EditUserModal
-          user={editingUser}
-          onClose={() => setEditingUser(null)}
-          onSuccess={() => {
-            setEditingUser(null);
-            window.location.reload();
+            fetchUsers();
           }}
         />
       )}
     </div>
   );
+}
+
+// Helper to calculate total counts for chips when not yet fetched
+function totalUsersCount(users: any[], role: string) {
+  if (role === "all") return users.length;
+  return users.filter(u => u.role === role || (role === "admin" && u.role === "super_admin")).length;
 }

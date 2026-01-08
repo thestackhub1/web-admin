@@ -114,7 +114,9 @@ export async function PUT(request: NextRequest, context: Params) {
         if (parsed.data.difficulty !== undefined) updateData.difficulty = parsed.data.difficulty;
         if (parsed.data.chapter_id !== undefined) updateData.chapterId = parsed.data.chapter_id;
         if (parsed.data.answer_data !== undefined) updateData.answerData = parsed.data.answer_data;
-        if (parsed.data.explanation !== undefined) updateData.explanation = parsed.data.explanation;
+        if (parsed.data.explanation_en !== undefined || parsed.data.explanation_mr !== undefined) {
+            updateData.explanation = parsed.data.explanation_en || parsed.data.explanation_mr || null;
+        }
         if (parsed.data.tags !== undefined) updateData.tags = parsed.data.tags;
         if (parsed.data.class_level !== undefined) updateData.classLevel = parsed.data.class_level;
         if (parsed.data.marks !== undefined) updateData.marks = parsed.data.marks;

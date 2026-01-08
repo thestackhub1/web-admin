@@ -2,45 +2,66 @@
 
 "use client";
 
-import Image from "next/image";
 import { clsx } from "clsx";
 import { cn } from '@/client/utils';
+import { Logo } from "@/client/components/shared/Logo";
 
 // ============================================
-// Loading Component - Brand GIF loader
+// Loading Component - Premium Logo Spinner
 // ============================================
 
 interface LoadingComponentProps {
-    message?: string;
-    className?: string;
+  message?: string;
+  className?: string;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
+const sizeMap = {
+  sm: { logo: "sm" as const, container: "h-8 w-8", text: "text-xs" },
+  md: { logo: "md" as const, container: "h-12 w-12", text: "text-sm" },
+  lg: { logo: "lg" as const, container: "h-16 w-16", text: "text-base" },
+  xl: { logo: "xl" as const, container: "h-20 w-20", text: "text-lg" },
+};
+
 /**
- * Brand loading component with animated GIF
+ * Premium loading component with SVG logo and spinning rings.
+ * Replaces the old GIF-based loader for better performance and aesthetics.
  */
-export function LoadingComponent({ message, className }: LoadingComponentProps) {
-    return (
-        <div className={cn("flex flex-col items-center justify-center space-y-4", className)}>
-            <div className="relative h-12 w-12">
-                <Image
-                    src="/assets/logo-transparent.gif"
-                    alt="Loading..."
-                    fill
-                    className="object-contain"
-                    unoptimized
-                />
-            </div>
-            {message && (
-                <p className="text-sm font-medium text-neutral-500 animate-pulse-subtle">
-                    {message}
-                </p>
-            )}
+export function LoadingComponent({
+  message,
+  className,
+  size = "md"
+}: LoadingComponentProps) {
+  const sizeConfig = sizeMap[size];
+
+  return (
+    <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
+      <div className={cn("relative", sizeConfig.container)}>
+        {/* Outer spinning ring */}
+        <div className="absolute inset-0 rounded-full border-2 border-neutral-200 dark:border-neutral-700" />
+        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary-500 border-r-primary-300 animate-spin" />
+
+        {/* Inner logo with pulse */}
+        <div className="absolute inset-2 flex items-center justify-center">
+          <Logo
+            size={sizeConfig.logo}
+            className="animate-pulse-subtle"
+            idPrefix={`loader-${size}`}
+          />
         </div>
-    );
+      </div>
+
+      {message && (
+        <p className={cn("text-neutral-500 font-medium animate-pulse", sizeConfig.text)}>
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ============================================
-// Standard Spinner Loader
+// Standard Spinner Loader (Legacy/Fallback)
 // ============================================
 
 interface LoaderProps {
@@ -49,7 +70,7 @@ interface LoaderProps {
   variant?: "primary" | "white" | "neutral";
 }
 
-const sizeClasses = {
+const basicSizeClasses = {
   sm: "h-4 w-4 border-2",
   md: "h-8 w-8 border-2",
   lg: "h-12 w-12 border-3",
@@ -63,14 +84,14 @@ const variantClasses = {
 };
 
 /**
- * Standard spinner for general use
+ * Basic spinner for very small areas where Logo might be too much.
  */
 export function Loader({ size = "md", variant = "primary", className }: LoaderProps) {
   return (
     <div
       className={clsx(
         "animate-spin rounded-full",
-        sizeClasses[size],
+        basicSizeClasses[size],
         variantClasses[variant],
         className
       )}
@@ -78,12 +99,11 @@ export function Loader({ size = "md", variant = "primary", className }: LoaderPr
   );
 }
 
-// ============================================
-// Alias for backwards compatibility
-// ============================================
-
-export function LoaderSpinner({ size = "sm", className }: { size?: "sm" | "md" | "lg"; className?: string }) {
-  return <Loader size={size} className={className} />;
+/**
+ * Alias for backwards compatibility - now uses the premium LoadingComponent
+ */
+export function LoaderSpinner({ size = "md", className, message }: { size?: "sm" | "md" | "lg"; className?: string; message?: string }) {
+  return <LoadingComponent size={size} className={className} message={message} />;
 }
 
 // ============================================
@@ -96,7 +116,7 @@ interface LoadingOverlayProps {
 }
 
 /**
- * Full overlay loader with optional message
+ * Full overlay loader with premium blurred background
  */
 export function LoadingOverlay({ message = "Loading...", className }: LoadingOverlayProps) {
   return (
@@ -106,7 +126,7 @@ export function LoadingOverlay({ message = "Loading...", className }: LoadingOve
         className
       )}
     >
-      <LoadingComponent message={message} />
+      <LoadingComponent size="lg" message={message} />
     </div>
   );
 }
@@ -124,8 +144,8 @@ interface PageLoaderProps {
  */
 export function PageLoader({ message }: PageLoaderProps) {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center">
-      <LoadingComponent message={message} />
+    <div className="flex min-h-[60vh] flex-col items-center justify-center">
+      <LoadingComponent size="lg" message={message} />
     </div>
   );
 }
@@ -137,7 +157,7 @@ export function PageLoader({ message }: PageLoaderProps) {
 export function FullscreenLoader() {
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-white dark:bg-neutral-950">
-      <LoadingComponent message="Loading The Stack Hub..." />
+      <LoadingComponent size="xl" message="Loading The Stack Hub..." />
     </div>
   );
 }

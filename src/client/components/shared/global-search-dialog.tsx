@@ -5,6 +5,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/client/utils";
+import { Loader } from "@/client/components/ui";
 import {
   Search,
   User,
@@ -12,7 +13,6 @@ import {
   FileQuestion,
   Calendar,
   ArrowRight,
-  Loader2,
   Command,
 } from "lucide-react";
 import { useGlobalSearch, quickNavItems, type SearchResult } from "@/client/hooks/use-global-search";
@@ -151,7 +151,7 @@ export function GlobalSearchDialog({ isOpen, onClose }: GlobalSearchDialogProps)
           {/* Search Input */}
           <div className="flex items-center gap-3 border-b border-neutral-200/80 bg-linear-to-r from-neutral-50/50 to-transparent px-4 py-4 dark:border-neutral-700/80 dark:from-neutral-800/30">
             {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+              <Loader size="sm" />
             ) : (
               <Search className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
             )}

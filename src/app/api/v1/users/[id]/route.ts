@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { successResponse, ApiErrors } from '@/lib/api/response';
 import { authenticateRequest, isAuthContext } from '@/lib/auth';
-import { UsersService, ExamsService } from '@/lib/services';
+import { UsersService, ExamsService, SchoolsService } from '@/lib/services';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,6 +47,18 @@ export async function GET(request: NextRequest, context: Params) {
 
         const examStats = await ExamsService.getUserExamStats(id, rlsContext);
 
+        // Get school details if schoolId exists
+        let schoolDetails = null;
+        if (user.schoolId) {
+            const school = await SchoolsService.getById(user.schoolId, rlsContext);
+            if (school) {
+                schoolDetails = {
+                    id: school.id,
+                    name: school.name,
+                };
+            }
+        }
+
         // Transform user to snake_case
         const transformedUser = {
             id: user.id,
@@ -61,6 +73,7 @@ export async function GET(request: NextRequest, context: Params) {
             is_active: user.isActive,
             created_at: user.createdAt?.toISOString(),
             updated_at: user.updatedAt?.toISOString(),
+            schools: schoolDetails, // Include school info
         };
 
         // Transform to snake_case

@@ -389,7 +389,7 @@ export function QuickActionCard({
   semantic = "primary",
 }: QuickActionCardProps) {
   const iconClasses = semanticIconClasses[semantic];
-  
+
   return (
     <Link href={href} className="focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 rounded-2xl block group">
       <div className="bento-card p-5 h-full group-hover:-translate-y-1 group-hover:shadow-glow-card-hover transition-all duration-300">
@@ -516,7 +516,7 @@ export function DataTableBody({ children, className }: { children: React.ReactNo
 
 export function DataTableRow({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <tr 
+    <tr
       className={clsx(
         "group transition-colors duration-150",
         "hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50",
@@ -530,12 +530,15 @@ export function DataTableRow({ children, className, onClick }: { children: React
   );
 }
 
-export function DataTableCell({ children, className }: { children?: React.ReactNode; className?: string }) {
+export function DataTableCell({ children, className, colSpan }: { children?: React.ReactNode; className?: string; colSpan?: number }) {
   return (
-    <td className={clsx(
-      "px-6 py-4 text-sm text-neutral-700 dark:text-neutral-300",
-      className
-    )}>
+    <td
+      colSpan={colSpan}
+      className={clsx(
+        "px-6 py-4 text-sm text-neutral-700 dark:text-neutral-300",
+        className
+      )}
+    >
       {children}
     </td>
   );

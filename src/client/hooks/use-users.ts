@@ -16,6 +16,10 @@ export interface User {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  schools?: {
+    id: string;
+    name: string;
+  } | null;
   exam_stats?: {
     total: number;
     completed: number;
@@ -37,6 +41,7 @@ export function useUsers(filters?: {
   role?: string;
   schoolId?: string;
   classLevel?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -52,9 +57,10 @@ export function useUsers(filters?: {
     };
   }>(async () => {
     const params = new URLSearchParams();
-    if (filters?.role) params.append('role', filters.role);
+    if (filters?.role && filters.role !== 'all') params.append('role', filters.role);
     if (filters?.schoolId) params.append('schoolId', filters.schoolId);
-    if (filters?.classLevel) params.append('classLevel', filters.classLevel);
+    if (filters?.classLevel && filters.classLevel !== 'all') params.append('classLevel', filters.classLevel);
+    if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString());
 
@@ -91,6 +97,8 @@ export interface UpdateUserDTO {
   classLevel?: string | null;
   isActive?: boolean;
   email?: string;
+  phone?: string | null;
+  preferred_language?: string | null;
   password?: string;
 }
 

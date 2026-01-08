@@ -126,9 +126,9 @@ export async function POST(request: NextRequest, context: Params) {
             difficulty: parsed.data.difficulty,
             chapterId: parsed.data.chapter_id || null,
             answerData: parsed.data.answer_data,
-            explanation: parsed.data.explanation || null,
+            explanation: parsed.data.explanation_en || parsed.data.explanation_mr || null,
             tags: parsed.data.tags || [],
-            classLevel: parsed.data.class_level, // Required
+            classLevel: parsed.data.class_level || "General", // Required
             marks: parsed.data.marks || 1,
             isActive: parsed.data.is_active ?? true,
             createdBy: authResult.user.id,

@@ -5,6 +5,7 @@
 import { useState, useCallback } from "react";
 import { clsx } from "clsx";
 import { ChevronDown, X, Calendar, Filter, RefreshCw } from "lucide-react";
+import { Loader } from "@/client/components/ui/loader";
 
 // ============================================
 // Types
@@ -432,7 +433,11 @@ export function SmartFilterBar({
                 isLoading && "opacity-50"
               )}
             >
-              <RefreshCw className={clsx("h-3 w-3", isLoading && "animate-spin")} />
+              {isLoading ? (
+                <Loader size="sm" className="h-3 w-3" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
               Refresh
             </button>
           )}

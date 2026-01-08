@@ -58,7 +58,7 @@ export async function GET(request: NextRequest, context: Params) {
         for (const [tableName, questionIds] of Object.entries(questionsByTable)) {
             // Extract subject slug from table name (e.g., "questions_scholarship" -> "scholarship")
             const subjectSlug = tableName.replace('questions_', '').replace(/_/g, '-');
-            
+
             try {
                 const questions = await QuestionsService.getByIds(
                     subjectSlug,
@@ -70,11 +70,11 @@ export async function GET(request: NextRequest, context: Params) {
                 const chapterIds = questions
                     .map(q => q.chapter_id)
                     .filter((id): id is string => id !== null && id !== undefined);
-                
+
                 let chaptersMap: Record<string, any> = {};
                 if (chapterIds.length > 0) {
                     const chapterList = await ChaptersService.getByIds(chapterIds, rlsContext);
-                    
+
                     chaptersMap = Object.fromEntries(
                         chapterList.map(ch => [ch.id, { name_en: ch.nameEn, name_mr: ch.nameMr }])
                     );
@@ -86,15 +86,15 @@ export async function GET(request: NextRequest, context: Params) {
                         id: q.id,
                         question_text: q.question_text,
                         question_language: q.question_language as 'en' | 'mr',
-                        question_text_secondary: q.question_text_mr || null,
+                        question_text_secondary: (q as any).question_text_mr || (q as any).question_text_secondary || null,
                         secondary_language: q.question_language === 'en' ? 'mr' : 'en',
                         question_type: q.question_type,
                         answer_data: q.answer_data,
                         marks: q.marks,
-                        explanation_en: q.explanation_en || null,
-                        explanation_mr: q.explanation_mr || null,
-                        chapter: q.chapter_id && chaptersMap[q.chapter_id] 
-                            ? chaptersMap[q.chapter_id] 
+                        explanation_en: (q as any).explanation || null,
+                        explanation_mr: (q as any).explanation || null,
+                        chapter: q.chapter_id && chaptersMap[q.chapter_id]
+                            ? chaptersMap[q.chapter_id]
                             : null,
                     };
                 }

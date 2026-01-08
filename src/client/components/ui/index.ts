@@ -5,11 +5,6 @@
  *
  * Barrel export for all primitive UI components.
  * Import from '@/client/components/ui' or '@/ui' instead of individual files.
- *
- * @example
- * ```tsx
- * import { Button, Input, GlassCard, Badge } from '@/client/components/ui';
- * ```
  */
 
 // Buttons
@@ -41,9 +36,15 @@ export { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 export * from "./charts";
 export * from "./analytics-charts";
 
-// Loading states
-export { Loader, LoaderSpinner, LoadingOverlay, PageLoader, FullscreenLoader, LoadingComponent } from "./loader";
-export { LoadingSpinner, FullPageLoader, InlineLoader } from "./loading-spinner";
+// Loading states - Consolidated into loader.tsx
+export {
+    Loader,
+    LoaderSpinner,
+    LoadingOverlay,
+    PageLoader,
+    FullscreenLoader,
+    LoadingComponent
+} from "./loader";
 
 // Question display components
 export * from "./question-components";

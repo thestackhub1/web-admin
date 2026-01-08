@@ -22,9 +22,48 @@ export interface School {
   is_active?: boolean;
 }
 
-export function useSchools(autoExecute: boolean = true) {
-  return useApi<School[]>(async () => {
-    return api.get<School[]>('/api/v1/schools');
+export interface PaginatedSchools {
+  items: School[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  stats: {
+    totalItems: number;
+    totalVerified: number;
+    totalUnverified: number;
+    totalOverall: number;
+  };
+}
+
+export function useSchools(
+  filters?: {
+    search?: string;
+    verified?: boolean;
+    userAdded?: boolean;
+    city?: string;
+    state?: string;
+    page?: number;
+    pageSize?: number;
+  },
+  autoExecute: boolean = true
+) {
+  return useApi<PaginatedSchools>(async () => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.verified !== undefined) params.append('verified', filters.verified.toString());
+    if (filters?.userAdded !== undefined) params.append('userAdded', filters.userAdded.toString());
+    if (filters?.city) params.append('city', filters.city);
+    if (filters?.state) params.append('state', filters.state);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString());
+
+    const url = params.toString() ? `/api/v1/schools?${params.toString()}` : '/api/v1/schools';
+    return api.get<PaginatedSchools>(url);
   }, autoExecute);
 }
 

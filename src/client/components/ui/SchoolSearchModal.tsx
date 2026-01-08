@@ -17,15 +17,42 @@ import * as React from "react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Search, X, MapPin, Plus, Building2, Check,
+    Search, X, MapPin, Plus, Loader2, Building2, Check,
     AlertCircle, ChevronRight, Sparkles,
     Clock, TrendingUp, ArrowLeft
 } from "lucide-react";
-import { Loader } from "@/client/components/ui/loader";
 import { Button } from "@/client/components/ui/button";
-import { schoolsApi, type School } from "@/client/api/schools";
+import { schoolsApi } from "@/client/api/schools";
+import type { School } from "@/client/hooks/use-schools";
 import { toast } from "sonner";
 import { cn } from "@/client/utils";
+
+// Mock translation function for admin portal
+const useTranslations = (namespace: string) => {
+    const translations: Record<string, Record<string, string>> = {
+        auth: {
+            addYourSchool: "Add your school",
+            noSchoolsFound: "No schools found",
+            addNewSchool: "Add New School",
+            selectSchool: "Select School",
+            schoolName: "School Name",
+            enterSchoolName: "Enter school name",
+            cityOptional: "City (Optional)",
+            stateOptional: "State (Optional)",
+            schoolAdded: "School added successfully",
+            failedToAddSchool: "Failed to add school",
+            searchSchoolPlaceholder: "Search for your school...",
+            searchSchoolHint: "Type at least 2 characters to search",
+            popularSchools: "Popular Schools",
+            addSchool: "Add School",
+            'validation.schoolNameMin2': "School name must be at least 2 characters",
+        },
+        common: {
+            retry: "Retry",
+        }
+    };
+    return (key: string) => translations[namespace]?.[key] || key;
+};
 
 // Special ID for "Other" option
 const OTHER_SCHOOL_ID = "other";
@@ -81,6 +108,7 @@ const SchoolCard: React.FC<{
     index: number;
 }> = ({ school, isSelected, onSelect, index }) => {
     const isOtherOption = school.id === OTHER_SCHOOL_ID || school.is_other_option;
+    const t = useTranslations('auth');
 
     return (
         <motion.button
@@ -148,7 +176,7 @@ const SchoolCard: React.FC<{
                 {isOtherOption && (
                     <p className="text-sm text-primary-600 dark:text-primary-400 flex items-center gap-1 mt-0.5">
                         <Sparkles className="w-3.5 h-3.5" />
-                        Add your school
+                        {t('addYourSchool')}
                     </p>
                 )}
             </div>
@@ -193,7 +221,8 @@ const SectionHeader: React.FC<{
 const EmptyState: React.FC<{
     searchQuery: string;
     onAddNew: () => void;
-}> = ({ searchQuery, onAddNew }) => (
+    t: (key: string) => string;
+}> = ({ searchQuery, onAddNew, t }) => (
     <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -206,17 +235,17 @@ const EmptyState: React.FC<{
             </div>
         </div>
         <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
-            No schools found
+            {t('noSchoolsFound')}
         </h3>
         <p className="text-neutral-500 dark:text-neutral-400 mb-6 max-w-xs mx-auto">
             {searchQuery
                 ? `We couldn't find "${searchQuery}" in our database`
-                : "Add your school"
+                : t('addYourSchool')
             }
         </p>
         <Button onClick={onAddNew} className="shadow-lg shadow-primary-500/25">
             <Plus className="w-4 h-4 mr-2" />
-            Add New School
+            {t('addNewSchool')}
         </Button>
     </motion.div>
 );
@@ -242,6 +271,9 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
     onSelect,
     onClose,
 }) => {
+    const t = useTranslations('auth');
+    const tc = useTranslations('common');
+
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
     const [schools, setSchools] = useState<ExtendedSchool[]>([]);
@@ -364,7 +396,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
 
         try {
             const result = await schoolsApi.suggest(10);
-            if (result.data) { // Assuming admin api client returns data directly or error property
+            if (result.success && result.data) {
                 // Mark some as verified for demo
                 const enhanced = (result.data as ExtendedSchool[]).map((s, i) => ({
                     ...s,
@@ -391,7 +423,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                 limit: 20
             });
 
-            if (result.data) {
+            if (result.success && result.data) {
                 const enhanced = (result.data as ExtendedSchool[]).map((s, i) => ({
                     ...s,
                     is_verified: i < 3,
@@ -435,7 +467,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
 
     const handleAddNewSchool = async () => {
         if (!newSchoolName.trim() || newSchoolName.trim().length < 2) {
-            toast.error("School name must be at least 2 characters long");
+            toast.error(t('validation.schoolNameMin2'));
             return;
         }
 
@@ -450,7 +482,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                 location_country: 'India',
             });
 
-            if (result.data) {
+            if (result.success && result.data) {
                 const schoolData = result.data as ExtendedSchool;
 
                 if (schoolData.is_suggested) {
@@ -459,16 +491,16 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                     return;
                 }
 
-                toast.success(schoolData.message || "School added successfully");
+                toast.success(schoolData.message || t('schoolAdded'));
                 saveToRecent(schoolData);
                 onSelect(result.data);
                 onClose();
             } else {
-                toast.error(result.error || "Failed to add school");
+                toast.error(result.error || t('failedToAddSchool'));
             }
         } catch (err) {
             console.error('Failed to create school:', err);
-            toast.error("Failed to add school");
+            toast.error(t('failedToAddSchool'));
         } finally {
             setIsCreating(false);
         }
@@ -482,7 +514,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
         setNewSchoolState('');
     };
 
-    const isSearching = searchQuery.trim().length >= 1;
+    const isSearching = searchQuery.trim().length >= 2;
     const displaySchools = isSearching ? schools : popularSchools;
     const hasRecentSchools = recentSchools.length > 0 && !isSearching && !showAddForm;
 
@@ -509,7 +541,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                     <div className="relative overflow-hidden shrink-0">
                         {/* Gradient Background */}
                         <div className="absolute inset-0 bg-linear-to-br from-primary-500 via-primary-600 to-purple-600" />
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTRzMiAyIDIgNC01IDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
 
                         <div className="relative px-6 pt-6 pb-5">
                             <div className="flex items-center justify-between mb-4">
@@ -526,7 +558,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                     )}
                                     <div>
                                         <h2 className="text-xl font-bold text-white">
-                                            {showAddForm ? "Add New School" : "Select School"}
+                                            {showAddForm ? t('addNewSchool') : t('selectSchool')}
                                         </h2>
                                         <p className="text-sm text-white/70 mt-0.5">
                                             {showAddForm
@@ -559,16 +591,16 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                 type="text"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                                placeholder="Search by name, city..."
+                                                placeholder={t('searchSchoolPlaceholder')}
                                                 className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-white/30 shadow-lg text-base"
                                             />
                                             {loading && (
-                                                <Loader size="sm" className="absolute right-4 top-1/2 -translate-y-1/2" />
+                                                <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-500 animate-spin" />
                                             )}
                                         </div>
                                         {!isSearching && (
                                             <p className="text-xs text-white/60 mt-2 ml-1">
-                                                Search functionality is powered by our database
+                                                {t('searchSchoolHint')}
                                             </p>
                                         )}
                                     </motion.div>
@@ -620,7 +652,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                                     {suggestedSchool.name}
                                                                 </p>
                                                                 {(suggestedSchool.location_city || suggestedSchool.location_state) && (
-                                                                    <p className="text-sm text-neutral-500 flex items-center gap-1">
+                                                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
                                                                         <MapPin className="w-3 h-3" />
                                                                         {[suggestedSchool.location_city, suggestedSchool.location_state].filter(Boolean).join(', ')}
                                                                     </p>
@@ -642,7 +674,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                                                    School Name <span className="text-red-500">*</span>
+                                                    {t('schoolName')} <span className="text-red-500">*</span>
                                                 </label>
                                                 <div className="relative">
                                                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
@@ -650,7 +682,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                         type="text"
                                                         value={newSchoolName}
                                                         onChange={(e) => setNewSchoolName(e.target.value)}
-                                                        placeholder="Enter school name"
+                                                        placeholder={t('enterSchoolName')}
                                                         autoFocus
                                                         className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                                     />
@@ -660,7 +692,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
                                                     <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                                                        City (Optional)
+                                                        {t('cityOptional')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -672,7 +704,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                                                        State (Optional)
+                                                        {t('stateOptional')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -699,7 +731,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                             className="w-full py-4 text-base font-semibold shadow-lg shadow-primary-500/25"
                                         >
                                             <Plus className="w-5 h-5 mr-2" />
-                                            Add School
+                                            {t('addSchool')}
                                         </Button>
                                     </motion.div>
                                 ) : (
@@ -721,9 +753,9 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                 <p className="text-neutral-600 dark:text-neutral-400 mb-4">{error}</p>
                                                 <Button
                                                     onClick={() => performSearch(searchQuery)}
-                                                    variant="secondary" // Admin portal uses secondary for outline/alternative usually
+                                                    variant="outline"
                                                 >
-                                                    Retry
+                                                    {tc('retry')}
                                                 </Button>
                                             </div>
                                         ) : (
@@ -759,7 +791,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                                     ? <Search className="w-4 h-4" />
                                                                     : <TrendingUp className="w-4 h-4" />
                                                                 }
-                                                                title={isSearching ? "Search Results" : "Popular Schools"}
+                                                                title={isSearching ? "Search Results" : t('popularSchools')}
                                                                 count={displaySchools.length}
                                                             />
                                                             <div className="space-y-2 mb-4">
@@ -784,6 +816,7 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                                 setShowAddForm(true);
                                                                 setNewSchoolName(searchQuery);
                                                             }}
+                                                            t={t}
                                                         />
                                                     ) : (
                                                         /* Always show "Can't Find School" option at the bottom if not empty state */
@@ -791,15 +824,26 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                                                             <motion.button
                                                                 initial={{ opacity: 0 }}
                                                                 animate={{ opacity: 1 }}
-                                                                transition={{ delay: 0.3 }}
                                                                 onClick={() => {
                                                                     setShowAddForm(true);
                                                                     setNewSchoolName(searchQuery);
                                                                 }}
-                                                                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700 transition-colors bg-neutral-50/50 dark:bg-neutral-800/50"
+                                                                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-primary-50 dark:bg-primary-900/10 border-2 border-dashed border-primary-200 dark:border-primary-800 hover:border-primary-400 hover:bg-primary-100/50 transition-all group text-left"
                                                             >
-                                                                <Plus className="w-4 h-4" />
-                                                                <span className="text-sm font-medium">Can't find your school? Add it now</span>
+                                                                <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                                                                    <Plus className="w-6 h-6" />
+                                                                </div>
+                                                                <div className="flex-1 text-left">
+                                                                    <p className="font-semibold text-primary-900 dark:text-primary-100">
+                                                                        {t('cantFindSchool')}
+                                                                    </p>
+                                                                    <p className="text-sm text-primary-600/80 dark:text-primary-400/80">
+                                                                        {t('addYourSchool')}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="w-8 h-8 rounded-full bg-white dark:bg-neutral-800 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <ChevronRight className="w-4 h-4 text-primary-500" />
+                                                                </div>
                                                             </motion.button>
                                                         </div>
                                                     )}
@@ -811,8 +855,24 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({
                             </AnimatePresence>
                         </div>
                     </div>
+
+                    {/* Footer with keyboard hint */}
+                    <div className="shrink-0 px-6 py-3 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-100 dark:border-neutral-800">
+                        <div className="flex items-center justify-center gap-4 text-xs text-neutral-400">
+                            <span className="flex items-center gap-1.5">
+                                <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-[10px] font-medium">ESC</kbd>
+                                to close
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-[10px] font-medium">↵</kbd>
+                                to select
+                            </span>
+                        </div>
+                    </div>
                 </motion.div>
             </motion.div>
         </AnimatePresence>
     );
 };
+
+SchoolSearchModal.displayName = "SchoolSearchModal";

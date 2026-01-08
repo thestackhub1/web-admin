@@ -28,9 +28,20 @@ export interface SchoolUpdateData {
 
 export class SchoolsService {
   /**
-   * Get all schools with optional filters
+   * Get all schools with optional filters, search and pagination
    */
-  static async getAll(options?: { isVerified?: boolean; isUserAdded?: boolean }, rlsContext?: RLSContext) {
+  static async getAll(
+    options?: {
+      isVerified?: boolean;
+      isUserAdded?: boolean;
+      locationCity?: string;
+      locationState?: string;
+      search?: string;
+      page?: number;
+      pageSize?: number;
+    },
+    rlsContext?: RLSContext
+  ) {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const conditions = [];
@@ -43,28 +54,90 @@ export class SchoolsService {
       conditions.push(eq(schools.isUserAdded, options.isUserAdded));
     }
 
+    if (options?.locationState) {
+      conditions.push(eq(schools.locationState, options.locationState));
+    }
+
+    if (options?.locationCity) {
+      conditions.push(ilike(schools.locationCity, `%${options.locationCity}%`));
+    }
+
+    if (options?.search) {
+      const searchTerm = options.search.toLowerCase().trim();
+      conditions.push(
+        or(
+          ilike(schools.nameSearch, `%${searchTerm}%`),
+          ilike(schools.locationCity, `%${searchTerm}%`),
+          ilike(schools.locationState, `%${searchTerm}%`)
+        )
+      );
+    }
+
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Handle pagination
+    const page = options?.page || 1;
+    const pageSize = options?.pageSize || 50;
+    const offset = (page - 1) * pageSize;
+
+    // Total count for pagination
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schools)
+      .where(whereClause);
+
+    // Global stats (optional optimization: cache these)
+    const [verifiedCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schools)
+      .where(eq(schools.isVerified, true));
+
+    const [unverifiedCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schools)
+      .where(eq(schools.isVerified, false));
+
+    const totalItems = Number(countResult?.count || 0);
+    const totalPages = Math.ceil(totalItems / pageSize);
 
     const results = await db
       .select()
       .from(schools)
       .where(whereClause)
-      .orderBy(asc(schools.name));
+      .orderBy(asc(schools.name))
+      .limit(pageSize)
+      .offset(offset);
 
-    return results.map((school) => ({
-      id: school.id,
-      name: school.name,
-      name_search: school.nameSearch,
-      location_city: school.locationCity,
-      location_state: school.locationState,
-      location_country: school.locationCountry,
-      is_verified: school.isVerified,
-      is_user_added: school.isUserAdded,
-      created_by: school.createdBy,
-      student_count: school.studentCount,
-      created_at: school.createdAt?.toISOString(),
-      updated_at: school.updatedAt?.toISOString(),
-    }));
+    return {
+      items: results.map((school) => ({
+        id: school.id,
+        name: school.name,
+        name_search: school.nameSearch,
+        location_city: school.locationCity,
+        location_state: school.locationState,
+        location_country: school.locationCountry,
+        is_verified: school.isVerified,
+        is_user_added: school.isUserAdded,
+        created_by: school.createdBy,
+        student_count: school.studentCount,
+        created_at: school.createdAt?.toISOString(),
+        updated_at: school.updatedAt?.toISOString(),
+      })),
+      pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+      stats: {
+        totalItems, // This is filtered total
+        totalVerified: Number(verifiedCountResult?.count || 0),
+        totalUnverified: Number(unverifiedCountResult?.count || 0),
+        totalOverall: Number(verifiedCountResult?.count || 0) + Number(unverifiedCountResult?.count || 0)
+      }
+    };
   }
 
   /**

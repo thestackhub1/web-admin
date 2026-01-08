@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
+import { LoadingComponent, Loader } from "@/client/components/ui/loader";
 import { Button } from '@/client/components/ui/button';
 import { TextInput } from '@/client/components/ui/input';
 import { GlassCard, PageHeader } from '@/client/components/ui/premium';
@@ -75,8 +76,8 @@ export default function EditCategoryPage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-96 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+            <div className="flex h-96 flex-col items-center justify-center space-y-4">
+                <LoadingComponent size="lg" message="Fetching subject details..." />
             </div>
         );
     }
@@ -180,7 +181,7 @@ export default function EditCategoryPage() {
                         <Button type="submit" disabled={isSaving}>
                             {isSaving ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader size="sm" variant="white" className="mr-2" />
                                     Saving...
                                 </>
                             ) : (

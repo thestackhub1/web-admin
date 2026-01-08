@@ -1,4 +1,5 @@
 import { authServerApi, isAuthenticated } from "@/lib/api";
+import { api } from "@/client/api";
 
 export interface School {
   id: string;
@@ -79,3 +80,23 @@ export async function getSchoolStats(): Promise<SchoolStats> {
 
   return data;
 }
+
+/**
+ * Schools API for Client Components (Compatibility)
+ */
+export const schoolsApi = {
+  async search(params: { q: string; limit?: number }) {
+    const { data, error } = await api.get<School[]>(
+      `/api/v1/schools/search?q=${encodeURIComponent(params.q)}&limit=${params.limit || 20}`
+    );
+    return { success: !error, data, error: error ? String(error) : undefined };
+  },
+  async suggest(limit: number = 10) {
+    const { data, error } = await api.get<School[]>(`/api/v1/schools/suggest?limit=${limit}`);
+    return { success: !error, data, error: error ? String(error) : undefined };
+  },
+  async create(payload: any) {
+    const { data, error } = await api.post<School>('/api/v1/schools', payload);
+    return { success: !error, data, error: error ? String(error) : undefined };
+  }
+};

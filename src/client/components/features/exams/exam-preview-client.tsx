@@ -18,7 +18,7 @@ import {
     X,
     Lightbulb,
 } from "lucide-react";
-import { LoaderSpinner } from '@/client/components/ui/loader';
+import { Loader, LoadingComponent } from '@/client/components/ui/loader';
 import { toast } from "sonner";
 import { GlassCard } from '@/client/components/ui/premium';
 import { questionTypeLabels } from "@/client/types/questions";
@@ -197,7 +197,11 @@ export function ExamPreviewClient({
                             disabled={isLoading}
                             className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                         >
-                            <RefreshCw className={clsx("h-4 w-4", isLoading && "animate-spin")} />
+                            {isLoading ? (
+                                <Loader size="sm" className="h-4 w-4" />
+                            ) : (
+                                <RefreshCw className="h-4 w-4" />
+                            )}
                             Regenerate
                         </button>
                         <button
@@ -231,7 +235,7 @@ export function ExamPreviewClient({
                             className="flex items-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
                         >
                             {isGeneratingPdf ? (
-                                <LoaderSpinner size="sm" />
+                                <Loader size="sm" variant="white" />
                             ) : (
                                 <Download className="h-4 w-4" />
                             )}
@@ -267,7 +271,7 @@ export function ExamPreviewClient({
             {isLoading ? (
                 <div className="flex h-64 items-center justify-center">
                     <div className="text-center">
-                        <LoaderSpinner size="lg" />
+                        <LoadingComponent size="lg" message="Generating exam preview..." />
                         <p className="mt-3 text-neutral-500">Generating exam preview...</p>
                     </div>
                 </div>

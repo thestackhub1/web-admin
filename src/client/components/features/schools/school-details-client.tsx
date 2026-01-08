@@ -22,7 +22,6 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
-  Loader2,
   Users,
   MapPin,
   Calendar,
@@ -37,6 +36,7 @@ import {
   TrendingUp,
   ChevronRight,
 } from "lucide-react";
+import { Loader } from "@/client/components/ui/loader";
 
 interface School {
   id: string;
@@ -137,20 +137,20 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
 
   const createdDate = school.created_at
     ? new Date(school.created_at).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
     : null;
 
   const updatedDate = school.updated_at
     ? new Date(school.updated_at).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : null;
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -166,7 +166,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-linear-to-br from-primary-50 via-purple-50/50 to-blue-50 dark:from-primary-950/30 dark:via-purple-950/20 dark:to-blue-950/30" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
-        
+
         {/* Decorative Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary-200/30 dark:bg-primary-800/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-200/30 dark:bg-purple-800/10 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
@@ -174,15 +174,15 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
         <div className="relative px-6 py-8 lg:px-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="hover:text-neutral-900 dark:hover:text-white transition-colors"
             >
               Dashboard
             </Link>
             <ChevronRight className="h-4 w-4" />
-            <Link 
-              href="/dashboard/schools" 
+            <Link
+              href="/dashboard/schools"
               className="hover:text-neutral-900 dark:hover:text-white transition-colors"
             >
               Schools
@@ -194,7 +194,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
           </nav>
 
           {/* Back Button */}
-          <Link 
+          <Link
             href="/dashboard/schools"
             className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors mb-6"
           >
@@ -223,7 +223,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                   <h1 className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white">
                     {school.name}
                   </h1>
-                  <Badge 
+                  <Badge
                     variant={isVerified ? "success" : "warning"}
                     className="text-xs font-medium"
                   >
@@ -281,7 +281,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                   className="gap-2 shadow-lg shadow-primary-500/25"
                 >
                   {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" />
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
@@ -311,7 +311,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                 </p>
               </div>
             </div>
-            <Link 
+            <Link
               href={`/dashboard/users?schoolId=${school.id}`}
               className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 mt-3 hover:underline"
             >
@@ -325,7 +325,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
             <div className="flex items-center gap-4">
               <div className={cn(
                 "w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200",
-                isVerified 
+                isVerified
                   ? "bg-linear-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/50 dark:to-emerald-800/50"
                   : "bg-linear-to-br from-amber-100 to-amber-200 dark:from-amber-900/50 dark:to-amber-800/50"
               )}>
@@ -477,7 +477,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                   <Shield className="h-5 w-5 text-primary-500" />
                   Verification Status
                 </h3>
-                
+
                 <div className={cn(
                   "p-4 rounded-xl border-2 transition-all duration-200",
                   isVerified
@@ -502,8 +502,8 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                           "text-sm",
                           isVerified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
                         )}>
-                          {isVerified 
-                            ? "This school is trusted and verified" 
+                          {isVerified
+                            ? "This school is trusted and verified"
                             : "This school is pending verification"}
                         </p>
                       </div>
@@ -526,7 +526,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                   <Calendar className="h-5 w-5 text-primary-500" />
                   Metadata
                 </h3>
-                
+
                 <dl className="space-y-4">
                   <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800">
                     <dt className="text-sm text-neutral-500 dark:text-neutral-400">School ID</dt>
@@ -597,7 +597,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                       className="gap-2"
                     >
                       {isSaving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader size="sm" />
                       ) : (
                         <Save className="h-4 w-4" />
                       )}
@@ -627,7 +627,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                   <div>
                     <p className="font-medium text-neutral-900 dark:text-white">Delete this school</p>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                      Once deleted, this school and all associated data will be permanently removed. 
+                      Once deleted, this school and all associated data will be permanently removed.
                       Students linked to this school will have their school reference cleared.
                     </p>
                   </div>
@@ -662,7 +662,7 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
                         className="gap-2"
                       >
                         {deleteSchoolMutation.isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader size="sm" />
                         ) : (
                           <Trash2 className="h-4 w-4" />
                         )}

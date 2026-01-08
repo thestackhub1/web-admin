@@ -53,6 +53,7 @@ interface Question {
   answer_data?: any;
   explanation_en?: string | null;
   explanation_mr?: string | null;
+  explanation?: string | null; // Keep for compatibility if needed
 }
 
 interface QuestionsClientPageProps {
@@ -83,13 +84,13 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
   // Inline editing state
   const [editingCell, setEditingCell] = useState<{ questionId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-  
+
   // Use hooks for mutations
   const updateMutation = useUpdateQuestion(subject);
   const bulkActivateMutation = useBulkUpdateQuestionStatus(subject);
   const bulkDeactivateMutation = useBulkUpdateQuestionStatus(subject);
   const bulkDeleteMutation = useBulkDeleteQuestions(subject);
-  
+
   const isSaving = updateMutation.isLoading;
 
   // Filter state - initialize from URL
@@ -257,9 +258,9 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         id: editingCell.questionId,
         ...updateData,
       };
-      
+
       const result = await updateMutation.mutateAsync(mutationData);
-      
+
       if (result) {
         // Update local state
         setQuestions((prev) =>
@@ -361,7 +362,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         return true;
       });
 
-      const exportData = format === "json" 
+      const exportData = format === "json"
         ? JSON.stringify(filteredQuestions, null, 2)
         : convertToCSV(filteredQuestions);
 
@@ -369,11 +370,11 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         [exportData],
         { type: format === "json" ? "application/json" : "text/csv" }
       );
-      
+
       const filename = format === "json"
         ? `${subject}-questions-${filteredQuestions.length}.json`
         : `${subject}-questions-${filteredQuestions.length}.csv`;
-      
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -623,48 +624,48 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         </div>
 
         <div className="p-5">
-        {filteredQuestions.length === 0 ? (
-          <EmptyState
-            icon={FileQuestion}
-            title="No questions found"
-            description={questions.length === 0 ? "Add your first question" : "Adjust your filters"}
-            action={
-              questions.length === 0 ? (
-                <Link href={`/dashboard/questions/${subject}/new`}>
-                  <Button variant="primary">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Question
-                  </Button>
-                </Link>
-              ) : undefined
-            }
-          />
-        ) : viewMode === "list" ? (
-          <QuestionListView
-            questions={paginatedQuestions}
-            selectedIds={selectedIds}
-            subject={subject}
-            onToggleSelect={toggleSelect}
-          />
-        ) : (
-          <QuestionTableView
-            questions={paginatedQuestions}
-            selectedIds={selectedIds}
-            subject={subject}
-            editingCell={editingCell}
-            editValue={editValue}
-            isSaving={isSaving}
-            onToggleSelect={toggleSelect}
-            onSelectAll={selectAll}
-            onClearSelection={clearSelection}
-            onStartEditing={startEditing}
-            onSaveEdit={saveEdit}
-            onCancelEditing={cancelEditing}
-            onEditValueChange={setEditValue}
-            getMcqOptions={getMcqOptions}
-            allSelected={selectedIds.size === filteredQuestions.length}
-          />
-        )}
+          {filteredQuestions.length === 0 ? (
+            <EmptyState
+              icon={FileQuestion}
+              title="No questions found"
+              description={questions.length === 0 ? "Add your first question" : "Adjust your filters"}
+              action={
+                questions.length === 0 ? (
+                  <Link href={`/dashboard/questions/${subject}/new`}>
+                    <Button variant="primary">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Question
+                    </Button>
+                  </Link>
+                ) : undefined
+              }
+            />
+          ) : viewMode === "list" ? (
+            <QuestionListView
+              questions={paginatedQuestions}
+              selectedIds={selectedIds}
+              subject={subject}
+              onToggleSelect={toggleSelect}
+            />
+          ) : (
+            <QuestionTableView
+              questions={paginatedQuestions}
+              selectedIds={selectedIds}
+              subject={subject}
+              editingCell={editingCell}
+              editValue={editValue}
+              isSaving={isSaving}
+              onToggleSelect={toggleSelect}
+              onSelectAll={selectAll}
+              onClearSelection={clearSelection}
+              onStartEditing={startEditing}
+              onSaveEdit={saveEdit}
+              onCancelEditing={cancelEditing}
+              onEditValueChange={setEditValue}
+              getMcqOptions={getMcqOptions}
+              allSelected={selectedIds.size === filteredQuestions.length}
+            />
+          )}
         </div>
 
         {/* Pagination */}

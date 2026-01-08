@@ -1,13 +1,13 @@
 import { getCurrentUser, getUserById } from "@/client/services";
 import { PageHeader, GlassCard, EmptyState } from '@/client/components/ui/premium';
-import { 
-  Mail, 
-  Phone, 
-  School, 
-  GraduationCap, 
-  Calendar, 
-  Clock, 
-  Shield, 
+import {
+  Mail,
+  Phone,
+  School,
+  GraduationCap,
+  Calendar,
+  Clock,
+  Shield,
   BookOpen,
   CheckCircle2,
   XCircle,
@@ -22,17 +22,17 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { clsx } from "clsx";
+import React from "react";
+import { UserDetailsActions } from "@/client/components/features/users/user-details-actions";
+import { UserAcademicInfo } from "@/client/components/features/users/user-academic-info";
+import { UserProfileCard } from "@/client/components/features/users/user-profile-card";
+import { UserContactInfo } from "@/client/components/features/users/user-contact-info";
 
 export const metadata: Metadata = {
   title: "User Details - The Stack Hub Admin",
 };
 
-const roleConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
-  admin: { icon: Shield, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/30" },
-  teacher: { icon: BookOpen, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
-  student: { icon: GraduationCap, color: "text-brand-blue-600 dark:text-brand-blue-400", bgColor: "bg-brand-blue-100 dark:bg-brand-blue-900/30" },
-};
-
+// ... existing config ...
 const statusConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
   completed: { icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bgColor: "bg-green-50 dark:bg-green-900/30", label: "Completed" },
   in_progress: { icon: Clock, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-50 dark:bg-amber-900/30", label: "In Progress" },
@@ -53,34 +53,13 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const roleInfo = roleConfig[user.role] || roleConfig.student;
-  const RoleIcon = roleInfo.icon;
-
-  const getInitials = (name: string | null | undefined, email: string | null) => {
-    if (name) return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-    if (email) return email.charAt(0).toUpperCase();
-    return "U";
-  };
-
-  const getGradient = (name: string | null | undefined) => {
-    const gradients = [
-      "from-blue-400 to-indigo-500",
-      "from-purple-400 to-pink-500",
-      "from-green-400 to-teal-500",
-      "from-brand-blue-400 to-red-500",
-      "from-cyan-400 to-blue-500",
-    ];
-    const index = (name?.charCodeAt(0) || 0) % gradients.length;
-    return gradients[index];
-  };
-
   const stats = user.exam_stats;
   const exams = user.recent_exams;
 
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <Link 
+      <Link
         href="/dashboard/users"
         className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
       >
@@ -96,140 +75,20 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
           { label: "Users", href: "/dashboard/users" },
           { label: user.name || user.email || "User" },
         ]}
+        action={<UserDetailsActions user={user} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Profile Card */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Profile Card */}
-          <GlassCard className="text-center">
-            {/* Avatar */}
-            <div className="flex justify-center mb-4">
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.name || ""}
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-white dark:ring-neutral-800 shadow-lg"
-                />
-              ) : (
-                <div className={clsx(
-                  "flex h-24 w-24 items-center justify-center rounded-full text-2xl font-bold text-white",
-                  "bg-linear-to-br shadow-lg ring-4 ring-white dark:ring-neutral-800",
-                  getGradient(user.name)
-                )}>
-                  {getInitials(user.name, user.email)}
-                </div>
-              )}
-            </div>
+          {/* Profile Card (Interactive) */}
+          <UserProfileCard user={user} />
 
-            {/* Name & Email */}
-            <h2 className="text-xl font-bold text-neutral-900 dark:text-white">
-              {user.name || "No name set"}
-            </h2>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-              {user.email}
-            </p>
-
-            {/* Role Badge */}
-            <div className="mt-4 flex justify-center">
-              <div className={clsx(
-                "inline-flex items-center gap-2 rounded-full px-4 py-2",
-                roleInfo.bgColor
-              )}>
-                <RoleIcon className={clsx("h-4 w-4", roleInfo.color)} />
-                <span className={clsx("font-medium capitalize", roleInfo.color)}>{user.role}</span>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="mt-4 flex justify-center">
-              {user.is_active ? (
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span className="text-sm font-medium">Active Account</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                  <XCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Inactive Account</span>
-                </div>
-              )}
-            </div>
-          </GlassCard>
-
-          {/* Contact Info */}
-          <GlassCard>
-            <h3 className="font-semibold text-neutral-900 dark:text-white mb-4">Contact Information</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                  <Mail className="h-5 w-5 text-neutral-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Email</p>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
-                    {user.email || "Not provided"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                  <Phone className="h-5 w-5 text-neutral-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Phone</p>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                    {user.phone || "Not provided"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                  <Globe className="h-5 w-5 text-neutral-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Language</p>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white uppercase">
-                    {user.preferred_language || "EN"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
+          {/* Contact Info (Interactive) */}
+          <UserContactInfo user={user} />
 
           {/* Academic Info (for students) */}
-          {user.role === "student" && (
-            <GlassCard>
-              <h3 className="font-semibold text-neutral-900 dark:text-white mb-4">Academic Information</h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                    <School className="h-5 w-5 text-neutral-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">School</p>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                      {user.school_id || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                    <GraduationCap className="h-5 w-5 text-neutral-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Class Level</p>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                      {user.class_level_id || "Not set"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </GlassCard>
-          )}
+          {user.role === "student" && <UserAcademicInfo user={user} />}
 
           {/* Account Dates */}
           <GlassCard>
@@ -319,7 +178,7 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
           <GlassCard>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-neutral-900 dark:text-white">Recent Exam Attempts</h3>
-              <Link 
+              <Link
                 href={`/dashboard/exams?user=${user.id}`}
                 className="text-sm text-brand-blue-600 hover:text-brand-blue-700 dark:text-brand-blue-400 dark:hover:text-brand-blue-300"
               >
@@ -335,7 +194,7 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
               />
             ) : (
               <div className="space-y-3">
-                {exams.map((exam) => {
+                {exams.map((exam: any) => {
                   const status = statusConfig[exam.status] || statusConfig.in_progress;
                   const StatusIcon = status.icon;
                   const scorePercentage = exam.total_marks && exam.total_marks > 0 && exam.score !== null

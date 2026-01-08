@@ -546,7 +546,7 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
         questionLanguage={questionLanguage}
         questionType={questionType}
         answerData={answerData}
-        explanationContent={explanationContentEn}
+        explanationContent={explanationContent}
       />
     </div>
   );

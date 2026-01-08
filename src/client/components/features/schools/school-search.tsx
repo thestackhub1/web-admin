@@ -4,11 +4,12 @@
 
 import { useState, useEffect } from "react";
 import { useSchoolSuggest, useSchoolSearch, useCreateSchool, type School } from '@/client/hooks';
-import { Search, Building2, MapPin, Plus, Loader2 } from "lucide-react";
+import { Search, Building2, MapPin, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import { GlassCard, Badge } from '@/client/components/ui/premium';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
+import { Loader } from '@/client/components/ui/loader';
 import { toast } from "sonner";
 
 interface SchoolSearchProps {
@@ -161,7 +162,7 @@ export function SchoolSearch({
           />
           {isSearching && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+              <Loader size="sm" variant="neutral" />
             </div>
           )}
         </div>
@@ -312,7 +313,7 @@ export function SchoolSearch({
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader size="sm" variant="white" className="mr-2" />
                     Adding...
                   </>
                 ) : (

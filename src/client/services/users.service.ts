@@ -87,14 +87,25 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 }
 
 /**
- * Fetch users list with optional school filter
+ * Fetch users list with filters
  */
-export async function getUsers(schoolId?: string): Promise<UserProfile[]> {
+export async function getUsers(filters: {
+  schoolId?: string;
+  role?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<UserProfile[]> {
   if (!(await isAuthenticated())) return [];
 
-  const url = schoolId
-    ? `/api/v1/users?pageSize=100&schoolId=${schoolId}`
-    : "/api/v1/users?pageSize=100";
+  const params = new URLSearchParams();
+  if (filters.schoolId) params.append("schoolId", filters.schoolId);
+  if (filters.role && filters.role !== "all") params.append("role", filters.role);
+  if (filters.search) params.append("search", filters.search);
+  params.append("page", (filters.page || 1).toString());
+  params.append("pageSize", (filters.pageSize || 100).toString());
+
+  const url = `/api/v1/users?${params.toString()}`;
 
   const { data, error } = await authServerApi.get<UsersApiResponse>(url);
 
@@ -130,17 +141,19 @@ export async function getUserById(id: string): Promise<UserDetailProfile | null>
 /**
  * Get user statistics (counts by role)
  */
-export async function getUserStats(schoolId?: string): Promise<UserStats> {
+export async function getUserStats(filters: { schoolId?: string; search?: string } = {}): Promise<UserStats> {
   if (!(await isAuthenticated())) {
     return { admins: 0, teachers: 0, students: 0 };
   }
 
-  const schoolFilter = schoolId ? `&schoolId=${schoolId}` : "";
+  const baseParams = new URLSearchParams();
+  if (filters.schoolId) baseParams.append("schoolId", filters.schoolId);
+  if (filters.search) baseParams.append("search", filters.search);
 
   const [adminResult, teacherResult, studentResult] = await Promise.all([
-    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=admin&pageSize=1${schoolFilter}`),
-    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=teacher&pageSize=1${schoolFilter}`),
-    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=student&pageSize=1${schoolFilter}`),
+    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=admin&pageSize=1&${baseParams.toString()}`),
+    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=teacher&pageSize=1&${baseParams.toString()}`),
+    authServerApi.get<UsersApiResponse>(`/api/v1/users?role=student&pageSize=1&${baseParams.toString()}`),
   ]);
 
   return {

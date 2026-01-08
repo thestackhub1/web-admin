@@ -125,7 +125,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const verified = searchParams.get('verified'); // Filter by verified status
+    const verified = searchParams.get('verified');
+    const search = searchParams.get('search');
+    const city = searchParams.get('city');
+    const state = searchParams.get('state');
+    const userAdded = searchParams.get('userAdded');
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
 
     const rlsContext = {
       userId: authResult.user.id,
@@ -133,17 +139,30 @@ export async function GET(request: NextRequest) {
       email: authResult.user.email,
     };
 
-    // Use service to fetch schools
-    const options: { isVerified?: boolean } = {};
+    // Prepare options for service
+    const options: any = {
+      page,
+      pageSize,
+      search: search || undefined,
+      locationCity: city || undefined,
+      locationState: state || undefined,
+    };
+
     if (verified === 'true') {
       options.isVerified = true;
     } else if (verified === 'false') {
       options.isVerified = false;
     }
 
-    const schools = await SchoolsService.getAll(options, rlsContext);
+    if (userAdded === 'true') {
+      options.isUserAdded = true;
+    } else if (userAdded === 'false') {
+      options.isUserAdded = false;
+    }
 
-    return successResponse(schools);
+    const result = await SchoolsService.getAll(options, rlsContext);
+
+    return successResponse(result);
   } catch (error) {
     console.error('[API] Schools list error:', error);
     return ApiErrors.serverError('Failed to fetch schools');

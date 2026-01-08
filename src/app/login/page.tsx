@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { Button, Input, Card, PasscodeInput, LoadingSpinner } from "@/client/components/ui";
+import { Button, Input, Card, PasscodeInput, LoadingComponent } from "@/client/components/ui";
 import { AuthLayout } from "@/client/components/layout/auth-layout";
 import { useSignin } from "@/client/hooks";
 import { Phone, ArrowRight, Sparkles, Lock, Mail, User } from "lucide-react";
@@ -22,7 +22,7 @@ export default function LoginPage() {
 function LoginPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-      <LoadingSpinner size="xl" text="Loading..." />
+      <LoadingComponent size="xl" message="Loading..." />
     </div>
   );
 }

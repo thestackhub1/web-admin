@@ -12,11 +12,16 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ schoolId?: string }>;
+  searchParams: Promise<{
+    schoolId?: string;
+    role?: string;
+    search?: string;
+  }>;
 }
 
 export default async function UsersPage({ searchParams }: PageProps) {
-  const { schoolId } = await searchParams;
+  const params = await searchParams;
+  const { schoolId, role, search } = params;
 
   if (!(await isAuthenticated())) {
     redirect("/login");
@@ -30,15 +35,15 @@ export default async function UsersPage({ searchParams }: PageProps) {
 
   // Fetch data in parallel
   const [users, stats, school] = await Promise.all([
-    getUsers(schoolId),
-    getUserStats(schoolId),
+    getUsers({ schoolId, role, search }),
+    getUserStats({ schoolId, search }),
     schoolId ? getSchoolById(schoolId) : Promise.resolve(null),
   ]);
   const totalUsers = stats.admins + stats.teachers + stats.students;
 
   // Build page title and description based on filter
   const pageTitle = school ? `Students at ${school.name}` : "Users";
-  const pageDescription = school 
+  const pageDescription = school
     ? `View and manage students from ${school.name}`
     : "Manage user accounts and permissions";
 

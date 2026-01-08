@@ -1,5 +1,5 @@
 "use client";
-
+import { toast } from "sonner";
 import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
 import { Badge, FadeIn } from "@/client/components/ui";
@@ -8,7 +8,7 @@ import { formatTimeAgo } from "./utils";
 
 interface ExamActivity {
   id: string;
-  status: "completed" | "in_progress";
+  status: "completed" | "in_progress" | "abandoned";
   percentage?: number | null;
   started_at?: string | null;
   profiles?: {
@@ -65,7 +65,7 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
               const displayName = exam.profiles?.name || exam.profiles?.email?.split('@')[0] || 'Anonymous Student';
               const subjectName = exam.subjects?.name_en || exam.exam_structure?.name_en || 'General Exam';
               const timeAgo = exam.started_at ? formatTimeAgo(new Date(exam.started_at)) : '';
-              
+
               return (
                 <div
                   key={exam.id}
@@ -76,9 +76,11 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                       <div className="flex items-center gap-3 mb-2">
                         <div className={cn(
                           "h-2.5 w-2.5 rounded-full ring-4 ring-opacity-20",
-                          exam.status === 'completed' 
-                            ? 'bg-success-500 ring-success-500' 
-                            : 'bg-warning-500 ring-warning-500'
+                          exam.status === 'completed'
+                            ? 'bg-success-500 ring-success-500'
+                            : exam.status === 'abandoned'
+                              ? 'bg-neutral-500 ring-neutral-500'
+                              : 'bg-warning-500 ring-warning-500'
                         )} />
                         <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
                           {displayName}
@@ -123,10 +125,10 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                       )}
                     </div>
                     <Badge
-                      variant={exam.status === "completed" ? "success" : "warning"}
+                      variant={exam.status === "completed" ? "success" : exam.status === "abandoned" ? "default" : "warning"}
                       size="sm"
                     >
-                      {exam.status === "completed" ? "Completed" : "In Progress"}
+                      {exam.status === "completed" ? "Completed" : exam.status === "abandoned" ? "Abandoned" : "In Progress"}
                     </Badge>
                   </div>
                 </div>
