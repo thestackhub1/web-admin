@@ -1,0 +1,273 @@
+// Client-side only — no server secrets or database access here
+
+"use client";
+
+/**
+ * Users Client - Premium User Management
+ * 
+ * Premium SaaS table design with consistent styling.
+ */
+
+import { useState } from "react";
+import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Edit, Trash2, PlusCircle } from "lucide-react";
+import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell } from '@/client/components/ui/premium';
+import { SmartFilterChips } from '@/client/components/ui/question-components';
+import { TextInput } from '@/client/components/ui/input';
+import { Button } from '@/client/components/ui/button';
+import Link from "next/link";
+import { cn } from "@/client/utils";
+import { AddUserModal, EditUserModal } from "./user-modals";
+import { useDeleteUser } from "@/client/hooks/use-users";
+
+interface User {
+  id: string;
+  email: string;
+  name?: string | null;
+  avatar_url: string | null;
+  role: string;
+  is_active: boolean;
+  school_id?: string | null;
+  class_level?: string | null;
+  preferred_language?: string | null;
+  created_at: string;
+}
+
+const roleVariants: Record<string, "purple" | "info" | "default"> = {
+  admin: "purple",
+  teacher: "info",
+  student: "default",
+  super_admin: "purple",
+};
+
+const roleIcons: Record<string, React.ReactNode> = {
+  admin: <Crown className="h-3 w-3 mr-1 inline" />,
+  teacher: <BookOpen className="h-3 w-3 mr-1 inline" />,
+  student: <GraduationCap className="h-3 w-3 mr-1 inline" />,
+  super_admin: <Crown className="h-3 w-3 mr-1 inline" />,
+};
+
+const roleLabels: Record<string, string> = {
+  admin: "Admin",
+  teacher: "Teacher",
+  student: "Student",
+  super_admin: "Super Admin",
+};
+
+export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
+  const [users] = useState(initialUsers);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const { mutate: deleteUser, loading: deleting } = useDeleteUser();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Helper to get user's display name
+  const getUserName = (user: User) => user.name || "";
+
+  const filteredUsers = users.filter((user) => {
+    const userName = getUserName(user);
+    const matchesSearch =
+      user.email.toLowerCase().includes(search.toLowerCase()) ||
+      userName.toLowerCase().includes(search.toLowerCase());
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
+
+  const handleDelete = async (userId: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this user? This action cannot be undone.');
+    if (confirmed) {
+      setDeletingId(userId);
+      const result = await deleteUser({ userId, hardDelete: false }); // Soft delete by default
+      setDeletingId(null);
+      if (result) {
+        window.location.reload();
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Action Bar */}
+      <div className="flex justify-end">
+        <Button
+          className="gap-2 bg-brand-blue-600 hover:bg-brand-blue-700 text-white"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <PlusCircle className="h-4 w-4" />
+          Add User
+        </Button>
+      </div>
+
+      <DataTableContainer>
+        {/* Filters */}
+        <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <TextInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name or email..."
+                className="pl-11"
+              />
+            </div>
+            <SmartFilterChips
+              chips={[
+                { id: "all", label: "All", isActive: roleFilter === "all", count: users.length },
+                { id: "admin", label: "Admins", isActive: roleFilter === "admin", count: users.filter(u => u.role === "admin" || u.role === "super_admin").length },
+                { id: "teacher", label: "Teachers", isActive: roleFilter === "teacher", count: users.filter(u => u.role === "teacher").length },
+                { id: "student", label: "Students", isActive: roleFilter === "student", count: users.filter(u => u.role === "student").length },
+              ]}
+              onSelect={(id) => setRoleFilter(id)}
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        {filteredUsers.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon={UserCircle}
+              title="No users found"
+              description="Try adjusting your search or filters"
+            />
+          </div>
+        ) : (
+          <DataTable>
+            <DataTableHead>
+              <tr>
+                <DataTableHeadCell>User</DataTableHeadCell>
+                <DataTableHeadCell>Role</DataTableHeadCell>
+                <DataTableHeadCell>Status</DataTableHeadCell>
+                <DataTableHeadCell>Language</DataTableHeadCell>
+                <DataTableHeadCell>Joined</DataTableHeadCell>
+                <DataTableHeadCell>Actions</DataTableHeadCell>
+              </tr>
+            </DataTableHead>
+            <DataTableBody>
+              {filteredUsers.map((user) => (
+                <DataTableRow key={user.id}>
+                  <DataTableCell>
+                    <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 group/user">
+                      {user.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt={user.name || ""}
+                          className="h-10 w-10 rounded-xl object-cover ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-insight-600 text-sm font-semibold text-white ring-2 ring-transparent group-hover/user:ring-primary-400 transition-all">
+                          {(user.name || user.email).charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-neutral-900 dark:text-white group-hover/user:text-primary-600 dark:group-hover/user:text-primary-400 transition-colors">
+                          {user.name || "No name"}
+                        </p>
+                        <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                          <Mail className="h-3 w-3" />
+                          {user.email}
+                        </p>
+                      </div>
+                    </Link>
+                  </DataTableCell>
+                  <DataTableCell>
+                    <Badge variant={roleVariants[user.role] || "default"}>
+                      {roleIcons[user.role]} {roleLabels[user.role] || user.role}
+                    </Badge>
+                  </DataTableCell>
+                  <DataTableCell>
+                    <div className="flex items-center gap-2">
+                      {user.is_active ? (
+                        <>
+                          <ToggleRight className="h-5 w-5 text-success-500" />
+                          <span className="text-sm font-medium text-success-600 dark:text-success-400">Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft className="h-5 w-5 text-neutral-400" />
+                          <span className="text-sm text-neutral-500">Inactive</span>
+                        </>
+                      )}
+                    </div>
+                  </DataTableCell>
+                  <DataTableCell>
+                    <span className="text-sm text-neutral-600 uppercase dark:text-neutral-400 font-medium">
+                      {user.preferred_language || "en"}
+                    </span>
+                  </DataTableCell>
+                  <DataTableCell>
+                    <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {new Date(user.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </div>
+                  </DataTableCell>
+                  <DataTableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingUser(user)}
+                        className="h-8 w-8 p-0 text-neutral-500 hover:text-brand-blue-600"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(user.id)}
+                        disabled={deletingId === user.id}
+                        className="h-8 w-8 p-0 text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Link href={`/dashboard/users/${user.id}`}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-neutral-500">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </DataTableCell>
+                </DataTableRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
+        )}
+
+        <div className="px-6 py-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Showing <span className="font-medium text-neutral-700 dark:text-neutral-300">{filteredUsers.length}</span> of <span className="font-medium text-neutral-700 dark:text-neutral-300">{users.length}</span> users
+          </p>
+        </div>
+      </DataTableContainer>
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <AddUserModal
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={() => {
+            setIsAddModalOpen(false);
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSuccess={() => {
+            setEditingUser(null);
+            window.location.reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}

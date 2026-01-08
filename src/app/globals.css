@@ -1,0 +1,774 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/*
+ * The Stack Hub Admin Portal - Premium Design System
+ * Matches marketing website & student portal design language
+ * 
+ * The Stack Hub Unified Color Palette
+ * ===================================
+ * - Primary Blue #3B82F6 (Franchising/Main Brand)
+ * - Emerald #10B981 (Growth/Education)  
+ * - Amber #F59E0B (Construction/Highlights)
+ * - Purple #8B5CF6 (Manufacturing/Insights)
+ */
+
+/* ==========================================
+   CSS Variables - The Stack Hub Color Palette
+   ========================================== */
+:root {
+  color-scheme: light;
+
+  /* Primary Blue - Main Brand (Franchising) */
+  --color-primary: #3B82F6;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3B82F6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Success Emerald - Growth (Education) */
+  --color-success: #10B981;
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10B981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+
+  /* Warning Amber - Base (Construction) */
+  --color-warning: #F59E0B;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #F59E0B;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+
+  /* Insight Purple - Future (Manufacturing) */
+  --color-insight: #8B5CF6;
+  --color-insight-50: #f5f3ff;
+  --color-insight-100: #ede9fe;
+  --color-insight-200: #ddd6fe;
+  --color-insight-300: #c4b5fd;
+  --color-insight-400: #a78bfa;
+  --color-insight-500: #8B5CF6;
+  --color-insight-600: #7c3aed;
+  --color-insight-700: #6d28d9;
+  --color-insight-800: #5b21b6;
+  --color-insight-900: #4c1d95;
+
+  /* Neutrals */
+  --color-neutral: #4B5563;
+  --color-neutral-50: #F8FAFC;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4B5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1F2937;
+  --color-neutral-900: #111827;
+  --color-neutral-950: #030712;
+
+  /* Danger/Error */
+  --color-danger: #ef4444;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-neutral-50);
+}
+
+.dark body {
+  background: var(--color-neutral-900);
+}
+
+/* Marathi Font Support */
+@layer base {
+  :root {
+    --font-devanagari: var(--font-devanagari);
+    --font-mukta: var(--font-mukta);
+  }
+
+  /* Apply Marathi fonts to elements with Devanagari text */
+  [lang="mr"],
+  .marathi-text {
+    font-family: var(--font-devanagari), var(--font-mukta), 'Arial Unicode MS', sans-serif;
+  }
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-900);
+}
+
+.dark ::selection {
+  background-color: var(--color-primary-800);
+  color: var(--color-primary-100);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-300);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-700);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-600);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(24, 119, 242, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(24, 119, 242, 0.5);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg,
+      var(--color-neutral-100) 0%,
+      var(--color-neutral-200) 50%,
+      var(--color-neutral-100) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Glass effect - matching student portal */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .glass {
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text - The Stack Hub Logo Colors */
+.text-gradient {
+  background: linear-gradient(to right, var(--color-primary-500), var(--color-primary-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-brand {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-insight-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-logo {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-success-500) 25%, var(--color-warning-500) 50%, var(--color-insight-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gradient backgrounds - The Stack Hub Logo Colors */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+}
+
+.bg-gradient-teal {
+  background: linear-gradient(135deg, var(--color-success-500) 0%, var(--color-success-600) 100%);
+}
+
+.bg-gradient-orange {
+  background: linear-gradient(135deg, var(--color-warning-500) 0%, var(--color-warning-600) 100%);
+}
+
+.bg-gradient-purple {
+  background: linear-gradient(135deg, var(--color-insight-500) 0%, var(--color-insight-600) 100%);
+}
+
+/* Admin-specific: Professional blue-purple gradient for dashboards */
+.bg-gradient-admin {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-insight-600) 100%);
+}
+
+.bg-gradient-hero {
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--color-primary-50) 50%, var(--color-insight-50) 100%);
+}
+
+.bg-gradient-hero-logo {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-success-50) 25%, var(--color-warning-50) 50%, var(--color-insight-50) 100%);
+}
+
+.dark .bg-gradient-hero {
+  background: linear-gradient(135deg, var(--color-neutral-900) 0%, var(--color-primary-900) 50%, var(--color-insight-900) 100%);
+}
+
+.dark .bg-gradient-hero-logo {
+  background: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-success-900) 25%, var(--color-warning-900) 50%, var(--color-insight-900) 100%);
+}
+
+/* Glow shadows - The Stack Hub Logo Colors */
+.shadow-glow-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-glow-card-hover {
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1);
+}
+
+.shadow-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(16, 185, 129, 0.1);
+}
+
+.shadow-glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 0 40px rgba(245, 158, 11, 0.1);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.1);
+}
+
+.shadow-glow-logo {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), 0 0 60px rgba(16, 185, 129, 0.2), 0 0 90px rgba(245, 158, 11, 0.15), 0 0 120px rgba(139, 92, 246, 0.1);
+}
+
+/* Button shadows - The Stack Hub Logo Colors */
+.shadow-primary {
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+.shadow-primary-hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+.shadow-primary-lg {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+/* Math Formula Styling - Preserved */
+.math-formula {
+  display: inline-block;
+  margin: 0 0.25em;
+  vertical-align: middle;
+}
+
+.math-formula.block-math {
+  display: block;
+  margin: 1em auto;
+  text-align: center;
+}
+
+.math-formula.inline-math {
+  display: inline;
+  margin: 0 0.2em;
+}
+
+/* KaTeX overrides */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1em 0;
+}
+
+.dark .math-formula {
+  filter: brightness(1.1);
+}
+
+/* Math node in editor */
+.math-node {
+  display: inline-block;
+  margin: 0 0.25em;
+  padding: 0.125em 0.25em;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.25rem;
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+.dark .math-node {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Print styles */
+@media print {
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .no-print,
+  header,
+  nav,
+  aside,
+  footer {
+    display: none !important;
+  }
+
+  .section,
+  .question {
+    page-break-inside: avoid;
+  }
+
+  .print-bg {
+    background-color: inherit !important;
+    print-color-adjust: exact;
+  }
+}
+
+/* ==========================================
+   Premium SaaS Design System Utilities
+   Linear/Raycast/Vercel inspired
+   (Aligned with student-portal)
+   ========================================== */
+
+/* Enhanced Glass with multiple variants */
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-subtle {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dark .glass-strong {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Floating glass header specific */
+.glass-header {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 4px 24px -4px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.dark .glass-header {
+  background: rgba(17, 24, 39, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 24px -4px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Premium card glow states */
+.card-premium {
+  position: relative;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 30px rgba(59, 130, 246, 0.1),
+    0 0 0 1px rgba(59, 130, 246, 0.08);
+}
+
+.dark .card-premium {
+  background: rgba(17, 24, 39, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark .card-premium:hover {
+  box-shadow: 
+    0 8px 30px rgba(59, 130, 246, 0.15),
+    0 0 0 1px rgba(59, 130, 246, 0.15);
+}
+
+/* Bento grid card styles */
+.bento-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.bento-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.dark .bento-card {
+  background: rgba(17, 24, 39, 0.5);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .bento-card::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+}
+
+.dark .bento-card:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+/* Hero section - clean, spacious */
+.hero-premium {
+  position: relative;
+  padding: 3rem 2.5rem;
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+.hero-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.03) 0%, 
+    rgba(139, 92, 246, 0.02) 50%,
+    rgba(16, 185, 129, 0.02) 100%
+  );
+  pointer-events: none;
+}
+
+.dark .hero-premium::before {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.08) 0%, 
+    rgba(139, 92, 246, 0.06) 50%,
+    rgba(16, 185, 129, 0.04) 100%
+  );
+}
+
+/* Semantic icon containers */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.icon-container-primary {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary-600);
+}
+
+.icon-container-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success-600);
+}
+
+.icon-container-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning-600);
+}
+
+.icon-container-insight {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--color-insight-600);
+}
+
+.dark .icon-container-primary {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--color-primary-400);
+}
+
+.dark .icon-container-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success-400);
+}
+
+.dark .icon-container-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-warning-400);
+}
+
+.dark .icon-container-insight {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--color-insight-400);
+}
+
+/* Sidebar vertical pill indicator */
+.nav-pill-indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: var(--color-primary-500);
+  border-radius: 0 4px 4px 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.nav-item-active .nav-pill-indicator {
+  opacity: 1;
+}
+
+/* Logo Stack Animation */
+@keyframes logoStack {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+  }
+
+  50% {
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stackLayer {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-logo-stack {
+  animation: logoStack 1s ease-out forwards;
+}
+
+.animate-stack-layer {
+  animation: stackLayer 0.6s ease-out forwards;
+}
+
+/* Button with primary shadow */
+.btn-primary-glow {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-glow:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+  transform: translateY(-1px);
+}
+
+/* Glass button variant */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Large glow shadows */
+.shadow-glow-blue-lg {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.4), 0 0 60px rgba(59, 130, 246, 0.15);
+}
+
+/* Primary hover variant */
+.bg-gradient-primary-hover {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+}
+
+/* Emerald gradient (alias for student-portal compatibility) */
+.bg-gradient-emerald {
+  background: linear-gradient(135deg, var(--color-success-500) 0%, var(--color-success-600) 100%);
+}
+
+/* Amber gradient (alias for student-portal compatibility) */
+.bg-gradient-amber {
+  background: linear-gradient(135deg, var(--color-warning-500) 0%, var(--color-warning-600) 100%);
+}
+
+/* AI Insights gradient (admin-specific) */
+.bg-gradient-ai {
+  background: linear-gradient(135deg, var(--color-insight-600) 0%, var(--color-insight-700) 50%, var(--color-insight-800) 100%);
+}
+
+/* Logo-inspired multi-color gradients */
+.bg-gradient-logo {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-success-500) 25%, var(--color-warning-500) 50%, var(--color-insight-500) 100%);
+}
+
+.bg-gradient-logo-vertical {
+  background: linear-gradient(to bottom, var(--color-primary-500) 0%, var(--color-success-500) 33%, var(--color-warning-500) 66%, var(--color-insight-500) 100%);
+}
