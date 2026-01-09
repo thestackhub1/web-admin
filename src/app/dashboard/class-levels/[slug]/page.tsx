@@ -1,6 +1,7 @@
-import { authServerApi, isAuthenticated } from "@/lib/api";
+import { isAuthenticated } from "@/lib/api";
 import type { Metadata } from "next";
 import { ClassLevelDetailClient } from '@/client/components/features/class-levels/class-level-detail-client';
+import { ClassLevelsService } from "@/lib/services/class-levels.service";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -8,19 +9,17 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  
+
   if (!(await isAuthenticated())) {
     return {
       title: "Class Level - The Stack Hub Admin",
     };
   }
 
-  const { data: classLevel } = await authServerApi.get<{ name_en: string }>(
-    `/api/v1/class-levels/${slug}`
-  );
+  const classLevel = await ClassLevelsService.getBySlug(slug);
 
   return {
-    title: classLevel ? `${classLevel.name_en} - The Stack Hub Admin` : "Class Not Found",
+    title: classLevel ? `${classLevel.nameEn} - The Stack Hub Admin` : "Class Not Found",
   };
 }
 

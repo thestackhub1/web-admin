@@ -64,6 +64,7 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
   const initialRole = searchParams.get("role") || "all";
   const initialSearch = searchParams.get("search") || "";
   const schoolId = searchParams.get("schoolId") || undefined;
+  const classLevelId = searchParams.get("classLevelId") || undefined;
 
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
@@ -81,6 +82,7 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
     role: roleFilter,
     search: debouncedSearch,
     schoolId,
+    classLevel: classLevelId,
     pageSize: 100
   });
 

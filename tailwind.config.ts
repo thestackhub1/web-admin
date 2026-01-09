@@ -38,6 +38,19 @@ const config: Config = {
                     800: 'var(--color-primary-800)',
                     900: 'var(--color-primary-900)',
                 },
+                blue: {
+                    DEFAULT: 'var(--color-primary)',
+                    50: 'var(--color-primary-50)',
+                    100: 'var(--color-primary-100)',
+                    200: 'var(--color-primary-200)',
+                    300: 'var(--color-primary-300)',
+                    400: 'var(--color-primary-400)',
+                    500: 'var(--color-primary-500)',
+                    600: 'var(--color-primary-600)',
+                    700: 'var(--color-primary-700)',
+                    800: 'var(--color-primary-800)',
+                    900: 'var(--color-primary-900)',
+                },
                 // ==========================================
                 // Growth (Education) - Emerald/Success
                 // ==========================================
@@ -146,6 +159,18 @@ const config: Config = {
                 // Semantic Color Aliases
                 // ==========================================
                 danger: {
+                    DEFAULT: 'var(--color-danger)',
+                    50: 'var(--color-danger-50)',
+                    500: 'var(--color-danger-500)',
+                    600: 'var(--color-danger-600)',
+                },
+                rose: {
+                    DEFAULT: 'var(--color-danger)',
+                    50: 'var(--color-danger-50)',
+                    500: 'var(--color-danger-500)',
+                    600: 'var(--color-danger-600)',
+                },
+                red: {
                     DEFAULT: 'var(--color-danger)',
                     50: 'var(--color-danger-50)',
                     500: 'var(--color-danger-500)',

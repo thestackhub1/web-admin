@@ -8,6 +8,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 import {
   Calendar,
@@ -54,6 +55,7 @@ interface ScheduledExamsClientProps {
 // Main Component
 // ============================================
 export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClassLevels, subjects: propsSubjects }: ScheduledExamsClientProps = {}) {
+  const searchParams = useSearchParams();
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -89,7 +91,16 @@ export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClas
   const subjects = useMemo(() => propsSubjects || (hookSubjects?.map((s) => ({ id: s.id, name_en: s.name_en })) || []), [propsSubjects, hookSubjects]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const { filters, setFilters, clearFilters, removeFilter } = useFilters();
+
+  // Initialize filters from URL
+  const initialFilters = useMemo(() => ({
+    classLevelId: searchParams.get("classLevelId") || undefined,
+    subjectId: searchParams.get("subjectId") || undefined,
+    status: searchParams.get("status") || undefined,
+    dateRange: { from: null, to: null, preset: "all" },
+  }), [searchParams]);
+
+  const { filters, setFilters, clearFilters, removeFilter } = useFilters(initialFilters);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "calendar" | "kanban">("list");
 
   // All hooks and memoized values must be before early returns

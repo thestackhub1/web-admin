@@ -41,20 +41,25 @@ export function ExamStructureSectionCard({
     onMove,
 }: ExamStructureSectionCardProps) {
     return (
-        <div className="flex items-center gap-4 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800/50">
-            {/* Drag Handle */}
-            <div className="flex flex-col gap-1">
+        <div className="group relative flex items-center gap-6 rounded-3xl bg-white p-6 shadow-sm border border-neutral-100 transition-all hover:shadow-md hover:border-primary-100 dark:bg-neutral-900 dark:border-neutral-800 dark:hover:border-primary-900/50">
+            {/* Index Pin */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-neutral-50 text-neutral-400 font-black text-xs uppercase tracking-tighter group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors dark:bg-neutral-800">
+                {String(index + 1).padStart(2, '0')}
+            </div>
+
+            {/* Drag/Move Handle */}
+            <div className="flex flex-col gap-1 shrink-0">
                 <button
                     onClick={() => onMove(index, "up")}
                     disabled={index === 0}
-                    className="rounded p-1 text-neutral-400 hover:bg-neutral-200 disabled:opacity-30 dark:hover:bg-neutral-700"
+                    className="p-1 rounded-lg text-neutral-300 hover:bg-neutral-50 hover:text-primary-500 disabled:opacity-0 transition-all dark:hover:bg-neutral-800"
                 >
                     <ArrowUp className="h-4 w-4" />
                 </button>
                 <button
                     onClick={() => onMove(index, "down")}
                     disabled={index === totalSections - 1}
-                    className="rounded p-1 text-neutral-400 hover:bg-neutral-200 disabled:opacity-30 dark:hover:bg-neutral-700"
+                    className="p-1 rounded-lg text-neutral-300 hover:bg-neutral-50 hover:text-primary-500 disabled:opacity-0 transition-all dark:hover:bg-neutral-800"
                 >
                     <ArrowDown className="h-4 w-4" />
                 </button>
@@ -62,51 +67,62 @@ export function ExamStructureSectionCard({
 
             {/* Section Info */}
             <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-                        Q{section.order_index}
-                    </span>
-                    <h4 className="font-semibold text-neutral-900 dark:text-white">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <h4 className="text-lg font-black text-neutral-900 dark:text-white leading-none">
                         {section.name_en}
                     </h4>
-                    <Badge variant="purple" size="sm">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-primary-100/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary-600 dark:bg-primary-900/40 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50">
                         {questionTypeLabels[section.question_type]}
-                    </Badge>
+                    </span>
                     {/* Chapter config badge */}
                     {section.chapter_configs && section.chapter_configs.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-success-100/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-success-600 dark:bg-success-900/40 dark:text-success-400 border border-success-200/50 dark:border-success-800/50">
                             <BookOpen className="h-3 w-3" />
-                            {section.chapter_configs.length} chapter{section.chapter_configs.length > 1 ? "s" : ""} • {section.chapter_configs.reduce((sum, c) => sum + c.question_count, 0)} Q
+                            {section.chapter_configs.length} Targeted Chapters
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-neutral-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500 border border-neutral-100 dark:border-neutral-700">
                             <BookOpen className="h-3 w-3" />
-                            All chapters
+                            Global Scope
                         </span>
                     )}
                 </div>
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    {section.question_count} × {section.marks_per_question} marks = {section.total_marks} marks
-                </p>
+
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-neutral-400">Yield:</span>
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">{section.total_marks} Marks</span>
+                    </div>
+                    <div className="h-1 w-1 rounded-full bg-neutral-200 dark:bg-neutral-700" />
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-neutral-400">Questions:</span>
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">{section.question_count} × {section.marks_per_question}</span>
+                    </div>
+                </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pl-4 border-l border-neutral-100 dark:border-neutral-800">
                 <button
                     onClick={() => onEdit(section)}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/30"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-400 hover:bg-primary-50 hover:text-primary-600 transition-all dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+                    title="Edit Section"
                 >
-                    Edit
+                    <Trash2 className="hidden" /> {/* Placeholder just to keep Trash2 imported if I didn't mean to remove it */}
+                    <div className="relative">
+                        <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                    </div>
                 </button>
                 <button
                     onClick={() => onDelete(section.id)}
-                    className="rounded-lg p-2 text-neutral-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/30"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-400 hover:bg-danger-50 hover:text-danger-500 transition-all dark:hover:bg-danger-900/20 dark:hover:text-danger-500"
+                    title="Delete Section"
                 >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-5 w-5" />
                 </button>
             </div>
         </div>
     );
 }
-
 

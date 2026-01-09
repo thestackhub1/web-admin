@@ -20,6 +20,10 @@ export interface ClassLevel {
     name_mr: string | null;
     slug: string;
   }>;
+  studentCount?: number;
+  examStructureCount?: number;
+  scheduledExamCount?: number;
+  examAttemptCount?: number;
 }
 
 export function useClassLevels() {

@@ -22,11 +22,12 @@ export async function GET(request: NextRequest) {
         const userId = searchParams.get('user_id') || undefined;
         const subjectId = searchParams.get('subject_id') || undefined;
         const status = searchParams.get('status') || undefined;
+        const classLevelId = searchParams.get('class_level_id') || undefined;
         const page = parseInt(searchParams.get('page') || '1');
         const pageSize = parseInt(searchParams.get('page_size') || '20');
 
         const result = await ExamsService.getAll(
-            { userId, subjectId, status, page, pageSize },
+            { userId, subjectId, status, classLevelId, page, pageSize },
             {
                 userId: authResult.user.id,
                 role: authResult.profile.role,

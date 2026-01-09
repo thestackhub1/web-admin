@@ -28,6 +28,13 @@ export interface AuthContext {
 }
 
 /**
+ * Roles allowed to access the admin portal
+ */
+export const ADMIN_ROLES = ['admin', 'super_admin', 'teacher', 'school_admin'] as const;
+export type AdminRole = typeof ADMIN_ROLES[number];
+export type AllowedRole = AdminRole | 'student';
+
+/**
  * Extract token from Authorization header
  */
 function extractToken(request: NextRequest): string | null {
@@ -50,9 +57,11 @@ export async function authenticateRequest(
     request: NextRequest,
     options: {
         requireStudent?: boolean;
-        allowedRoles?: ('admin' | 'teacher' | 'student' | 'super_admin')[];
-    } = { requireStudent: false }
+        allowedRoles?: AllowedRole[];
+    } = {}
 ): Promise<AuthContext | ReturnType<typeof ApiErrors.unauthorized>> {
+    // Default allowed roles for Admin Portal if none provided
+    const effectiveAllowedRoles = options.allowedRoles || (options.requireStudent ? ['student'] : [...ADMIN_ROLES]);
     // Extract token
     const token = extractToken(request);
     if (!token) {
@@ -83,14 +92,8 @@ export async function authenticateRequest(
     }
 
     // Role-based access control
-    if (options.allowedRoles) {
-        // Use allowedRoles if provided
-        if (!options.allowedRoles.includes(profile.role as 'admin' | 'teacher' | 'student' | 'super_admin')) {
-            return ApiErrors.forbidden(`This action requires one of: ${options.allowedRoles.join(', ')}`);
-        }
-    } else if (options.requireStudent && profile.role !== 'student') {
-        // Legacy: check student role
-        return ApiErrors.forbidden('This API is for students only');
+    if (!effectiveAllowedRoles.includes(profile.role as AllowedRole)) {
+        return ApiErrors.forbidden(`Access denied. Role '${profile.role}' is not authorized for this action.`);
     }
 
     return {

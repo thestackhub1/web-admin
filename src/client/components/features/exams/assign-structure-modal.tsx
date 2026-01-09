@@ -38,7 +38,7 @@ export function AssignStructureModal({
 }: AssignStructureModalProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(currentStructureId || null);
-  
+
   // Use hook for updating scheduled exam
   const { mutate: updateExam, loading: isSaving } = useUpdateScheduledExam();
 
@@ -92,7 +92,7 @@ export function AssignStructureModal({
             className={clsx(
               "flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition-all",
               selectedId === null
-                ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
+                ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                 : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 dark:hover:border-neutral-600"
             )}
           >
@@ -100,7 +100,7 @@ export function AssignStructureModal({
               className={clsx(
                 "flex h-10 w-10 items-center justify-center rounded-lg",
                 selectedId === null
-                  ? "bg-brand-blue-500 text-white"
+                  ? "bg-primary-500 text-white"
                   : "bg-neutral-100 text-neutral-400 dark:bg-neutral-800"
               )}
             >
@@ -112,7 +112,7 @@ export function AssignStructureModal({
                 Remove assigned blueprint
               </p>
             </div>
-            {selectedId === null && <Check className="h-5 w-5 text-brand-blue-500" />}
+            {selectedId === null && <Check className="h-5 w-5 text-primary-500" />}
           </button>
 
           {structures.length === 0 ? (
@@ -133,7 +133,7 @@ export function AssignStructureModal({
                 className={clsx(
                   "flex w-full items-start gap-4 rounded-xl border-2 p-4 text-left transition-all",
                   selectedId === structure.id
-                    ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                     : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 dark:hover:border-neutral-600"
                 )}
               >
@@ -141,7 +141,7 @@ export function AssignStructureModal({
                   className={clsx(
                     "flex h-10 w-10 items-center justify-center rounded-lg",
                     selectedId === structure.id
-                      ? "bg-brand-blue-500 text-white"
+                      ? "bg-primary-500 text-white"
                       : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
                   )}
                 >
@@ -170,7 +170,7 @@ export function AssignStructureModal({
                   </div>
                 </div>
                 {selectedId === structure.id && (
-                  <Check className="mt-1 h-5 w-5 shrink-0 text-brand-blue-500" />
+                  <Check className="mt-1 h-5 w-5 shrink-0 text-primary-500" />
                 )}
               </button>
             ))

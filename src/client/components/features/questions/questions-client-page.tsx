@@ -560,9 +560,44 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
 
       {/* Stats */}
       {questions.length > 0 && (
-        <GlassCard className="p-4" bento>
-          <QuestionStats stats={stats} />
-        </GlassCard>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <GlassCard className="flex items-center gap-3 p-3">
+            <div className="rounded-lg bg-neutral-100 p-2 dark:bg-neutral-800">
+              <FileQuestion className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white">{stats.total}</p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Total</p>
+            </div>
+          </GlassCard>
+          <GlassCard className="flex items-center gap-3 p-3">
+            <div className="rounded-lg bg-success-50 p-2 dark:bg-success-900/20">
+              <CheckSquare className="h-5 w-5 text-success-600 dark:text-success-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => q.is_active).length}</p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Active</p>
+            </div>
+          </GlassCard>
+          <GlassCard className="flex items-center gap-3 p-3">
+            <div className="rounded-lg bg-primary-50 p-2 dark:bg-primary-900/20">
+              <Square className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => q.question_type.startsWith('mcq')).length}</p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">MCQ</p>
+            </div>
+          </GlassCard>
+          <GlassCard className="flex items-center gap-3 p-3">
+            <div className="rounded-lg bg-warning-50 p-2 dark:bg-warning-900/20">
+              <Pencil className="h-5 w-5 text-warning-600 dark:text-warning-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => ['short_answer', 'long_answer'].includes(q.question_type)).length}</p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Descriptive</p>
+            </div>
+          </GlassCard>
+        </div>
       )}
 
       {/* Chapter Chips */}
@@ -571,7 +606,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
       )}
 
       {/* Search and Filters */}
-      <GlassCard className="relative p-5" bento>
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <QuestionSearchBar
             searchQuery={searchQuery}
@@ -594,7 +629,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
             />
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* Questions List/Table */}
       <GlassCard bento padding="none" className="overflow-hidden">

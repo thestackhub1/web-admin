@@ -22,60 +22,59 @@ interface SubjectCardProps {
 
 export function SubjectCard({ subject, chapterCount, questionCount }: SubjectCardProps) {
   return (
-    <Link href={`/dashboard/subjects/${subject.id}`} className="block h-full">
-      <GlassCard className="group h-full transition-all duration-300 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-900/50 cursor-pointer">
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-              {/* Icon */}
-              <div className="h-14 w-14 shrink-0 rounded-xl text-white flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105 bg-linear-to-br from-primary-500 to-primary-600">
-                {subject.icon ? (
-                  <span className="text-2xl">{subject.icon}</span>
-                ) : (
-                  <BookOpen className="h-7 w-7" />
-                )}
-              </div>
+    <Link href={`/dashboard/subjects/${subject.id}`} className="block h-full group">
+      <GlassCard
+        hover
+        className="h-full relative flex flex-col justify-between overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-primary-900/20"
+      >
+        <div className="p-5 flex items-start gap-4">
+          {/* Icon */}
+          <div className="shrink-0 rounded-xl bg-linear-to-br from-primary-50 to-primary-100 p-3 text-primary-600 shadow-inner group-hover:from-primary-100 group-hover:to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 dark:text-primary-400">
+            {subject.icon ? (
+              <span className="text-2xl">{subject.icon}</span>
+            ) : (
+              <BookOpen className="h-6 w-6" />
+            )}
+          </div>
 
-              {/* Title and Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-bold text-neutral-900 dark:text-white truncate">
-                    {subject.name_en}
-                  </h3>
-                </div>
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 italic mb-3">
-                  {subject.name_mr}
-                </p>
+          <div className="flex-1 min-w-0">
+            {/* Title */}
+            <h3 className="font-bold text-lg text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+              {subject.name_en}
+            </h3>
+            {subject.name_mr && (
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                {subject.name_mr}
+              </p>
+            )}
 
-                {/* Stats */}
-                <div className="flex flex-wrap gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                    <Layers className="h-3.5 w-3.5" />
-                    {chapterCount} Chapters
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                    <FileQuestion className="h-3.5 w-3.5" />
-                    {questionCount} Questions
-                  </div>
-                </div>
-              </div>
+            {/* Status Dot */}
+            <div className="absolute top-5 right-5">
+              <div className={clsx(
+                "h-2 w-2 rounded-full",
+                subject.is_active
+                  ? 'bg-success-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                  : 'bg-neutral-300 dark:bg-neutral-600'
+              )}></div>
+            </div>
+          </div>
+        </div>
 
-              {/* Status Indicator */}
-              <div className="shrink-0 ml-4">
-                <div className={clsx(
-                  "h-2.5 w-2.5 rounded-full",
-                  subject.is_active
-                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
-                    : 'bg-neutral-400'
-                )}></div>
-              </div>
+        {/* Footer Stats & Action */}
+        <div className="mt-auto flex items-center justify-between border-t border-neutral-100 bg-neutral-50/50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/20">
+          <div className="flex items-center gap-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <div className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5" />
+              {chapterCount} Chapters
+            </div>
+            <div className="flex items-center gap-1.5">
+              <FileQuestion className="h-3.5 w-3.5" />
+              {questionCount} Questions
             </div>
           </div>
 
-          {/* Primary Action */}
-          <div className="w-full rounded-xl bg-linear-to-r from-primary-600 to-purple-600 text-white py-3 px-4 text-sm font-semibold shadow-md shadow-primary-600/20 hover:from-primary-700 hover:to-purple-700 hover:shadow-lg hover:shadow-primary-600/30 transition-all duration-200 flex items-center justify-center gap-2 group/button">
-            View Details
-            <ArrowRight className="h-4 w-4 transition-transform group-hover/button:translate-x-0.5" />
+          <div className="text-neutral-400 group-hover:text-primary-500 transition-colors">
+            <ArrowRight className="h-4 w-4" />
           </div>
         </div>
       </GlassCard>

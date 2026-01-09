@@ -12,10 +12,15 @@ import { examStructures, subjects, type ExamStructure } from '@/db/schema';
 export class ExamStructuresService {
   /**
    * Get all active exam structures
-   * Optionally filtered by subject ID
+   * Optionally filtered by subject ID and active status
    */
-  static async getAll(options?: { subjectId?: string }) {
+  static async getAll(options?: { subjectId?: string; includeInactive?: boolean }) {
     const db = await dbService.getDb();
+
+    const conditions = [];
+    if (!options?.includeInactive) {
+      conditions.push(eq(examStructures.isActive, true));
+    }
 
     let query = db
       .select({
@@ -25,6 +30,7 @@ export class ExamStructuresService {
         nameMr: examStructures.nameMr,
         descriptionEn: examStructures.descriptionEn,
         descriptionMr: examStructures.descriptionMr,
+        classLevelId: examStructures.classLevelId,
         classLevel: examStructures.classLevel,
         durationMinutes: examStructures.durationMinutes,
         totalQuestions: examStructures.totalQuestions,
@@ -41,7 +47,7 @@ export class ExamStructuresService {
       })
       .from(examStructures)
       .leftJoin(subjects, eq(examStructures.subjectId, subjects.id))
-      .where(eq(examStructures.isActive, true))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(asc(examStructures.orderIndex));
 
     // Note: Drizzle doesn't support dynamic where clauses easily
@@ -56,6 +62,7 @@ export class ExamStructuresService {
       name_mr: r.nameMr,
       description_en: r.descriptionEn,
       description_mr: r.descriptionMr,
+      class_level_id: r.classLevelId,
       class_level: r.classLevel,
       duration_minutes: r.durationMinutes,
       total_questions: r.totalQuestions,
@@ -65,11 +72,11 @@ export class ExamStructuresService {
       order_index: r.orderIndex,
       subjects: r.subject?.id
         ? {
-            id: r.subject.id,
-            name_en: r.subject.nameEn,
-            name_mr: r.subject.nameMr,
-            slug: r.subject.slug,
-          }
+          id: r.subject.id,
+          name_en: r.subject.nameEn,
+          name_mr: r.subject.nameMr,
+          slug: r.subject.slug,
+        }
         : null,
     }));
 

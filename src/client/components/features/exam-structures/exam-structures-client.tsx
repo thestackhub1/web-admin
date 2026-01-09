@@ -56,8 +56,15 @@ export function ExamStructuresClient() {
   }, [structures, subjects]);
 
   // Filter structures based on search params
+  /* eslint-disable react-hooks/exhaustive-deps */
   const filteredStructures = useMemo(() => {
     let filtered = structuresWithSubjects;
+
+    // Filter by class level (from URL)
+    const classLevelId = searchParams.get('classLevelId');
+    if (classLevelId) {
+      filtered = filtered.filter((s: any) => s.class_level_id === classLevelId);
+    }
 
     if (subjectFilter && subjectFilter !== "all") {
       filtered = filtered.filter((s: any) => s.subjects?.slug === subjectFilter);
@@ -70,7 +77,8 @@ export function ExamStructuresClient() {
     }
 
     return filtered;
-  }, [structuresWithSubjects, subjectFilter, statusFilter]);
+  }, [structuresWithSubjects, subjectFilter, statusFilter, searchParams]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -98,7 +106,7 @@ export function ExamStructuresClient() {
         breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Exam Structures" }]}
         action={
           <Link href="/dashboard/exam-structures/new">
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 bg-linear-to-r from-primary-600 to-insight-600 hover:from-primary-700 hover:to-insight-700 text-white shadow-lg shadow-primary-500/25 border-0">
               <Plus className="h-4 w-4" />
               Create Structure
             </Button>
@@ -161,7 +169,7 @@ export function ExamStructuresClient() {
               <Link
                 href="/dashboard/exam-structures"
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${!subjectFilter || subjectFilter === "all"
-                  ? "bg-linear-to-r from-brand-blue-500 to-brand-purple-500 text-white shadow-lg shadow-brand-blue-500/25"
+                  ? "bg-linear-to-r from-primary-500 to-insight-500 text-white shadow-lg shadow-primary-500/25"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   }`}
               >
@@ -249,7 +257,7 @@ export function ExamStructuresClient() {
             {(subjectFilter || statusFilter) && (
               <Link
                 href="/dashboard/exam-structures"
-                className="ml-2 text-sm text-brand-blue-600 hover:text-brand-blue-700 dark:text-brand-blue-400"
+                className="ml-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
               >
                 Clear filters
               </Link>
@@ -359,7 +367,7 @@ export function ExamStructuresClient() {
                         </span>
                       ))}
                       {sections.length > 3 && (
-                        <span className="rounded-lg bg-brand-blue-50 px-2.5 py-1 text-xs font-medium text-brand-blue-600 dark:bg-brand-blue-900/30 dark:text-brand-blue-400">
+                        <span className="rounded-lg bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
                           +{sections.length - 3} more
                         </span>
                       )}

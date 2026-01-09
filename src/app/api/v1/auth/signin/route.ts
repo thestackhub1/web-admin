@@ -7,15 +7,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/api/rate-limit';
+import { ADMIN_ROLES } from '@/lib/auth/middleware';
 import { z } from 'zod';
 
 // Accept either email or phone
 const signinSchema = z.object({
-  email: z.string().optional(),
-  phone: z.string().optional(),
-  password: z.string().min(1, 'Password is required'),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    password: z.string().min(1, 'Password is required'),
 }).refine((data) => data.email || data.phone, {
-  message: 'Email or phone is required',
+    message: 'Email or phone is required',
 });
 
 export async function POST(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
         }
 
         const { email, phone, password } = parsed.data;
-        
+
         // Determine the identifier (email or phone)
         const identifier = email || phone || '';
 
@@ -81,12 +82,27 @@ export async function POST(request: NextRequest) {
             .eq('id', authData.user.id)
             .single();
 
+        const role = profile?.role || 'student';
+        const isAllowed = ADMIN_ROLES.includes(role as any);
+
+        if (!isAllowed) {
+            // Sign out the user immediately if they have an unauthorized role
+            await supabase.auth.signOut();
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Access denied. This portal is for administrators and teachers only. Students should use the Student Portal.'
+                },
+                { status: 403 }
+            );
+        }
+
         // Create response with cookies
         const response = NextResponse.json({
             success: true,
             data: {
                 user_id: authData.user.id,
-                role: profile?.role || 'student',
+                role: role,
                 redirect: '/dashboard',
             }
         });

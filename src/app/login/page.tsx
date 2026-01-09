@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Button, Input, Card, PasscodeInput, LoadingComponent } from "@/client/components/ui";
 import { AuthLayout } from "@/client/components/layout/auth-layout";
-import { useSignin } from "@/client/hooks";
-import { Phone, ArrowRight, Sparkles, Lock, Mail, User } from "lucide-react";
+import { useSignin, useLogout } from "@/client/hooks";
+import { Phone, ArrowRight, Sparkles, Lock, Mail, User, AlertCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 
 export default function LoginPage() {
@@ -32,8 +33,14 @@ const phoneSchema = z.string().regex(/^[6-9]\d{9}$/, "Invalid phone number");
 const emailSchema = z.string().email("Invalid email address");
 
 function LoginForm() {
-  // Use signin hook
+  // Use signin and logout hooks
   const { mutate: signin, loading: isLoading } = useSignin();
+  const { mutate: logout } = useLogout();
+  const searchParams = useSearchParams();
+
+  // Check for errors from middleware
+  const errorParam = searchParams.get("error");
+  const reasonParam = searchParams.get("reason");
 
   // Form State
   const [identifier, setIdentifier] = React.useState("");
@@ -43,6 +50,18 @@ function LoginForm() {
   const [isAutoDetected, setIsAutoDetected] = React.useState(false);
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  // Handle unauthorized access from middleware
+  React.useEffect(() => {
+    if (errorParam === "access_denied" && reasonParam === "unauthorized_role") {
+      // Automatically log out to clear any invalid session
+      logout();
+      toast.error("Access denied. Students are not allowed to access this portal.", {
+        description: "Please use the Student Portal for your exams.",
+        duration: 5000,
+      });
+    }
+  }, [errorParam, reasonParam, logout]);
 
   // Auto-detect Auth Method based on input
   React.useEffect(() => {
@@ -148,6 +167,19 @@ function LoginForm() {
         <p className="text-neutral-500 dark:text-neutral-400">
           Enter your details to access the admin portal
         </p>
+
+        {errorParam === "access_denied" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-6 flex items-center gap-3 p-4 rounded-xl bg-warning-50 border border-warning-200 text-warning-800 dark:bg-warning-950/30 dark:border-warning-800 dark:text-warning-400"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div className="text-sm font-medium text-left">
+              Students are not allowed to access this portal. Please use the Student Portal.
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       <motion.div
@@ -274,7 +306,7 @@ function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] transition-all duration-300"
+              className="w-full bg-linear-to-r from-primary-600 to-insight-600 hover:from-primary-700 hover:to-insight-700 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02] transition-all duration-300"
               size="lg"
               isLoading={isLoading}
               rightIcon={!isLoading && <ArrowRight className="h-4 w-4" />}
@@ -299,7 +331,7 @@ function LoginForm() {
             </p>
             <Link href="/signup" className="inline-block w-full">
               <Button variant="secondary" className="w-full border-dashed border-neutral-300 dark:border-neutral-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 text-neutral-700 dark:text-neutral-300" size="md">
-                <Sparkles className="h-4 w-4 mr-2 text-amber-500" />
+                <Sparkles className="h-4 w-4 mr-2 text-warning-500" />
                 Create Account
               </Button>
             </Link>

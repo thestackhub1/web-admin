@@ -141,51 +141,43 @@ function SubjectsContent({ categories, standaloneSubjects, stats }: SubjectsCont
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <GlassCard className="border-l-4 border-l-purple-500 hover:border-l-purple-400 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="icon-container-insight">
-              <Folder className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalCategories}</p>
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Categories</p>
-            </div>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <div className="rounded-xl bg-insight-50 p-2 dark:bg-insight-900/20">
+            <Folder className="h-6 w-6 text-insight-600 dark:text-insight-400" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalCategories}</p>
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Categories</p>
           </div>
         </GlassCard>
 
-        <GlassCard className="border-l-4 border-l-primary-500 hover:border-l-primary-400 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="icon-container-primary">
-              <BookOpen className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.rootSubjects}</p>
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Root Subjects</p>
-            </div>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <div className="rounded-xl bg-primary-50 p-2 dark:bg-primary-900/20">
+            <BookOpen className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.rootSubjects}</p>
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Root Subjects</p>
           </div>
         </GlassCard>
 
-        <GlassCard className="border-l-4 border-l-emerald-500 hover:border-l-emerald-400 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="icon-container-success">
-              <Layers className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalChapters}</p>
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Chapters</p>
-            </div>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <div className="rounded-xl bg-success-50 p-2 dark:bg-success-900/20">
+            <Layers className="h-6 w-6 text-success-600 dark:text-success-400" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalChapters}</p>
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Chapters</p>
           </div>
         </GlassCard>
 
-        <GlassCard className="border-l-4 border-l-amber-500 hover:border-l-amber-400 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="icon-container-warning">
-              <FileQuestion className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalQuestions}</p>
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Questions</p>
-            </div>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <div className="rounded-xl bg-warning-50 p-2 dark:bg-warning-900/20">
+            <FileQuestion className="h-6 w-6 text-warning-600 dark:text-warning-400" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalQuestions}</p>
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Questions</p>
           </div>
         </GlassCard>
       </div>

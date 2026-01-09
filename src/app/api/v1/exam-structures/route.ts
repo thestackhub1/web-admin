@@ -13,21 +13,21 @@ import { ExamStructuresService } from '@/lib/services';
 import { z } from 'zod';
 
 const createExamStructureSchema = z.object({
-  subject_id: z.string().uuid(),
-  class_level_id: z.string().uuid().nullable().optional(),
-  name_en: z.string().min(1),
-  name_mr: z.string().min(1),
-  description_en: z.string().nullable().optional(),
-  description_mr: z.string().nullable().optional(),
-  class_level: z.string().nullable().optional(),
-  duration_minutes: z.number().int().positive(),
-  total_questions: z.number().int().positive(),
-  total_marks: z.number().int().positive(),
-  passing_percentage: z.number().int().min(0).max(100),
-  sections: z.array(z.any()).optional(),
-  is_template: z.boolean().optional(),
-  order_index: z.number().int().optional(),
-  is_active: z.boolean().optional(),
+    subject_id: z.string().uuid(),
+    class_level_id: z.string().uuid().nullable().optional(),
+    name_en: z.string().min(1),
+    name_mr: z.string().min(1),
+    description_en: z.string().nullable().optional(),
+    description_mr: z.string().nullable().optional(),
+    class_level: z.string().nullable().optional(),
+    duration_minutes: z.number().int().positive(),
+    total_questions: z.number().int().positive(),
+    total_marks: z.number().int().positive(),
+    passing_percentage: z.number().int().min(0).max(100),
+    sections: z.array(z.any()).optional(),
+    is_template: z.boolean().optional(),
+    order_index: z.number().int().optional(),
+    is_active: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
         // Use service layer
         const examStructures = await ExamStructuresService.getAll({
             subjectId: subjectId || undefined,
+            includeInactive: true, // Fetch all structures (active + drafts) for admin dashboard
         });
 
         return successResponse(examStructures);

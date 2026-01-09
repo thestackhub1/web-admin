@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
             description_en: cl.descriptionEn,
             description_mr: cl.descriptionMr,
             order_index: cl.orderIndex,
+            subjects: cl.subjects,
+            exam_count: cl.examCount,
         }));
 
         return successResponse(data);

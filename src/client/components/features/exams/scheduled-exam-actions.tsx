@@ -18,10 +18,11 @@ import {
   Eye,
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
-import { Button } from '@/client/components/ui/button';
-import { 
-  useDeleteScheduledExam, 
-  useUpdateScheduledExamStatus, 
+import { Button, buttonVariants } from '@/client/components/ui/button';
+import { cn } from "@/client/utils";
+import {
+  useDeleteScheduledExam,
+  useUpdateScheduledExamStatus,
   useScheduledExam,
   useCreateScheduledExam,
 } from "@/client/hooks";
@@ -85,7 +86,7 @@ export function ScheduledExamActions({
       toast.error("Exam data not available");
       return;
     }
-    
+
     setIsDuplicating(true);
 
     // Create a copy using the hook
@@ -120,106 +121,111 @@ export function ScheduledExamActions({
           {/* Preview Button - Link to separate page */}
           <Link
             href={`/dashboard/scheduled-exams/${examId}/preview`}
-            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-md active:scale-[0.98]"
+            className={cn(buttonVariants({ variant: "primary", size: "sm" }), "shadow-sm")}
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="mr-2 h-4 w-4" />
             Preview
           </Link>
 
           {/* Publish/Unpublish/Archive */}
-        {currentStatus === "draft" && (
-          <button
-            onClick={() => handleStatusChange("published")}
-            disabled={isUpdatingStatus}
-            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-success-500 to-success-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-success-600 hover:to-success-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50"
-          >
-            {isUpdatingStatus ? (
-              <LoaderSpinner size="sm" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            Publish
-          </button>
-        )}
-
-        {currentStatus === "published" && (
-          <button
-            onClick={() => handleStatusChange("draft")}
-            disabled={isUpdatingStatus}
-            className="inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-200 active:scale-[0.98] dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-50"
-          >
-            {isUpdatingStatus ? (
-              <LoaderSpinner size="sm" />
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-            Unpublish
-          </button>
-        )}
-
-        {currentStatus === "completed" && (
-          <button
-            onClick={() => handleStatusChange("archived")}
-            disabled={isUpdatingStatus}
-            className="inline-flex items-center gap-2 rounded-xl bg-warning-100 px-4 py-2.5 text-sm font-medium text-warning-700 transition-all hover:bg-warning-200 active:scale-[0.98] dark:bg-warning-900/30 dark:text-warning-400 disabled:opacity-50"
-          >
-            {isUpdatingStatus ? (
-              <LoaderSpinner size="sm" />
-            ) : (
-              <Archive className="h-4 w-4" />
-            )}
-            Archive
-          </button>
-        )}
-
-        {/* Duplicate */}
-        <button
-          onClick={handleDuplicate}
-          disabled={isDuplicating}
-          className="inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-200 active:scale-[0.98] dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 disabled:opacity-50"
-        >
-          {isDuplicating ? (
-            <LoaderSpinner size="sm" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-          Duplicate
-        </button>
-
-        {/* Delete */}
-        {!showDeleteConfirm ? (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-error-50 px-4 py-2.5 text-sm font-medium text-error-600 transition-all hover:bg-error-100 active:scale-[0.98] dark:bg-error-900/20 dark:text-error-400 dark:hover:bg-error-900/30"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </button>
-        ) : (
-          <div className="flex items-center gap-2 rounded-xl bg-error-50 px-3 py-2 dark:bg-error-900/20">
-            <AlertTriangle className="h-4 w-4 text-error-500" />
-            <span className="text-sm font-medium text-error-600 dark:text-error-400">
-              Delete?
-            </span>
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="rounded-lg bg-error-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-error-700 active:scale-[0.98] disabled:opacity-50"
+          {currentStatus === "draft" && (
+            <Button
+              onClick={() => handleStatusChange("published")}
+              disabled={isUpdatingStatus}
+              variant="emerald"
+              size="sm"
+              className="shadow-sm"
             >
-              {isDeleting ? (
-                <LoaderSpinner size="sm" />
+              {isUpdatingStatus ? (
+                <LoaderSpinner size="sm" className="mr-2" />
               ) : (
-                "Yes"
+                <Play className="mr-2 h-4 w-4" />
               )}
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(false)}
-              className="rounded-lg p-1 text-error-500 transition-colors hover:bg-error-100 dark:text-error-400 dark:hover:bg-error-900/30"
+              Publish
+            </Button>
+          )}
+
+          {currentStatus === "published" && (
+            <Button
+              onClick={() => handleStatusChange("draft")}
+              disabled={isUpdatingStatus}
+              variant="secondary"
+              size="sm"
             >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+              {isUpdatingStatus ? (
+                <LoaderSpinner size="sm" className="mr-2" />
+              ) : (
+                <FileText className="mr-2 h-4 w-4" />
+              )}
+              Unpublish
+            </Button>
+          )}
+
+          {currentStatus === "completed" && (
+            <Button
+              onClick={() => handleStatusChange("archived")}
+              disabled={isUpdatingStatus}
+              variant="amber"
+              size="sm"
+            >
+              {isUpdatingStatus ? (
+                <LoaderSpinner size="sm" className="mr-2" />
+              ) : (
+                <Archive className="mr-2 h-4 w-4" />
+              )}
+              Archive
+            </Button>
+          )}
+
+          {/* Duplicate */}
+          <Button
+            onClick={handleDuplicate}
+            disabled={isDuplicating}
+            variant="secondary"
+            size="sm"
+          >
+            {isDuplicating ? (
+              <LoaderSpinner size="sm" className="mr-2" />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" />
+            )}
+            Duplicate
+          </Button>
+
+          {/* Delete */}
+          {!showDeleteConfirm ? (
+            <Button
+              onClick={() => setShowDeleteConfirm(true)}
+              variant="danger"
+              size="sm"
+              className="h-9 w-9 px-0"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl bg-error-50 px-2 py-1 dark:bg-error-900/20 border border-error-100 dark:border-error-900/50">
+              <Button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                variant="danger"
+                size="sm"
+              >
+                {isDeleting ? (
+                  <LoaderSpinner size="sm" className="mr-2" />
+                ) : (
+                  "Confirm"
+                )}
+              </Button>
+              <Button
+                onClick={() => setShowDeleteConfirm(false)}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 px-2 text-error-500 hover:text-error-600 hover:bg-error-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </>
     );

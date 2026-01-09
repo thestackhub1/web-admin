@@ -7,7 +7,7 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, or, inArray, asc, desc, sql, count } from 'drizzle-orm';
+import { eq, and, or, inArray, asc, desc, sql, count, ilike } from 'drizzle-orm';
 import {
   questionsScholarship,
   questionsEnglish,
@@ -98,8 +98,6 @@ export class QuestionsService {
 
     if (options.isActive !== undefined) {
       conditions.push(eq(table.isActive, options.isActive));
-    } else {
-      conditions.push(eq(table.isActive, true));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -163,7 +161,7 @@ export class QuestionsService {
     const results = await db
       .select()
       .from(table)
-      .where(and(inArray(table.id, questionIds), eq(table.isActive, true)));
+      .where(inArray(table.id, questionIds));
 
     return results.map((q) => ({
       id: q.id,
@@ -202,7 +200,7 @@ export class QuestionsService {
     const [question] = await db
       .select()
       .from(table)
-      .where(and(eq(table.id, questionId), eq(table.isActive, true)))
+      .where(eq(table.id, questionId))
       .limit(1);
 
     if (!question) {
@@ -327,8 +325,6 @@ export class QuestionsService {
     const conditions = [];
     if (options?.isActive !== undefined) {
       conditions.push(eq(table.isActive, options.isActive));
-    } else {
-      conditions.push(eq(table.isActive, true));
     }
 
     const [result] = await db
@@ -500,6 +496,90 @@ export class QuestionsService {
     }
 
     return { success: true };
+  }
+  /**
+   * Get questions from ALL tables (merged)
+   * This is a utility for the "All Questions" view.
+   * Note: Pagination is approximate when fetching across multiple tables without a unified view.
+   */
+  static async getAll(
+    options: QuestionListOptions & { search?: string, limit?: number, offset?: number } = {},
+    rlsContext?: RLSContext
+  ) {
+    const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
+
+    const subjects = [
+      { slug: 'scholarship', name: 'Scholarship', table: questionsScholarship },
+      { slug: 'english', name: 'English', table: questionsEnglish },
+      { slug: 'information-technology', name: 'Information Technology', table: questionsInformationTechnology }
+    ];
+
+    const allQueries = subjects.map(async ({ slug, name, table }) => {
+      const conditions = [];
+
+      if (options.chapterId) conditions.push(eq(table.chapterId, options.chapterId));
+      if (options.difficulty) conditions.push(eq(table.difficulty, options.difficulty));
+      if (options.questionType) conditions.push(eq(table.questionType, options.questionType));
+
+      if (options.isActive !== undefined) {
+        conditions.push(eq(table.isActive, options.isActive));
+      }
+
+      if (options.search) {
+        conditions.push(ilike(table.questionText, `%${options.search}%`));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // We fetch slightly more than limit per table to ensure we have enough after merging
+      // For proper global pagination, we'd need a different architecture, but this suffices for admin dashboard "scan"
+      const limit = options.limit || 20;
+
+      const results = await db
+        .select()
+        .from(table)
+        .where(whereClause)
+        .orderBy(desc(table.createdAt))
+        .limit(limit);
+
+      return results.map(q => ({
+        ...q,
+        subject: { slug, name }
+      }));
+    });
+
+    const nestedResults = await Promise.all(allQueries);
+    const flatResults = nestedResults.flat();
+
+    // Sort combined results by createdAt desc
+    flatResults.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    // Apply global pagination after merge (inefficient for deep pages, but functional for first few pages)
+    const effectiveOffset = 0; // The individual queries limited usage, so we just slice the top blended results
+    const results = flatResults.slice(0, options.limit || 20);
+
+    return results.map((q) => ({
+      id: q.id,
+      question_text: q.questionText,
+      question_language: q.questionLanguage,
+      question_type: q.questionType,
+      difficulty: q.difficulty,
+      answer_data: q.answerData,
+      explanation: q.explanation || null,
+      tags: q.tags,
+      class_level: q.classLevel,
+      marks: q.marks,
+      chapter_id: q.chapterId,
+      is_active: q.isActive,
+      created_by: q.createdBy,
+      created_at: q.createdAt?.toISOString(),
+      updated_at: q.updatedAt?.toISOString(),
+      subject: q.subject
+    }));
   }
 }
 

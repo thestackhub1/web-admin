@@ -31,7 +31,7 @@ import type {
   ScheduledExamStatus,
   ClassLevel,
 } from "@/client/types/class-levels";
-import type { ExamStructure } from "@/client/types/exam-structures";
+import type { AvailableExamStructure } from "@/client/services/scheduled-exams.service";
 import {
   scheduledExamStatusLabels,
 } from "@/client/types/class-levels";
@@ -47,7 +47,7 @@ interface ScheduledExamsDashboardProps {
     name_mr: string;
     slug: string;
   };
-  availableStructures?: ExamStructure[];
+  availableStructures?: AvailableExamStructure[];
 }
 
 const statusIcons: Record<ScheduledExamStatus, React.ElementType> = {
@@ -145,7 +145,7 @@ export function ScheduledExamsDashboard({
             >
               {/* Header */}
               <div className="flex items-start justify-between">
-                <Link 
+                <Link
                   href={`/dashboard/scheduled-exams/${exam.id}`}
                   className="flex items-center gap-3 group/link"
                 >

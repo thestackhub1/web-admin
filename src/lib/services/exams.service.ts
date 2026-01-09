@@ -13,6 +13,7 @@ export interface ExamListOptions {
   userId?: string;
   subjectId?: string;
   status?: string;
+  classLevelId?: string;
   page?: number;
   pageSize?: number;
 }
@@ -38,17 +39,21 @@ export class ExamsService {
 
     // Build where conditions
     const conditions = [];
-    
+
     if (options.userId) {
       conditions.push(eq(exams.userId, options.userId));
     }
-    
+
     if (options.subjectId) {
       conditions.push(eq(exams.subjectId, options.subjectId));
     }
-    
+
     if (options.status) {
       conditions.push(eq(exams.status, options.status as any));
+    }
+
+    if (options.classLevelId) {
+      conditions.push(eq(scheduledExams.classLevelId, options.classLevelId));
     }
 
     // Students can only see their own exams
@@ -63,7 +68,7 @@ export class ExamsService {
       .select({ count: exams.id })
       .from(exams)
       .where(whereClause);
-    
+
     const allResults = await countQuery;
     const totalItems = allResults.length;
 

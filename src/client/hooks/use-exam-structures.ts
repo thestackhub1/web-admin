@@ -8,6 +8,7 @@ export interface ExamStructure {
   name_en: string;
   name_mr: string | null;
   subject_id: string;
+  class_level_id?: string | null;
   class_level?: string | null;
   duration_minutes: number;
   total_questions: number;

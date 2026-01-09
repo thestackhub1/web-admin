@@ -18,6 +18,7 @@ import {
   Folder,
   FolderOpen,
 } from "lucide-react";
+import Link from "next/link";
 import { clsx } from "clsx";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { useAddSubjectToClassLevel, useRemoveSubjectFromClassLevel } from "@/client/hooks";
@@ -52,21 +53,21 @@ interface ClassLevelSubjectEditorProps {
 // Subject color and icon mapping
 const subjectStyles: Record<string, { bg: string; text: string; border: string; icon: React.ComponentType<any> }> = {
   scholarship: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-600 dark:text-purple-400",
-    border: "border-purple-200 dark:border-purple-800",
+    bg: "bg-insight-100 dark:bg-insight-900/30",
+    text: "text-insight-600 dark:text-insight-400",
+    border: "border-insight-200 dark:border-insight-800",
     icon: GraduationCap,
   },
   english: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-200 dark:border-blue-800",
+    bg: "bg-primary-100 dark:bg-primary-900/30",
+    text: "text-primary-600 dark:text-primary-400",
+    border: "border-primary-200 dark:border-primary-800",
     icon: Globe,
   },
   information_technology: {
-    bg: "bg-green-100 dark:bg-green-900/30",
-    text: "text-green-600 dark:text-green-400",
-    border: "border-green-200 dark:border-green-800",
+    bg: "bg-success-100 dark:bg-success-900/30",
+    text: "text-success-600 dark:text-success-400",
+    border: "border-success-200 dark:border-success-800",
     icon: Monitor,
   },
 };
@@ -212,15 +213,17 @@ export function ClassLevelSubjectEditor({
                   isRemoving && "opacity-50"
                 )}
               >
-                <Icon className={clsx("h-4 w-4", style.text)} />
-                <span className={clsx("text-sm font-medium", style.text)}>{subject.name_en}</span>
+                <Link href={`/dashboard/subjects/${subject.id}`} className="flex items-center gap-2">
+                  <Icon className={clsx("h-4 w-4", style.text)} />
+                  <span className={clsx("text-sm font-medium", style.text)}>{subject.name_en}</span>
+                </Link>
                 <button
                   onClick={() => handleRemoveSubject(subject)}
                   disabled={isPending}
                   className={clsx(
                     "ml-1 rounded-full p-1.5 transition-colors disabled:opacity-50",
                     style.text,
-                    "hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                    "hover:bg-danger-100 hover:text-danger-600 dark:hover:bg-danger-900/30 dark:hover:text-danger-400"
                   )}
                   title={`Remove ${subject.name_en}`}
                 >
@@ -302,7 +305,7 @@ export function ClassLevelSubjectEditor({
                               className={clsx(
                                 "flex items-center justify-between rounded-lg border p-3 transition-all",
                                 isAssigned
-                                  ? clsx("border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20", style.border)
+                                  ? clsx("border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-900/20", style.border)
                                   : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
                               )}
                             >
@@ -315,12 +318,14 @@ export function ClassLevelSubjectEditor({
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className={clsx(
-                                    "font-medium truncate",
-                                    isAssigned ? "text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"
-                                  )}>
-                                    {subject.name_en}
-                                  </p>
+                                  <Link href={`/dashboard/subjects/${subject.id}`} className="block">
+                                    <p className={clsx(
+                                      "font-medium truncate hover:underline",
+                                      isAssigned ? "text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"
+                                    )}>
+                                      {subject.name_en}
+                                    </p>
+                                  </Link>
                                   {subject.name_mr && (
                                     <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                                       {subject.name_mr}
@@ -333,7 +338,7 @@ export function ClassLevelSubjectEditor({
                                   <button
                                     onClick={() => handleRemoveSubject(subject)}
                                     disabled={isPending}
-                                    className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                    className="flex items-center gap-1.5 rounded-lg bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger-700 transition-colors hover:bg-danger-100 disabled:opacity-50 dark:bg-danger-900/30 dark:text-danger-400 dark:hover:bg-danger-900/50"
                                   >
                                     <X className="h-3.5 w-3.5" />
                                     Remove
@@ -342,7 +347,7 @@ export function ClassLevelSubjectEditor({
                                   <button
                                     onClick={() => handleAddSubject(subject)}
                                     disabled={isPending}
-                                    className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                                    className="flex items-center gap-1.5 rounded-lg bg-success-50 px-3 py-1.5 text-sm font-medium text-success-700 transition-colors hover:bg-success-100 disabled:opacity-50 dark:bg-success-900/30 dark:text-success-400 dark:hover:bg-success-900/50"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Add
@@ -379,7 +384,7 @@ export function ClassLevelSubjectEditor({
                   className={clsx(
                     "flex items-center justify-between rounded-lg border p-3 transition-all",
                     isAssigned
-                      ? clsx("border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20", style.border)
+                      ? clsx("border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-900/20", style.border)
                       : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
                   )}
                 >
@@ -392,12 +397,14 @@ export function ClassLevelSubjectEditor({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={clsx(
-                        "font-medium truncate",
-                        isAssigned ? "text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"
-                      )}>
-                        {subject.name_en}
-                      </p>
+                      <Link href={`/dashboard/subjects/${subject.id}`} className="block">
+                        <p className={clsx(
+                          "font-medium truncate hover:underline",
+                          isAssigned ? "text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"
+                        )}>
+                          {subject.name_en}
+                        </p>
+                      </Link>
                       {subject.name_mr && (
                         <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                           {subject.name_mr}
@@ -410,7 +417,7 @@ export function ClassLevelSubjectEditor({
                       <button
                         onClick={() => handleRemoveSubject(subject)}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                        className="flex items-center gap-1.5 rounded-lg bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger-700 transition-colors hover:bg-danger-100 disabled:opacity-50 dark:bg-danger-900/30 dark:text-danger-400 dark:hover:bg-danger-900/50"
                       >
                         <X className="h-3.5 w-3.5" />
                         Remove
@@ -419,7 +426,7 @@ export function ClassLevelSubjectEditor({
                       <button
                         onClick={() => handleAddSubject(subject)}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                        className="flex items-center gap-1.5 rounded-lg bg-success-50 px-3 py-1.5 text-sm font-medium text-success-700 transition-colors hover:bg-success-100 disabled:opacity-50 dark:bg-success-900/30 dark:text-success-400 dark:hover:bg-success-900/50"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add
@@ -435,9 +442,9 @@ export function ClassLevelSubjectEditor({
 
       {/* Empty State */}
       {categoriesWithSubjects.length === 0 && standaloneSubjects.length === 0 && (
-        <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 px-4 py-3 dark:bg-green-900/20">
-          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-          <p className="text-sm font-medium text-green-700 dark:text-green-400">
+        <div className="flex items-center justify-center gap-2 rounded-xl bg-success-50 px-4 py-3 dark:bg-success-900/20">
+          <CheckCircle2 className="h-5 w-5 text-success-600 dark:text-success-400" />
+          <p className="text-sm font-medium text-success-700 dark:text-success-400">
             All available subjects have been assigned!
           </p>
         </div>

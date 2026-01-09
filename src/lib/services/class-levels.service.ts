@@ -7,7 +7,8 @@
 
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc } from 'drizzle-orm';
-import { classLevels, subjectClassMappings, type ClassLevel } from '@/db/schema';
+import { classLevels, subjectClassMappings, subjects, scheduledExams, profiles, examStructures, exams, type ClassLevel } from '@/db/schema';
+import { count, or, sql } from 'drizzle-orm';
 
 export class ClassLevelsService {
   /**
@@ -16,7 +17,8 @@ export class ClassLevelsService {
   static async getAll() {
     const db = await dbService.getDb();
 
-    return db
+    // Fetch class levels with their subject mappings
+    const results = await db
       .select({
         id: classLevels.id,
         nameEn: classLevels.nameEn,
@@ -25,25 +27,165 @@ export class ClassLevelsService {
         descriptionEn: classLevels.descriptionEn,
         descriptionMr: classLevels.descriptionMr,
         orderIndex: classLevels.orderIndex,
+        subjectMapping: {
+          id: subjectClassMappings.id,
+          subjectId: subjectClassMappings.subjectId,
+          isActive: subjectClassMappings.isActive,
+        },
+        subject: {
+          id: subjects.id,
+          nameEn: subjects.nameEn,
+          nameMr: subjects.nameMr,
+          slug: subjects.slug,
+        }
       })
       .from(classLevels)
+      .leftJoin(subjectClassMappings, and(
+        eq(subjectClassMappings.classLevelId, classLevels.id),
+        eq(subjectClassMappings.isActive, true)
+      ))
+      .leftJoin(subjects, eq(subjectClassMappings.subjectId, subjects.id))
       .where(eq(classLevels.isActive, true))
       .orderBy(asc(classLevels.orderIndex));
+
+    // Fetch exam counts separately to avoid Cartesian product/fan-out issues
+    const examCounts = await db
+      .select({
+        classLevelId: scheduledExams.classLevelId,
+        count: count(scheduledExams.id),
+      })
+      .from(scheduledExams)
+      .where(eq(scheduledExams.isActive, true))
+      .groupBy(scheduledExams.classLevelId);
+
+    const examCountMap = new Map(examCounts.map(e => [e.classLevelId, e.count]));
+
+    // Aggregate results
+    const classLevelMap = new Map<string, any>();
+
+    for (const row of results) {
+      if (!classLevelMap.has(row.id)) {
+        classLevelMap.set(row.id, {
+          id: row.id,
+          nameEn: row.nameEn,
+          nameMr: row.nameMr,
+          slug: row.slug,
+          descriptionEn: row.descriptionEn,
+          descriptionMr: row.descriptionMr,
+          orderIndex: row.orderIndex,
+          subjects: [],
+          examCount: examCountMap.get(row.id) || 0,
+        });
+      }
+
+      if (row.subject && row.subjectMapping?.isActive) {
+        classLevelMap.get(row.id).subjects.push(row.subject);
+      }
+    }
+
+    return Array.from(classLevelMap.values());
   }
 
   /**
-   * Get class level by slug
+   * Get class level stats (students, blueprints, exams, attempts)
+   */
+  static async getStats(classLevelId: string, slug?: string, nameEn?: string) {
+    const db = await dbService.getDb();
+
+    // 1. Student Count
+    // We try to match by ID, Slug, or Name (legacy)
+    const conditions = [];
+    if (slug) conditions.push(eq(profiles.classLevel, slug));
+    if (nameEn) conditions.push(eq(profiles.classLevel, nameEn));
+    // Also try to match by ID if profiles stores ID (future proofing)
+    conditions.push(eq(profiles.classLevel, classLevelId));
+
+    const studentCountQuery = db
+      .select({ count: profiles.id })
+      .from(profiles)
+      .where(
+        and(
+          eq(profiles.role, 'student'),
+          eq(profiles.isActive, true),
+          or(...conditions)
+        )
+      );
+
+    // 2. Exam Structures (Blueprints)
+    const structuresCountQuery = db
+      .select({ count: examStructures.id })
+      .from(examStructures)
+      .where(
+        and(
+          eq(examStructures.classLevelId, classLevelId),
+          eq(examStructures.isActive, true)
+        )
+      );
+
+    // 3. Scheduled Exams
+    const scheduledExamsCountQuery = db
+      .select({ count: scheduledExams.id })
+      .from(scheduledExams)
+      .where(
+        and(
+          eq(scheduledExams.classLevelId, classLevelId),
+          // We count all non-cancelled exams for stats
+          // Optionally filtering by status in the future
+        )
+      );
+
+    // 4. Exam Attempts (via Scheduled Exams)
+    // We need to join exams -> scheduledExams -> filter by classLevelId
+    const attemptsCountQuery = db
+      .select({ count: exams.id })
+      .from(exams)
+      .innerJoin(scheduledExams, eq(exams.scheduledExamId, scheduledExams.id))
+      .where(eq(scheduledExams.classLevelId, classLevelId));
+
+    const [students, structures, scheduled, attempts] = await Promise.all([
+      studentCountQuery,
+      structuresCountQuery,
+      scheduledExamsCountQuery,
+      attemptsCountQuery
+    ]);
+
+    return {
+      studentCount: students.length,
+      examStructureCount: structures.length,
+      scheduledExamCount: scheduled.length,
+      examAttemptCount: attempts.length
+    };
+  }
+
+  /**
+   * Get class level by slug with stats
    */
   static async getBySlug(slug: string) {
     const db = await dbService.getDb();
 
+    // Use LOWER() for case-insensitive matching
     const [classLevel] = await db
       .select()
       .from(classLevels)
-      .where(and(eq(classLevels.slug, slug), eq(classLevels.isActive, true)))
+      .where(
+        and(
+          sql`LOWER(${classLevels.slug}) = ${slug.toLowerCase()}`,
+          eq(classLevels.isActive, true)
+        )
+      )
       .limit(1);
 
-    return classLevel || null;
+    if (!classLevel) {
+      return null;
+    }
+
+    // Fetch stats
+    const stats = await this.getStats(classLevel.id, classLevel.slug, classLevel.nameEn);
+
+    return {
+      ...classLevel,
+      ...stats
+    };
   }
 
   /**

@@ -25,6 +25,11 @@ export interface ExamAttempt {
   scheduled_exams: {
     id: string;
     name_en: string;
+    class_levels?: {
+      id: string;
+      name_en: string;
+      slug: string;
+    } | null;
   } | null;
 }
 

@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from "react";
 import { clsx } from "clsx";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ClipboardList,
   Clock,
@@ -56,6 +56,11 @@ export interface ExamAttempt {
   scheduled_exams: {
     id: string;
     name_en: string;
+    class_levels?: {
+      id: string;
+      name_en: string;
+      slug: string;
+    } | null;
   } | null;
 }
 
@@ -68,29 +73,29 @@ interface ExamAttemptsClientProps {
 // ============================================
 // Status Configuration
 // ============================================
-const statusConfig: Record<string, { 
-  label: string; 
+const statusConfig: Record<string, {
+  label: string;
   icon: React.ElementType;
   color: string;
   bgColor: string;
   dotColor: string;
 }> = {
-  completed: { 
-    label: "Completed", 
+  completed: {
+    label: "Completed",
     icon: CheckCircle2,
     color: "text-success-600 dark:text-success-400",
     bgColor: "bg-success-50 dark:bg-success-900/30",
     dotColor: "bg-success-500"
   },
-  in_progress: { 
-    label: "In Progress", 
+  in_progress: {
+    label: "In Progress",
     icon: Clock,
     color: "text-warning-600 dark:text-warning-400",
     bgColor: "bg-warning-50 dark:bg-warning-900/30",
     dotColor: "bg-warning-500"
   },
-  abandoned: { 
-    label: "Abandoned", 
+  abandoned: {
+    label: "Abandoned",
     icon: AlertCircle,
     color: "text-error-600 dark:text-error-400",
     bgColor: "bg-error-50 dark:bg-error-900/30",
@@ -98,8 +103,8 @@ const statusConfig: Record<string, {
   },
 };
 
-const defaultStatus = { 
-  label: "Unknown", 
+const defaultStatus = {
+  label: "Unknown",
   icon: ClipboardList,
   color: "text-neutral-500",
   bgColor: "bg-neutral-100 dark:bg-neutral-800",
@@ -109,16 +114,16 @@ const defaultStatus = {
 // ============================================
 // Stat Card Component
 // ============================================
-function StatCard({ 
-  value, 
-  label, 
-  icon: Icon, 
+function StatCard({
+  value,
+  label,
+  icon: Icon,
   color,
   active,
-  onClick 
-}: { 
-  value: number | string; 
-  label: string; 
+  onClick
+}: {
+  value: number | string;
+  label: string;
   icon: React.ElementType;
   color: "primary" | "success" | "warning" | "insight" | "neutral";
   active?: boolean;
@@ -162,8 +167,8 @@ function StatCard({
         "group relative w-full overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200",
         "bg-white/70 backdrop-blur-sm dark:bg-neutral-900/70",
         onClick && "cursor-pointer",
-        active 
-          ? `border-transparent ring-2 ${classes.ring}` 
+        active
+          ? `border-transparent ring-2 ${classes.ring}`
           : "border-neutral-200/50 hover:border-neutral-300 dark:border-neutral-700/50 dark:hover:border-neutral-600"
       )}
     >
@@ -192,10 +197,10 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+
   // Delete state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | "bulk" | null>(null);
@@ -254,7 +259,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
         router.refresh();
       }
     }
-    
+
     setDeleteModalOpen(false);
     setDeleteTarget(null);
   };
@@ -279,9 +284,17 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
     };
   }, [exams]);
 
+  const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
+
   // Filter exams
   const filteredExams = useMemo(() => {
     return exams.filter((exam) => {
+      // Class Level filter (from URL)
+      if (classLevelId && exam.scheduled_exams?.class_levels?.id !== classLevelId) {
+        return false;
+      }
+
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -300,7 +313,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
 
       return true;
     });
-  }, [exams, searchQuery, statusFilter, subjectFilter]);
+  }, [exams, searchQuery, statusFilter, subjectFilter, classLevelId]);
 
   const activeFiltersCount = [statusFilter, subjectFilter].filter(Boolean).length;
 
@@ -464,9 +477,9 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
       {showFilters && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-            onClick={() => setShowFilters(false)} 
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowFilters(false)}
           />
 
           {/* Dialog */}
@@ -613,8 +626,8 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
             searchQuery || activeFiltersCount > 0
               ? "Try adjusting your search or filters to find what you're looking for."
               : isStudent
-              ? "Your exam history will appear here when you take exams."
-              : "When students take exams, their attempts will appear here."
+                ? "Your exam history will appear here when you take exams."
+                : "When students take exams, their attempts will appear here."
           }
           action={
             (searchQuery || activeFiltersCount > 0) ? (
@@ -671,7 +684,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
             </div>
 
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-              {deleteTarget === "bulk" 
+              {deleteTarget === "bulk"
                 ? `Are you sure you want to delete ${selectedIds.size} exam attempt(s)? This will permanently remove all student answers and scores from the system.`
                 : "Are you sure you want to delete this exam attempt? This will permanently remove the student's answers and score from the system."
               }

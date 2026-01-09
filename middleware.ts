@@ -67,14 +67,13 @@ export async function middleware(request: NextRequest) {
   const isAllowed = userRole && allowedRoles.includes(userRole);
 
   // If authenticated but not an allowed role (e.g. student), force logout or show 403
-  // For now, we will redirect them to login with an error or just clear session (by not proceeding)
-  // But standard pattern is to redirect to a "not authorized" page or back to login
   if (user && !isAllowed && !isPublicRoute) {
-     // Optional: Sign them out or redirect to a specific error page. 
-     // For simplicity and security, redirect to login.
-     const url = request.nextUrl.clone();
-     url.pathname = "/login";
-     return NextResponse.redirect(url);
+    // Redirect to login with error message
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("error", "access_denied");
+    url.searchParams.set("reason", "unauthorized_role");
+    return NextResponse.redirect(url);
   }
 
   // If authenticated (and allowed) and trying to access login/signup, redirect to dashboard

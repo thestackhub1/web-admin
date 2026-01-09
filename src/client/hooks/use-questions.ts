@@ -20,6 +20,10 @@ export interface Question {
   created_by?: string | null;
   created_at?: string;
   updated_at?: string;
+  subject?: {
+    slug: string;
+    name: string;
+  };
 }
 
 export function useQuestions(
@@ -37,10 +41,38 @@ export function useQuestions(
     if (filters?.difficulty) params.append('difficulty', filters.difficulty);
     if (filters?.type) params.append('type', filters.type);
     if (filters?.limit) params.append('limit', filters.limit.toString());
-    
+
     const url = params.toString()
       ? `/api/v1/subjects/${subject}/questions?${params.toString()}`
       : `/api/v1/subjects/${subject}/questions`;
+    return api.get<Question[]>(url);
+  });
+}
+
+export function useAllQuestions(
+  filters?: {
+    subject?: string;
+    difficulty?: string;
+    type?: string;
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }
+) {
+  return useApi<Question[]>(async () => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.type) params.append('questionType', filters.type); // ensure consistency with API param name
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.offset) params.append('offset', filters.offset.toString());
+
+    const url = params.toString()
+      ? `/api/v1/questions?${params.toString()}`
+      : `/api/v1/questions`;
     return api.get<Question[]>(url);
   });
 }
