@@ -21,7 +21,7 @@ import {
   ProgressRing,
   InsightPanel,
 } from '@/client/components/ui/kpi-cards';
-import { LoaderSpinner } from '@/client/components/ui/loader';
+import { LoaderSpinner, PageLoader } from '@/client/components/ui/loader';
 import {
   useDashboardStats,
   useKpiMetrics,
@@ -168,11 +168,7 @@ export function AnalyticsClient() {
   const chapterPerformance: Array<{ chapterName: string; subjectName: string; accuracy: number }> = [];
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <LoaderSpinner />
-      </div>
-    );
+    return <PageLoader message="Loading analytics and performance metrics..." />;
   }
 
   const {

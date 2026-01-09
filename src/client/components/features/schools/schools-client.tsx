@@ -14,6 +14,7 @@ import {
   DataTableRow,
   DataTableCell
 } from '@/client/components/ui/premium';
+import { PageLoader } from "@/client/components/ui/loader";
 import {
   Search,
   Building2,
@@ -213,15 +214,11 @@ export function SchoolsClient() {
               </DataTableHead>
               <DataTableBody>
                 {isLoading && schools.length === 0 ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <DataTableRow key={i}>
-                      <DataTableCell><div className="h-4 w-48 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded" /></DataTableCell>
-                      <DataTableCell><div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded" /></DataTableCell>
-                      <DataTableCell><div className="h-4 w-12 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded" /></DataTableCell>
-                      <DataTableCell><div className="h-6 w-20 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-full" /></DataTableCell>
-                      <DataTableCell />
-                    </DataTableRow>
-                  ))
+                  <DataTableRow>
+                    <DataTableCell colSpan={5}>
+                      <PageLoader message="Loading schools..." />
+                    </DataTableCell>
+                  </DataTableRow>
                 ) : (
                   schools.map((school) => (
                     <DataTableRow

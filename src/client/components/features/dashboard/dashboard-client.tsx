@@ -13,7 +13,7 @@
 
 import { useDashboardStats, useKpiMetrics } from '@/client/hooks/use-analytics';
 import { useRecentActivity } from '@/client/hooks/use-exams';
-import { LoadingComponent } from '@/client/components/ui/loader';
+import { LoadingComponent, PageLoader } from '@/client/components/ui/loader';
 import {
   DashboardHero,
   DashboardStatsGrid,
@@ -30,11 +30,7 @@ export function DashboardClient() {
   const safeRecentActivity = recentActivity || [];
 
   if (statsLoading || kpisLoading || activityLoading) {
-    return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center p-8">
-        <LoadingComponent size="lg" message="Loading dashboard insights..." />
-      </div>
-    );
+    return <PageLoader message="Loading dashboard insights..." />;
   }
 
   const statsData = stats || {

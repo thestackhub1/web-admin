@@ -14,7 +14,7 @@ import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableH
 import { SmartFilterChips } from '@/client/components/ui/question-components';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
-import { LoadingComponent } from '@/client/components/ui/loader';
+import { LoadingComponent, PageLoader } from '@/client/components/ui/loader';
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/client/utils";
@@ -165,9 +165,7 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
 
         {/* Table Content */}
         {loading && users.length === 0 ? (
-          <div className="py-20 flex justify-center">
-            <LoadingComponent size="lg" />
-          </div>
+          <PageLoader message="Loading users..." />
         ) : users.length === 0 ? (
           <div className="p-8">
             <EmptyState

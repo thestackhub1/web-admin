@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from '@/client/components/ui/button';
 import { useExamStructures } from '@/client/hooks/use-exam-structures';
 import { useSubjects } from '@/client/hooks/use-subjects';
-import { LoaderSpinner } from '@/client/components/ui/loader';
+import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
 import { useMemo } from 'react';
 
 const subjectColors: Record<string, { bg: string; text: string; gradient: string; icon: React.ElementType }> = {
@@ -45,7 +45,7 @@ export function ExamStructuresClient() {
   // Enhance structures with subject information
   const structuresWithSubjects = useMemo(() => {
     if (!structures || !subjects) return [];
-    
+
     return structures.map((structure) => {
       const subject = subjects.find((s) => s.id === structure.subject_id);
       return {
@@ -58,17 +58,17 @@ export function ExamStructuresClient() {
   // Filter structures based on search params
   const filteredStructures = useMemo(() => {
     let filtered = structuresWithSubjects;
-    
+
     if (subjectFilter && subjectFilter !== "all") {
       filtered = filtered.filter((s: any) => s.subjects?.slug === subjectFilter);
     }
-    
+
     if (statusFilter === "active") {
       filtered = filtered.filter((s: any) => s.is_active);
     } else if (statusFilter === "draft") {
       filtered = filtered.filter((s: any) => !s.is_active);
     }
-    
+
     return filtered;
   }, [structuresWithSubjects, subjectFilter, statusFilter]);
 
@@ -87,11 +87,7 @@ export function ExamStructuresClient() {
 
   // Early return after all hooks
   if (isLoadingStructures || isLoadingSubjects) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderSpinner />
-      </div>
-    );
+    return <PageLoader message="Loading exam structures..." />;
   }
 
   return (
@@ -165,8 +161,8 @@ export function ExamStructuresClient() {
               <Link
                 href="/dashboard/exam-structures"
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${!subjectFilter || subjectFilter === "all"
-                    ? "bg-linear-to-r from-brand-blue-500 to-brand-purple-500 text-white shadow-lg shadow-brand-blue-500/25"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-linear-to-r from-brand-blue-500 to-brand-purple-500 text-white shadow-lg shadow-brand-blue-500/25"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   }`}
               >
                 <BookOpen className="h-4 w-4" />
@@ -183,15 +179,15 @@ export function ExamStructuresClient() {
                     key={subject.id}
                     href={`/dashboard/exam-structures?subject=${subject.slug}${statusFilter ? `&status=${statusFilter}` : ""}`}
                     className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${subjectFilter === subject.slug
-                        ? `bg-linear-to-r ${colors.gradient} text-white shadow-lg`
-                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                      ? `bg-linear-to-r ${colors.gradient} text-white shadow-lg`
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                       }`}
                   >
                     <colors.icon className="h-4 w-4" />
                     {subject.name_en}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${subjectFilter === subject.slug
-                        ? "bg-white/20 text-white"
-                        : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
+                      ? "bg-white/20 text-white"
+                      : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
                       }`}>
                       {count}
                     </span>
@@ -213,8 +209,8 @@ export function ExamStructuresClient() {
               <Link
                 href={`/dashboard/exam-structures${subjectFilter ? `?subject=${subjectFilter}` : ""}`}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${!statusFilter
-                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   }`}
               >
                 All
@@ -222,8 +218,8 @@ export function ExamStructuresClient() {
               <Link
                 href={`/dashboard/exam-structures?${subjectFilter ? `subject=${subjectFilter}&` : ""}status=active`}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${statusFilter === "active"
-                    ? "bg-green-600 text-white shadow-lg shadow-green-600/25"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-green-600 text-white shadow-lg shadow-green-600/25"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   }`}
               >
                 <span className="h-2 w-2 rounded-full bg-current" />
@@ -232,8 +228,8 @@ export function ExamStructuresClient() {
               <Link
                 href={`/dashboard/exam-structures?${subjectFilter ? `subject=${subjectFilter}&` : ""}status=draft`}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${statusFilter === "draft"
-                    ? "bg-neutral-600 text-white shadow-lg"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-neutral-600 text-white shadow-lg"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   }`}
               >
                 <span className="h-2 w-2 rounded-full bg-current" />

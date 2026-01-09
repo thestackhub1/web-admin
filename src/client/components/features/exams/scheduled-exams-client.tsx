@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
+import { PageLoader, LoadingComponent } from '@/client/components/ui/loader';
 import { useScheduledExams } from '@/client/hooks/use-scheduled-exams';
 import { useClassLevels } from '@/client/hooks/use-class-levels';
 import { useSubjects } from '@/client/hooks/use-subjects';
@@ -57,9 +58,13 @@ export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClas
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Use hooks to fetch data
-  const { data: hookExams, execute: refetchExams } = useScheduledExams({ status: 'all' });
-  const { data: hookClassLevels } = useClassLevels();
-  const { data: hookSubjects } = useSubjects();
+  const { data: hookExams, execute: refetchExams, loading: examsLoading } = useScheduledExams({ status: 'all' });
+  const { data: hookClassLevels, loading: clLoading } = useClassLevels();
+  const { data: hookSubjects, loading: sLoading } = useSubjects();
+
+  const isInitialLoading = (examsLoading && (!hookExams || hookExams.length === 0)) ||
+    (clLoading && (!hookClassLevels || hookClassLevels.length === 0)) ||
+    (sLoading && (!hookSubjects || hookSubjects.length === 0));
 
   // Callback for when a new exam is created
   const handleExamCreated = useCallback(() => {
@@ -143,6 +148,10 @@ export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClas
   const classLevelsList = useMemo(() => classLevels.map(cl => ({ value: cl.id, label: cl.name_en })), [classLevels]);
   const subjectsList = useMemo(() => subjects.map(s => ({ value: s.id, label: s.name_en })), [subjects]);
 
+
+  if (isInitialLoading) {
+    return <PageLoader message="Loading scheduled exams..." />;
+  }
 
   return (
     <div className="space-y-6">

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useClassLevels, useDeleteClassLevel, ClassLevel } from '@/client/hooks/use-class-levels';
 import { useSubjects } from '@/client/hooks/use-subjects';
 import { useScheduledExams } from '@/client/hooks/use-scheduled-exams';
-import { LoaderSpinner } from '@/client/components/ui/loader';
+import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
 import { Button } from "@/client/components/ui/button";
 import { ClassLevelModal } from "./class-level-modals";
 
@@ -42,11 +42,7 @@ export function ClassLevelsClient() {
   };
 
   if (isLoadingLevels) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderSpinner />
-      </div>
-    );
+    return <PageLoader message="Loading class levels..." />;
   }
 
   // Calculate stats

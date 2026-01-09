@@ -17,7 +17,7 @@ import { useSubjects, useSubjectStats } from '@/client/hooks/use-subjects';
 import { useSubjectChildren } from '@/client/hooks/use-subjects';
 import { useChaptersBySubject } from '@/client/hooks/use-chapters';
 import { useQuestions } from '@/client/hooks/use-questions';
-import { LoaderSpinner } from '@/client/components/ui/loader';
+import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
 import { useMemo } from 'react';
 
 export function SubjectsClient() {
@@ -39,11 +39,7 @@ export function SubjectsClient() {
   }, [topLevelSubjects]);
 
   if (isLoadingSubjects || isLoadingStats) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderSpinner />
-      </div>
-    );
+    return <PageLoader message="Loading subjects and statistics..." />;
   }
 
   // Show error if API failed
