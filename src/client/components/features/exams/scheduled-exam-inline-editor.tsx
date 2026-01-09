@@ -246,7 +246,7 @@ export function ScheduledExamInlineEditor({
 
         {/* Blueprint Section */}
         {examStructure && (
-          <div className="rounded-xl overflow-hidden bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-900/30 p-4">
+          <div className="rounded-xl overflow-hidden bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-900/30 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 center rounded-lg bg-white dark:bg-emerald-900/40 text-emerald-600 shadow-sm">

@@ -35,7 +35,7 @@ export function useClassLevels() {
 export function useClassLevel(slug: string) {
   return useApi<ClassLevel>(async () => {
     return api.get<ClassLevel>(`/api/v1/class-levels/${slug}`);
-  });
+  }, true);
 }
 
 // ============================================
@@ -72,7 +72,7 @@ export function useClassLevelSubjects(slug: string) {
     slug: string;
   }>>(async () => {
     return api.get(`/api/v1/class-levels/${slug}/subjects`);
-  });
+  }, true);
 }
 
 export function useClassLevelScheduledExams(slug: string, subjectId?: string) {
@@ -81,7 +81,7 @@ export function useClassLevelScheduledExams(slug: string, subjectId?: string) {
       ? `/api/v1/class-levels/${slug}/scheduled-exams?subject_id=${subjectId}`
       : `/api/v1/class-levels/${slug}/scheduled-exams`;
     return api.get(url);
-  });
+  }, true);
 }
 
 // ============================================

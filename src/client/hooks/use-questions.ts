@@ -60,11 +60,14 @@ export function useAllQuestions(
     offset?: number;
   }
 ) {
+  // Build a dependency key from all filter values so hook re-fetches when filters change
+  const dependencyKey = JSON.stringify(filters);
+  
   return useApi<Question[]>(async () => {
     const params = new URLSearchParams();
     if (filters?.subject) params.append('subject', filters.subject);
     if (filters?.difficulty) params.append('difficulty', filters.difficulty);
-    if (filters?.type) params.append('questionType', filters.type); // ensure consistency with API param name
+    if (filters?.type) params.append('questionType', filters.type);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.search) params.append('search', filters.search);
     if (filters?.limit) params.append('limit', filters.limit.toString());
@@ -73,8 +76,8 @@ export function useAllQuestions(
     const url = params.toString()
       ? `/api/v1/questions?${params.toString()}`
       : `/api/v1/questions`;
-    return api.get<Question[]>(url);
-  });
+    return await api.get<Question[]>(url);
+  }, { autoExecute: true, dependencyKey });
 }
 
 export function useQuestionCountsByChapter(subject: string, chapterId: string) {

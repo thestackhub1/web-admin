@@ -1,6 +1,5 @@
-import { getSubjects } from "@/client/services";
+import { getSubjects, getClassLevels } from "@/client/services";
 import { ExamStructureEditor } from '@/client/components/features/exams/exam-structure-editor';
-import { PageHeader } from '@/client/components/ui/premium';
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,21 +7,18 @@ export const metadata: Metadata = {
 };
 
 export default async function NewExamStructurePage() {
-    const subjects = await getSubjects();
+    const [subjects, classLevels] = await Promise.all([
+        getSubjects(),
+        getClassLevels(),
+    ]);
 
     return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Create Exam Structure"
-                description="Define a new exam blueprint with sections and rules"
-                breadcrumbs={[
-                    { label: "Dashboard", href: "/dashboard" },
-                    { label: "Exam Structures", href: "/dashboard/exam-structures" },
-                    { label: "New" },
-                ]}
+        <div className="space-y-6 animate-in fade-in duration-500">
+            <ExamStructureEditor 
+                subjects={subjects} 
+                classLevelsList={classLevels}
+                mode="create" 
             />
-
-            <ExamStructureEditor subjects={subjects} mode="create" />
         </div>
     );
 }

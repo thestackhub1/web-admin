@@ -1,7 +1,7 @@
-import { isAuthenticated } from "@/lib/api";
+import { isAuthenticated, authServerApi } from "@/lib/api";
 import { getUsers, getSchoolById, getUserStats, checkAdminAccess } from "@/client/services";
 import { GlassCard, PageHeader, Badge } from '@/client/components/ui/premium';
-import { Users, Shield, GraduationCap, BookOpen, Building2, X } from "lucide-react";
+import { Users, Shield, GraduationCap, BookOpen, Building2, X, Layers } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { UsersClient } from '@/client/components/features/users/users-client';
@@ -16,12 +16,26 @@ interface PageProps {
     schoolId?: string;
     role?: string;
     search?: string;
+    classLevelId?: string;
   }>;
+}
+
+// Helper to fetch class level info
+async function getClassLevelById(id: string) {
+  const { data, error } = await authServerApi.get<{
+    id: string;
+    nameEn: string;
+    nameMr: string;
+    slug: string;
+  }>(`/api/v1/class-levels/${id}`);
+
+  if (error || !data) return null;
+  return data;
 }
 
 export default async function UsersPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const { schoolId, role, search } = params;
+  const { schoolId, role, search, classLevelId } = params;
 
   if (!(await isAuthenticated())) {
     redirect("/login");
@@ -34,18 +48,25 @@ export default async function UsersPage({ searchParams }: PageProps) {
   }
 
   // Fetch data in parallel
-  const [users, stats, school] = await Promise.all([
-    getUsers({ schoolId, role, search }),
+  const [users, stats, school, classLevel] = await Promise.all([
+    getUsers({ schoolId, role, search, classLevelId }),
     getUserStats({ schoolId, search }),
     schoolId ? getSchoolById(schoolId) : Promise.resolve(null),
+    classLevelId ? getClassLevelById(classLevelId) : Promise.resolve(null),
   ]);
   const totalUsers = stats.admins + stats.teachers + stats.students;
 
   // Build page title and description based on filter
-  const pageTitle = school ? `Students at ${school.name}` : "Users";
-  const pageDescription = school
-    ? `View and manage students from ${school.name}`
-    : "Manage user accounts and permissions";
+  let pageTitle = "Users";
+  let pageDescription = "Manage user accounts and permissions";
+  
+  if (school) {
+    pageTitle = `Students at ${school.name}`;
+    pageDescription = `View and manage students from ${school.name}`;
+  } else if (classLevel) {
+    pageTitle = `Students in ${classLevel.nameEn}`;
+    pageDescription = `View and manage students enrolled in ${classLevel.nameEn}`;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -55,21 +76,33 @@ export default async function UsersPage({ searchParams }: PageProps) {
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           ...(school ? [{ label: "Schools", href: "/dashboard/schools" }] : []),
-          { label: school ? school.name : "Users" },
+          ...(classLevel ? [{ label: "Class Levels", href: "/dashboard/class-levels" }] : []),
+          { label: school ? school.name : classLevel ? classLevel.nameEn : "Users" },
         ]}
       />
 
       {/* Active Filters */}
-      {school && (
-        <div className="flex items-center gap-2">
+      {(school || classLevel) && (
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-neutral-500 dark:text-neutral-400">Filtering by:</span>
-          <Link href="/dashboard/users">
-            <Badge variant="info" className="gap-1.5 cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors">
-              <Building2 className="h-3 w-3" />
-              {school.name}
-              <X className="h-3 w-3 ml-1" />
-            </Badge>
-          </Link>
+          {school && (
+            <Link href="/dashboard/users">
+              <Badge variant="info" className="gap-1.5 cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors">
+                <Building2 className="h-3 w-3" />
+                {school.name}
+                <X className="h-3 w-3 ml-1" />
+              </Badge>
+            </Link>
+          )}
+          {classLevel && (
+            <Link href="/dashboard/users">
+              <Badge variant="info" className="gap-1.5 cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors">
+                <Layers className="h-3 w-3" />
+                {classLevel.nameEn}
+                <X className="h-3 w-3 ml-1" />
+              </Badge>
+            </Link>
+          )}
         </div>
       )}
 

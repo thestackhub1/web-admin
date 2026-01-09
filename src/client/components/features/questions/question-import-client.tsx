@@ -233,10 +233,10 @@ export function QuestionImportClient() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader
         title="Import Questions"
-        description="Upload PDF or CSV files to bulk import questions into the database"
+        description="Bulk import questions from PDF or CSV files"
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Questions", href: "/dashboard/questions" },
@@ -244,186 +244,247 @@ export function QuestionImportClient() {
         ]}
       />
 
-      {/* Step Indicator */}
-      <div className="flex items-center justify-center gap-4">
-        {[
-          { key: "upload", label: "Upload", icon: Upload },
-          { key: "processing", label: "Processing", icon: Loader },
-          { key: "review", label: "Review", icon: CheckCircle },
-        ].map((s, idx) => {
-          const Icon = s.icon;
-          const isActive = step === s.key;
-          const isCompleted = idx < (step === "upload" ? 0 : step === "processing" ? 1 : 2);
+      {/* Step Indicator - Compact & Modern */}
+      <div className="flex items-center justify-center">
+        <div className="inline-flex items-center gap-0 rounded-full bg-neutral-100 p-1 dark:bg-neutral-800">
+          {[
+            { key: "upload", label: "Upload", num: 1 },
+            { key: "processing", label: "Processing", num: 2 },
+            { key: "review", label: "Review", num: 3 },
+          ].map((s, idx) => {
+            const isActive = step === s.key;
+            const isCompleted = idx < (step === "upload" ? 0 : step === "processing" ? 1 : 2);
 
-          return (
-            <div key={s.key} className="flex items-center gap-2">
-              <div
-                className={`
-                  flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors
-                  ${isActive ? "border-brand-blue-500 bg-brand-blue-500 text-white" : ""}
-                  ${isCompleted ? "border-green-500 bg-green-500 text-white" : "border-neutral-300 text-neutral-400"}
-                `}
-              >
-                <Icon className={`h-5 w-5 ${isActive && s.key === "processing" ? "animate-spin-slow" : ""}`} />
+            return (
+              <div key={s.key} className="flex items-center">
+                <div
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
+                    ${isActive ? "bg-white shadow-sm text-neutral-900 dark:bg-neutral-700 dark:text-white" : ""}
+                    ${isCompleted ? "text-success-600 dark:text-success-400" : "text-neutral-500"}
+                    ${!isActive && !isCompleted ? "text-neutral-400" : ""}
+                  `}
+                >
+                  <span className={`
+                    flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold
+                    ${isActive ? "bg-primary-500 text-white" : ""}
+                    ${isCompleted ? "bg-success-500 text-white" : ""}
+                    ${!isActive && !isCompleted ? "bg-neutral-300 text-neutral-600 dark:bg-neutral-600 dark:text-neutral-300" : ""}
+                  `}>
+                    {isCompleted ? "✓" : s.num}
+                  </span>
+                  <span className="hidden sm:inline">{s.label}</span>
+                </div>
               </div>
-              <span
-                className={`text-sm font-medium ${isActive ? "text-brand-blue-600 dark:text-brand-blue-400" : "text-neutral-500"}`}
-              >
-                {s.label}
-              </span>
-              {idx < 2 && <div className="h-px w-16 bg-neutral-300" />}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Upload Step */}
       {step === "upload" && (
-        <GlassCard>
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Upload File</h2>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                Select a PDF or CSV/Excel file to import questions
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Import Type Selection */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => setImportType("pdf")}
+              className={`
+                relative rounded-xl border-2 p-5 text-left transition-all
+                ${importType === "pdf"
+                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500/20"
+                  : "border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-600"
+                }
+              `}
+            >
+              {importType === "pdf" && (
+                <div className="absolute top-3 right-3">
+                  <CheckCircle className="h-5 w-5 text-primary-500" />
+                </div>
+              )}
+              <FileText className={`h-8 w-8 ${importType === "pdf" ? "text-primary-500" : "text-neutral-400"}`} />
+              <p className="mt-3 text-sm font-semibold text-neutral-900 dark:text-white">PDF Import</p>
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Upload PDF exam papers with AI extraction
+              </p>
+            </button>
+            <button
+              onClick={() => setImportType("csv")}
+              className={`
+                relative rounded-xl border-2 p-5 text-left transition-all
+                ${importType === "csv"
+                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500/20"
+                  : "border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-600"
+                }
+              `}
+            >
+              {importType === "csv" && (
+                <div className="absolute top-3 right-3">
+                  <CheckCircle className="h-5 w-5 text-primary-500" />
+                </div>
+              )}
+              <Download className={`h-8 w-8 ${importType === "csv" ? "text-primary-500" : "text-neutral-400"}`} />
+              <p className="mt-3 text-sm font-semibold text-neutral-900 dark:text-white">CSV/Excel Import</p>
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Upload structured spreadsheet data
+              </p>
+            </button>
+          </div>
+
+          {/* Main Form Card */}
+          <GlassCard className="p-0! overflow-hidden">
+            {/* Form Header */}
+            <div className="border-b border-neutral-100 dark:border-neutral-800 px-6 py-4">
+              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+                {importType === "pdf" ? "PDF Import Settings" : "CSV Import Settings"}
+              </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Configure your import options
               </p>
             </div>
 
-            {/* Import Type Toggle */}
-            <div className="flex gap-4">
-              <button
-                onClick={() => setImportType("pdf")}
-                className={`flex-1 rounded-lg border-2 p-4 transition-colors ${importType === "pdf"
-                  ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
-                  : "border-neutral-200 dark:border-neutral-700"
-                  }`}
-              >
-                <FileText className="mx-auto h-8 w-8 text-brand-blue-500" />
-                <p className="mt-2 text-sm font-medium">PDF Import</p>
-                <p className="mt-1 text-xs text-neutral-500">Upload PDF exam papers</p>
-              </button>
-              <button
-                onClick={() => setImportType("csv")}
-                className={`flex-1 rounded-lg border-2 p-4 transition-colors ${importType === "csv"
-                  ? "border-brand-blue-500 bg-brand-blue-50 dark:bg-brand-blue-900/20"
-                  : "border-neutral-200 dark:border-neutral-700"
-                  }`}
-              >
-                <Download className="mx-auto h-8 w-8 text-brand-blue-500" />
-                <p className="mt-2 text-sm font-medium">CSV/Excel Import</p>
-                <p className="mt-1 text-xs text-neutral-500">Upload structured data</p>
-              </button>
-            </div>
-
-            {/* Subject Selection */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Subject <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={subjectSlug}
-                onChange={handleSubjectChange}
-                options={subjectOptions}
-                className="w-full"
-              />
-            </div>
-
-            {/* Batch Name */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Batch Name (Optional)
-              </label>
-              <TextInput
-                value={batchName}
-                onChange={(e) => setBatchName(e.target.value)}
-                placeholder="e.g., CCC_0101 Import"
-                className="w-full"
-              />
-            </div>
-
-            {/* AI Extraction Toggle (PDF only) */}
-            {importType === "pdf" && (
-              <>
-                {/* Use AI Extraction Toggle */}
-                <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-brand-blue-200 dark:border-brand-blue-800 bg-brand-blue-50 dark:bg-brand-blue-900/20">
-                  <input
-                    type="checkbox"
-                    id="useAI"
-                    checked={useAI}
-                    onChange={(e) => setUseAI(e.target.checked)}
-                    className="h-4 w-4 rounded border-neutral-300 text-brand-blue-600 focus:ring-brand-blue-500"
-                  />
-                  <label htmlFor="useAI" className="flex-1 cursor-pointer">
-                    <div className="text-sm font-medium text-neutral-900 dark:text-white">
-                      Use AI-Powered Extraction
-                    </div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                      Enable AI extraction for better accuracy with Marathi text and complex formats. Disable to use traditional parsing (faster but less accurate for Marathi).
-                    </div>
-                  </label>
-                </div>
-
-                {/* AI Model Selection (only shown when AI is enabled) */}
-                {useAI && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                        AI Model <span className="text-red-500">*</span>
-                      </label>
-                      <Select
-                        value={aiModel}
-                        onChange={setAiModel}
-                        options={aiModelOptions}
-                        className="w-full"
-                      />
-                      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                        Select the AI model for question extraction. GPT-4o is recommended for best Marathi support.
-                      </p>
-                    </div>
-
-                    {/* Scholarship Mode Toggle */}
-                    <div className="flex items-center gap-3 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
-                      <input
-                        type="checkbox"
-                        id="scholarshipMode"
-                        checked={scholarshipMode}
-                        onChange={(e) => setScholarshipMode(e.target.checked)}
-                        className="h-4 w-4 rounded border-neutral-300 text-brand-blue-600 focus:ring-brand-blue-500"
-                      />
-                      <label htmlFor="scholarshipMode" className="flex-1 cursor-pointer">
-                        <div className="text-sm font-medium text-neutral-900 dark:text-white">
-                          Maharashtra Scholarship Mode
-                        </div>
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                          Optimized for Maharashtra State Scholarship Exams (Class 5 & 8). Handles two-paper format, Marathi options (क, ख, ग, घ), and questions with two correct answers.
-                        </div>
-                      </label>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-
-            {/* File Upload */}
-            {importType === "pdf" ? (
-              <div className="space-y-4">
+            {/* Form Body */}
+            <div className="p-6 space-y-5">
+              {/* Subject Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                    PDF File <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                    Subject <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex-1 cursor-pointer">
-                      <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 p-8 hover:border-brand-blue-500 transition-colors">
+                  <Select
+                    value={subjectSlug}
+                    onChange={handleSubjectChange}
+                    options={subjectOptions}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                    Batch Name <span className="text-neutral-400 font-normal">(Optional)</span>
+                  </label>
+                  <TextInput
+                    value={batchName}
+                    onChange={(e) => setBatchName(e.target.value)}
+                    placeholder="e.g., CCC_0101 Import"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* AI Extraction Toggle (PDF only) */}
+              {importType === "pdf" && (
+                <div className="space-y-4">
+                  {/* AI Toggle */}
+                  <div className={`
+                    flex items-start gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer
+                    ${useAI 
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20" 
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
+                    }
+                  `} onClick={() => setUseAI(!useAI)}>
+                    <input
+                      type="checkbox"
+                      id="useAI"
+                      checked={useAI}
+                      onChange={(e) => setUseAI(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <label htmlFor="useAI" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                          AI-Powered Extraction
+                        </span>
+                        <Badge variant="success" size="sm">Recommended</Badge>
+                      </div>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                        Better accuracy with Marathi text and complex formats
+                      </p>
+                    </label>
+                  </div>
+
+                  {/* AI Model Selection */}
+                  {useAI && (
+                    <div className="pl-7 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                          AI Model
+                        </label>
+                        <Select
+                          value={aiModel}
+                          onChange={setAiModel}
+                          options={aiModelOptions}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Scholarship Mode */}
+                      <div className={`
+                        flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer
+                        ${scholarshipMode 
+                          ? "border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700" 
+                          : "border-neutral-200 dark:border-neutral-700"
+                        }
+                      `} onClick={() => setScholarshipMode(!scholarshipMode)}>
+                        <input
+                          type="checkbox"
+                          id="scholarshipMode"
+                          checked={scholarshipMode}
+                          onChange={(e) => setScholarshipMode(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <label htmlFor="scholarshipMode" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium text-neutral-900 dark:text-white">
+                            Maharashtra Scholarship Mode
+                          </span>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                            Optimized for Class 5 & 8 scholarship exams with Marathi options (क, ख, ग, घ)
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* File Upload */}
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  {importType === "pdf" ? "PDF File" : "CSV/Excel File"} <span className="text-red-500">*</span>
+                </label>
+                
+                {importType === "pdf" ? (
+                  <div className="space-y-3">
+                    {/* Main PDF Upload */}
+                    <label className="block cursor-pointer">
+                      <div className={`
+                        flex items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all
+                        ${pdfFile 
+                          ? "border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-900/20" 
+                          : "border-neutral-300 hover:border-primary-400 hover:bg-primary-50/50 dark:border-neutral-600 dark:hover:border-primary-500"
+                        }
+                      `}>
                         {pdfFile ? (
                           <div className="text-center">
-                            <FileText className="mx-auto h-12 w-12 text-green-500" />
-                            <p className="mt-2 text-sm font-medium">{pdfFile.name}</p>
-                            <p className="text-xs text-neutral-500">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <div className="flex items-center justify-center w-14 h-14 mx-auto rounded-xl bg-success-100 dark:bg-success-900/30">
+                              <FileText className="h-7 w-7 text-success-600 dark:text-success-400" />
+                            </div>
+                            <p className="mt-3 text-sm font-medium text-neutral-900 dark:text-white">{pdfFile.name}</p>
+                            <p className="text-xs text-neutral-500 mt-1">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <button
+                              onClick={(e) => { e.preventDefault(); setPdfFile(null); }}
+                              className="mt-2 text-xs text-red-500 hover:text-red-600 font-medium"
+                            >
+                              Remove file
+                            </button>
                           </div>
                         ) : (
                           <div className="text-center">
-                            <Upload className="mx-auto h-12 w-12 text-neutral-400" />
-                            <p className="mt-2 text-sm font-medium">Click to upload PDF</p>
-                            <p className="text-xs text-neutral-500">or drag and drop</p>
+                            <div className="flex items-center justify-center w-14 h-14 mx-auto rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                              <Upload className="h-7 w-7 text-neutral-400" />
+                            </div>
+                            <p className="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                              Drop your PDF here or <span className="text-primary-600">browse</span>
+                            </p>
+                            <p className="text-xs text-neutral-400 mt-1">Supports PDF files up to 50MB</p>
                           </div>
                         )}
                       </div>
@@ -434,26 +495,42 @@ export function QuestionImportClient() {
                         className="hidden"
                       />
                     </label>
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                    Answer Key PDF (Optional)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex-1 cursor-pointer">
-                      <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 p-6 hover:border-brand-blue-500 transition-colors">
-                        {answerKeyFile ? (
-                          <div className="text-center">
-                            <FileText className="mx-auto h-8 w-8 text-green-500" />
-                            <p className="mt-1 text-xs font-medium">{answerKeyFile.name}</p>
-                          </div>
-                        ) : (
-                          <div className="text-center">
-                            <Upload className="mx-auto h-8 w-8 text-neutral-400" />
-                            <p className="mt-1 text-xs text-neutral-500">Optional: Upload answer key</p>
-                          </div>
+                    {/* Answer Key (Optional) */}
+                    <label className="block cursor-pointer">
+                      <div className={`
+                        flex items-center gap-4 rounded-lg border p-4 transition-all
+                        ${answerKeyFile 
+                          ? "border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-900/20" 
+                          : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-700"
+                        }
+                      `}>
+                        <div className={`
+                          flex items-center justify-center w-10 h-10 rounded-lg
+                          ${answerKeyFile ? "bg-success-100 dark:bg-success-900/30" : "bg-neutral-100 dark:bg-neutral-800"}
+                        `}>
+                          <FileText className={`h-5 w-5 ${answerKeyFile ? "text-success-600" : "text-neutral-400"}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {answerKeyFile ? (
+                            <>
+                              <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{answerKeyFile.name}</p>
+                              <p className="text-xs text-neutral-500">Answer key attached</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Answer Key PDF</p>
+                              <p className="text-xs text-neutral-500">Optional - Click to upload</p>
+                            </>
+                          )}
+                        </div>
+                        {answerKeyFile && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); setAnswerKeyFile(null); }}
+                            className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                       <input
@@ -464,27 +541,38 @@ export function QuestionImportClient() {
                       />
                     </label>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  CSV/Excel File <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 p-8 hover:border-brand-blue-500 transition-colors">
+                ) : (
+                  <label className="block cursor-pointer">
+                    <div className={`
+                      flex items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all
+                      ${csvFile 
+                        ? "border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-900/20" 
+                        : "border-neutral-300 hover:border-primary-400 hover:bg-primary-50/50 dark:border-neutral-600 dark:hover:border-primary-500"
+                      }
+                    `}>
                       {csvFile ? (
                         <div className="text-center">
-                          <FileText className="mx-auto h-12 w-12 text-green-500" />
-                          <p className="mt-2 text-sm font-medium">{csvFile.name}</p>
-                          <p className="text-xs text-neutral-500">{(csvFile.size / 1024).toFixed(2)} KB</p>
+                          <div className="flex items-center justify-center w-14 h-14 mx-auto rounded-xl bg-success-100 dark:bg-success-900/30">
+                            <FileText className="h-7 w-7 text-success-600 dark:text-success-400" />
+                          </div>
+                          <p className="mt-3 text-sm font-medium text-neutral-900 dark:text-white">{csvFile.name}</p>
+                          <p className="text-xs text-neutral-500 mt-1">{(csvFile.size / 1024).toFixed(2)} KB</p>
+                          <button
+                            onClick={(e) => { e.preventDefault(); setCsvFile(null); }}
+                            className="mt-2 text-xs text-red-500 hover:text-red-600 font-medium"
+                          >
+                            Remove file
+                          </button>
                         </div>
                       ) : (
                         <div className="text-center">
-                          <Upload className="mx-auto h-12 w-12 text-neutral-400" />
-                          <p className="mt-2 text-sm font-medium">Click to upload CSV/Excel</p>
-                          <p className="text-xs text-neutral-500">or drag and drop</p>
+                          <div className="flex items-center justify-center w-14 h-14 mx-auto rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                            <Upload className="h-7 w-7 text-neutral-400" />
+                          </div>
+                          <p className="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            Drop your file here or <span className="text-primary-600">browse</span>
+                          </p>
+                          <p className="text-xs text-neutral-400 mt-1">Supports CSV and Excel files</p>
                         </div>
                       )}
                     </div>
@@ -495,25 +583,26 @@ export function QuestionImportClient() {
                       className="hidden"
                     />
                   </label>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Upload Button */}
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => router.back()}>
+            {/* Form Footer */}
+            <div className="border-t border-neutral-100 dark:border-neutral-800 px-6 py-4 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
+              <Button variant="ghost" onClick={() => router.back()}>
                 Cancel
               </Button>
               <Button
+                variant="primary"
                 onClick={handleUpload}
                 disabled={!((importType === "pdf" && pdfFile) || (importType === "csv" && csvFile))}
               >
                 <Upload className="mr-2 h-4 w-4" />
-                Process File
+                Process {importType === "pdf" ? "PDF" : "File"}
               </Button>
             </div>
-          </div>
-        </GlassCard>
+          </GlassCard>
+        </div>
       )}
 
       {/* Processing Step */}

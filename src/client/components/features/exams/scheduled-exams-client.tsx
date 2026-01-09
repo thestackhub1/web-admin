@@ -23,9 +23,9 @@ import {
   Kanban,
   Plus,
 } from "lucide-react";
-import { EmptyState } from '@/client/components/ui/premium';
+import { EmptyState, PageHeader } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
-import { PageLoader, LoadingComponent } from '@/client/components/ui/loader';
+import { PageLoader } from '@/client/components/ui/loader';
 import { useScheduledExams } from '@/client/hooks/use-scheduled-exams';
 import { useClassLevels } from '@/client/hooks/use-class-levels';
 import { useSubjects } from '@/client/hooks/use-subjects';
@@ -36,6 +36,7 @@ import { ScheduledExamsListView } from './scheduled-exams-list-view';
 import { ScheduledExamsGridView } from './scheduled-exams-grid-view';
 import { FilterDialog } from './filter-dialog';
 import { CreateScheduledExamModal } from './create-scheduled-exam-modal';
+import { ClassLevelFilterBadge, useClassLevelFilter } from '@/client/components/ui/class-level-filter-badge';
 import type { ScheduledExam } from './types';
 
 // ============================================
@@ -159,6 +160,28 @@ export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClas
   const classLevelsList = useMemo(() => classLevels.map(cl => ({ value: cl.id, label: cl.name_en })), [classLevels]);
   const subjectsList = useMemo(() => subjects.map(s => ({ value: s.id, label: s.name_en })), [subjects]);
 
+  // Get class level filter info for dynamic title
+  const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
+
+  // Dynamic page title and description based on filter
+  const pageTitle = hasClassLevelFilter && activeClassLevel 
+    ? `Scheduled Exams - ${activeClassLevel.name_en}` 
+    : "Scheduled Exams";
+  const pageDescription = hasClassLevelFilter && activeClassLevel
+    ? `Manage scheduled exams for ${activeClassLevel.name_en}`
+    : "Manage all scheduled exams across class levels and subjects";
+
+  // Build breadcrumbs based on filter
+  const breadcrumbs = useMemo(() => {
+    const crumbs: { label: string; href?: string }[] = [{ label: "Dashboard", href: "/dashboard" }];
+    if (hasClassLevelFilter && activeClassLevel) {
+      crumbs.push({ label: "Class Levels", href: "/dashboard/class-levels" });
+      crumbs.push({ label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` });
+    }
+    crumbs.push({ label: "Scheduled Exams" });
+    return crumbs;
+  }, [hasClassLevelFilter, activeClassLevel]);
+
 
   if (isInitialLoading) {
     return <PageLoader message="Loading scheduled exams..." />;
@@ -166,6 +189,18 @@ export function ScheduledExamsClient({ exams: propsExams, classLevels: propsClas
 
   return (
     <div className="space-y-6">
+      {/* Page Header with dynamic content */}
+      <PageHeader
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
+      />
+
+      {/* Active Filter Badge */}
+      {hasClassLevelFilter && (
+        <ClassLevelFilterBadge />
+      )}
+
       {/* Compact Stats Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">

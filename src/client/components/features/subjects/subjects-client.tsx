@@ -7,6 +7,7 @@
  * Follows the premium design system (Linear/Raycast/Vercel inspired).
  */
 
+import { useSearchParams } from 'next/navigation';
 import { PageHeader, GlassCard, Badge, EmptyState, SectionHeader } from '@/client/components/ui/premium';
 import { BookOpen, FileQuestion, Layers, Plus, Folder } from "lucide-react";
 import Link from "next/link";
@@ -19,10 +20,15 @@ import { useChaptersBySubject } from '@/client/hooks/use-chapters';
 import { useQuestions } from '@/client/hooks/use-questions';
 import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
 import { useMemo } from 'react';
+import { ClassLevelFilterBadge, useClassLevelFilter } from '@/client/components/ui/class-level-filter-badge';
 
 export function SubjectsClient() {
-  const { data: allSubjects, loading: isLoadingSubjects, error: subjectsError } = useSubjects();
+  const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
+  
+  const { data: allSubjects, loading: isLoadingSubjects, error: subjectsError } = useSubjects(classLevelId || undefined);
   const { data: stats, loading: isLoadingStats, error: statsError } = useSubjectStats();
+  const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
 
   // Filter only top-level subjects (no parent)
   const topLevelSubjects = useMemo(() => {
@@ -73,6 +79,8 @@ export function SubjectsClient() {
       categories={categories}
       standaloneSubjects={standaloneSubjects}
       stats={mappedStats}
+      activeClassLevel={activeClassLevel}
+      hasClassLevelFilter={hasClassLevelFilter}
     />
   );
 }
@@ -110,19 +118,44 @@ interface SubjectsContentProps {
     totalChapters: number;
     totalQuestions: number;
   };
+  activeClassLevel?: { id: string; name_en: string; slug: string } | null;
+  hasClassLevelFilter: boolean;
 }
 
-function SubjectsContent({ categories, standaloneSubjects, stats }: SubjectsContentProps) {
+function SubjectsContent({ categories, standaloneSubjects, stats, activeClassLevel, hasClassLevelFilter }: SubjectsContentProps) {
+  const pageTitle = hasClassLevelFilter && activeClassLevel 
+    ? `Subjects - ${activeClassLevel.name_en}` 
+    : "Subjects & Categories";
+  const pageDescription = hasClassLevelFilter && activeClassLevel 
+    ? `Curriculum subjects for ${activeClassLevel.name_en}` 
+    : "Manage curriculum hierarchy: categories contain multiple subjects, standalone subjects are independent";
+  
+  const breadcrumbs = useMemo(() => {
+    if (hasClassLevelFilter && activeClassLevel) {
+      return [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Class Levels", href: "/dashboard/class-levels" },
+        { label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` },
+        { label: "Subjects" }
+      ];
+    }
+    return [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Subjects" }
+    ];
+  }, [hasClassLevelFilter, activeClassLevel]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <PageHeader
-        title="Subjects & Categories"
-        description="Manage curriculum hierarchy: categories contain multiple subjects, standalone subjects are independent"
-        breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Subjects" }]}
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
         icon={BookOpen}
         iconColor="primary"
         action={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <ClassLevelFilterBadge />
             <Link href="/dashboard/subjects/new?type=category">
               <Button variant="insight" className="gap-2">
                 <Plus className="h-4 w-4" />

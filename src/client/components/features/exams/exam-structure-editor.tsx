@@ -15,20 +15,20 @@ import {
     Target,
     HelpCircle,
     BookOpen,
-    FileText,
-    ScrollText,
     ClipboardList,
     Lightbulb,
+    Clock,
+    Layers,
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { Button } from '@/client/components/ui/button';
 import { TextInput } from "@/client/components/ui/input";
 import { useChaptersWithCounts, useCreateExamStructure, useUpdateExamStructure } from "@/client/hooks";
 import { ChapterSelector, type ChapterQuestionConfig, type ChapterWithCount } from '@/client/components/features/subjects/chapter-selector';
-import { questionTypeLabels, type QuestionType } from "@/client/types/questions";
+import { type QuestionType } from "@/client/types/questions";
 import { ExamStructureFormFields } from './exam-structure-form-fields';
-import { ExamStructureSummary } from './exam-structure-summary';
 import { ExamStructureSectionsList } from './exam-structure-sections-list';
+import { PageHeader, GlassCard, Badge } from '@/client/components/ui/premium';
 
 interface Section {
     id: string;
@@ -246,29 +246,105 @@ export function ExamStructureEditor({
         }
     };
 
+    // Stats for the header
+    const stats = [
+        {
+            label: "Total Marks",
+            value: totalMarks,
+            icon: Target,
+            color: "primary",
+        },
+        {
+            label: "Sections",
+            value: sections.length,
+            icon: Layers,
+            color: "insight",
+        },
+        {
+            label: "Questions",
+            value: totalQuestions,
+            icon: HelpCircle,
+            color: "success",
+        },
+        {
+            label: "Duration",
+            value: `${duration} min`,
+            icon: Clock,
+            color: "warning",
+        },
+    ];
+
     return (
-        <div className="space-y-10 pb-20">
-            {/* Action Bar */}
-            <div className="flex items-center justify-end gap-3 sticky top-0 z-50 py-4 bg-background/80 backdrop-blur-md border-b border-neutral-100 dark:border-neutral-800 -mx-4 px-4 sm:-mx-8 sm:px-8">
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 rounded-2xl bg-white px-6 py-2.5 text-sm font-bold text-neutral-700 shadow-sm ring-1 ring-neutral-200 transition-all hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700 dark:hover:bg-neutral-700 active:scale-95"
-                >
-                    <X className="h-4 w-4" />
-                    Cancel
-                </button>
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 rounded-2xl bg-linear-to-r from-primary-600 to-insight-600 px-8 py-2.5 text-sm font-black text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-700 hover:to-insight-700 hover:shadow-xl active:scale-95 disabled:opacity-50"
-                >
-                    {isSaving ? (
-                        <LoaderSpinner size="sm" />
-                    ) : (
-                        <Save className="h-4 w-4" />
-                    )}
-                    {mode === "create" ? "Create Blueprint" : "Save Changes"}
-                </button>
+        <div className="space-y-6 pb-20">
+            {/* Premium Header */}
+            <PageHeader
+                title={mode === "edit" ? (nameEn || "Edit Blueprint") : "Create New Blueprint"}
+                description={mode === "edit" 
+                    ? (nameMr || "Configure section logic, marking schemes, and question distributions")
+                    : "Design a new exam structure with sections and question types"
+                }
+                breadcrumbs={[
+                    { label: "Dashboard", href: "/dashboard" },
+                    { label: "Exam Blueprints", href: "/dashboard/exam-structures" },
+                    { label: mode === "edit" ? "Edit" : "Create" },
+                ]}
+                action={
+                    <div className="flex items-center gap-3">
+                        <Badge variant={isActive ? "success" : "warning"} size="md" dot>
+                            {isActive ? "Active" : "Inactive"}
+                        </Badge>
+                        <Badge variant={isTemplate ? "info" : "purple"} size="md">
+                            {isTemplate ? "Template" : "Assigned"}
+                        </Badge>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.back()}
+                            className="gap-1.5"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            size="sm"
+                            className="gap-1.5"
+                        >
+                            {isSaving ? (
+                                <LoaderSpinner size="sm" />
+                            ) : (
+                                <Save className="h-3.5 w-3.5" />
+                            )}
+                            {mode === "create" ? "Create" : "Save Changes"}
+                        </Button>
+                    </div>
+                }
+            />
+
+            {/* Stats Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {stats.map((stat, index) => {
+                    const Icon = stat.icon;
+                    const colorClasses: Record<string, string> = {
+                        primary: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
+                        success: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
+                        warning: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+                        insight: "bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400",
+                    };
+
+                    return (
+                        <GlassCard key={index} className="flex items-center gap-4 p-5">
+                            <div className={`rounded-xl p-3 ${colorClasses[stat.color]}`}>
+                                <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
+                                <p className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</p>
+                            </div>
+                        </GlassCard>
+                    );
+                })}
             </div>
 
             <div className="max-w-7xl mx-auto space-y-10">
@@ -296,22 +372,6 @@ export function ExamStructureEditor({
                     onDurationChange={setDuration}
                     onPassingPercentageChange={setPassingPercentage}
                     onIsActiveChange={setIsActive}
-                />
-
-                {/* Summary Row */}
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-neutral-100 dark:border-neutral-800"></div>
-                    </div>
-                    <div className="relative flex justify-center">
-                        <span className="bg-background px-4 text-xs font-black uppercase tracking-[0.3em] text-neutral-400">Blueprint Metrics</span>
-                    </div>
-                </div>
-
-                <ExamStructureSummary
-                    sectionsCount={sections.length}
-                    totalQuestions={totalQuestions}
-                    totalMarks={totalMarks}
                 />
 
                 {/* Sections List */}
@@ -342,7 +402,7 @@ export function ExamStructureEditor({
     );
 }
 
-// Section Modal Component - Premium Redesigned with Chapters Tab
+// Section Modal Component - Compact Premium Design
 function SectionModal({
     section,
     chapters,
@@ -368,7 +428,7 @@ function SectionModal({
     const [instructionsEn, setInstructionsEn] = useState(section?.instructions_en || "");
     const [instructionsMr, setInstructionsMr] = useState(section?.instructions_mr || "");
     const [chapterConfigs, setChapterConfigs] = useState<ChapterQuestionConfig[]>(section?.chapter_configs || []);
-    const [activeTab, setActiveTab] = useState<"basic" | "marks" | "chapters" | "instructions">("basic");
+    const [activeTab, setActiveTab] = useState<"basic" | "chapters" | "instructions">("basic");
 
     const handleSave = () => {
         if (!nameEn.trim()) {
@@ -394,19 +454,6 @@ function SectionModal({
 
     const totalMarks = questionCount * marksPerQuestion;
 
-    // Get selected chapter IDs from configs for validation
-    const selectedChapterIds = chapterConfigs.map((c) => c.chapter_id);
-    const configuredQuestionCount = chapterConfigs.reduce((sum, c) => sum + c.question_count, 0);
-
-    // Calculate available questions for validation
-    const availableQuestions = chapterConfigs.length === 0
-        ? chapters.reduce((sum, ch) => sum + (ch.question_counts?.[questionType] || 0), 0)
-        : chapters
-            .filter((ch) => selectedChapterIds.includes(ch.id))
-            .reduce((sum, ch) => sum + (ch.question_counts?.[questionType] || 0), 0);
-
-    const hasEnoughQuestions = availableQuestions >= questionCount;
-
     // Group question types
     const objectiveTypes = questionTypes.filter(t =>
         ["fill_blank", "true_false", "mcq_single", "mcq_two", "mcq_three"].includes(t.value)
@@ -417,66 +464,58 @@ function SectionModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="w-full max-w-2xl transform animate-in fade-in zoom-in-95 duration-200">
-                {/* Modal Card */}
-                <div className="relative overflow-hidden rounded-3xl bg-white/95 shadow-2xl dark:bg-neutral-900/95 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-700/50 max-h-[90vh] flex flex-col">
-                    {/* Gradient Header */}
-                    <div className="relative bg-linear-to-r from-primary-600 via-primary-700 to-insight-600 px-6 py-5 shrink-0">
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
-                        <div className="relative flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                                    <ClipboardList className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-white">
-                                        {section ? "Edit Section" : "Add New Section"}
-                                    </h3>
-                                    <p className="text-sm text-primary-100">
-                                        {section ? `Section ${section.order_index}` : `Section ${nextIndex}`}
-                                    </p>
-                                </div>
+            <div className="w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="relative overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-900 max-h-[85vh] flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 px-6 py-4 shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                                <ClipboardList className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
+                                    {section ? "Edit Section" : "Add New Section"}
+                                </h3>
+                                <p className="text-xs text-neutral-500">Section {section?.order_index || nextIndex}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-1.5 dark:bg-neutral-800">
+                                <span className="text-lg font-bold text-neutral-900 dark:text-white">{totalMarks}</span>
+                                <span className="text-xs text-neutral-500">marks</span>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition-all"
+                                className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-all dark:hover:bg-neutral-800"
                             >
-                                <X className="h-5 w-5" />
+                                <X className="h-4 w-4" />
                             </button>
-                        </div>
-
-                        {/* Marks Preview Badge */}
-                        <div className="absolute -bottom-4 right-6 flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg dark:bg-neutral-800">
-                            <span className="text-2xl font-bold text-neutral-900 dark:text-white">{totalMarks}</span>
-                            <span className="text-xs text-neutral-500 dark:text-neutral-400">marks</span>
                         </div>
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-1 overflow-x-auto border-b border-neutral-200/50 px-6 pt-8 dark:border-neutral-700/50 shrink-0">
+                    <div className="flex gap-1 border-b border-neutral-100 px-6 dark:border-neutral-800 shrink-0">
                         {[
-                            { id: "basic", label: "Basic Info", icon: "✎" },
-                            { id: "marks", label: "Marks", icon: "★" },
-                            { id: "chapters", label: "Chapters", icon: "☰", badge: chapterConfigs.length > 0 ? `${chapterConfigs.length}` : undefined },
-                            { id: "instructions", label: "Instructions", icon: "ℹ" },
+                            { id: "basic", label: "Basic Info & Marks" },
+                            { id: "chapters", label: "Chapters", badge: chapterConfigs.length > 0 ? chapterConfigs.length : undefined },
+                            { id: "instructions", label: "Instructions" },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as typeof activeTab)}
                                 className={clsx(
-                                    "flex items-center gap-2 rounded-t-xl px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap",
+                                    "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                                     activeTab === tab.id
-                                        ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border-b-2 border-primary-600"
-                                        : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
+                                        ? "border-primary-600 text-primary-600 dark:text-primary-400"
+                                        : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                                 )}
                             >
-                                <span>{tab.icon}</span>
                                 {tab.label}
-                                {tab.badge && (
-                                    <span className="ml-1 rounded-full bg-primary-500 px-1.5 py-0.5 text-xs font-bold text-white">
+                                {tab.badge !== undefined && (
+                                    <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
                                         {tab.badge}
                                     </span>
                                 )}
@@ -486,112 +525,76 @@ function SectionModal({
 
                     {/* Content */}
                     <div className="p-6 overflow-y-auto flex-1">
-                        {/* Basic Info Tab */}
+                        {/* Basic Info & Marks Tab */}
                         {activeTab === "basic" && (
-                            <div className="space-y-6 animate-in fade-in duration-200">
+                            <div className="space-y-5 animate-in fade-in duration-200">
                                 {/* Section Names */}
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            <span className="flex h-5 w-5 items-center justify-center rounded bg-success-100 text-[10px] dark:bg-success-900/30">EN</span>
-                                            Name (English) <span className="text-danger-500">*</span>
-                                        </label>
-                                        <TextInput
-                                            value={nameEn}
-                                            onChange={(e) => setNameEn(e.target.value)}
-                                            placeholder="e.g. Fill in the Blanks"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            <span className="flex h-5 w-5 items-center justify-center rounded bg-primary-100 text-[10px] dark:bg-primary-900/30">MR</span>
-                                            Name (Marathi)
-                                        </label>
-                                        <TextInput
-                                            value={nameMr}
-                                            onChange={(e) => setNameMr(e.target.value)}
-                                            placeholder="e.g. रिकाम्या जागा भरा"
-                                        />
-                                    </div>
+                                    <TextInput
+                                        label="Name (English) *"
+                                        value={nameEn}
+                                        onChange={(e) => setNameEn(e.target.value)}
+                                        placeholder="e.g. Fill in the Blanks"
+                                    />
+                                    <TextInput
+                                        label="Name (Marathi)"
+                                        value={nameMr}
+                                        onChange={(e) => setNameMr(e.target.value)}
+                                        placeholder="e.g. रिकाम्या जागा भरा"
+                                    />
                                 </div>
 
                                 {/* Question Type */}
                                 <div>
-                                    <label className="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                    <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                         Question Type
                                     </label>
-
-                                    {/* Objective Types */}
-                                    <div className="mb-3">
-                                        <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-neutral-400">Objective</span>
-                                        <div className="grid grid-cols-5 gap-2">
+                                    <div className="space-y-3">
+                                        <div className="flex flex-wrap gap-2">
                                             {objectiveTypes.map((type) => (
                                                 <button
                                                     key={type.value}
                                                     onClick={() => setQuestionType(type.value)}
                                                     className={clsx(
-                                                        "group relative flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all",
+                                                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                                                         questionType === type.value
-                                                            ? "bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25 scale-105"
-                                                            : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                                            ? "bg-primary-100 text-primary-700 ring-2 ring-primary-500 dark:bg-primary-900/30 dark:text-primary-400"
+                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                                                     )}
                                                 >
-                                                    <span className="text-2xl">{type.icon}</span>
-                                                    <span className="text-[10px] font-medium leading-tight">{type.label}</span>
-                                                    {questionType === type.value && (
-                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-success-500 text-white shadow">
-                                                            <Check className="h-3 w-3" />
-                                                        </span>
-                                                    )}
+                                                    <span>{type.icon}</span>
+                                                    {type.label}
                                                 </button>
                                             ))}
                                         </div>
-                                    </div>
-
-                                    {/* Subjective Types */}
-                                    <div>
-                                        <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-neutral-400">Subjective</span>
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             {subjectiveTypes.map((type) => (
                                                 <button
                                                     key={type.value}
                                                     onClick={() => setQuestionType(type.value)}
                                                     className={clsx(
-                                                        "group relative flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all",
+                                                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                                                         questionType === type.value
-                                                            ? "bg-linear-to-br from-insight-500 to-insight-600 text-white shadow-lg shadow-insight-500/25 scale-105"
-                                                            : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                                            ? "bg-insight-100 text-insight-700 ring-2 ring-insight-500 dark:bg-insight-900/30 dark:text-insight-400"
+                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                                                     )}
                                                 >
-                                                    <span className="text-2xl">{type.icon}</span>
-                                                    <span className="text-[10px] font-medium leading-tight">{type.label}</span>
-                                                    {questionType === type.value && (
-                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-success-500 text-white shadow">
-                                                            <Check className="h-3 w-3" />
-                                                        </span>
-                                                    )}
+                                                    <span>{type.icon}</span>
+                                                    {type.label}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
 
-                        {/* Marks Tab */}
-                        {activeTab === "marks" && (
-                            <div className="space-y-6 animate-in fade-in duration-200">
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    {/* Question Count */}
-                                    <div className="rounded-2xl bg-linear-to-br from-primary-50 to-primary-100/50 p-5 dark:from-primary-900/20 dark:to-primary-800/20">
-                                        <label className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            <HelpCircle className="h-4 w-4 text-primary-500" />
-                                            Number of Questions
-                                        </label>
-                                        <div className="flex items-center gap-3">
+                                {/* Marks Configuration */}
+                                <div className="grid gap-4 sm:grid-cols-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Questions</label>
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => setQuestionCount(Math.max(1, questionCount - 1))}
-                                                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-neutral-600 shadow hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Minus className="h-4 w-4" />
                                             </button>
@@ -599,27 +602,22 @@ function SectionModal({
                                                 type="number"
                                                 value={questionCount}
                                                 onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value)))}
-                                                className="h-12 w-20 rounded-xl border-0 bg-white text-center text-xl font-bold text-neutral-900 shadow focus:ring-2 focus:ring-primary-500 dark:bg-neutral-800 dark:text-white"
+                                                className="h-9 w-16 rounded-lg border border-neutral-200 text-center font-medium text-neutral-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                             />
                                             <button
                                                 onClick={() => setQuestionCount(questionCount + 1)}
-                                                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-neutral-600 shadow hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </div>
-
-                                    {/* Marks per Question */}
-                                    <div className="rounded-2xl bg-linear-to-br from-amber-50 to-amber-50 p-5 dark:from-amber-900/20 dark:to-amber-900/20">
-                                        <label className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            <Target className="h-4 w-4 text-amber-500" />
-                                            Marks per Question
-                                        </label>
-                                        <div className="flex items-center gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Marks Each</label>
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => setMarksPerQuestion(Math.max(1, marksPerQuestion - 1))}
-                                                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-neutral-600 shadow hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Minus className="h-4 w-4" />
                                             </button>
@@ -627,31 +625,21 @@ function SectionModal({
                                                 type="number"
                                                 value={marksPerQuestion}
                                                 onChange={(e) => setMarksPerQuestion(Math.max(1, Number(e.target.value)))}
-                                                className="h-12 w-20 rounded-xl border-0 bg-white text-center text-xl font-bold text-neutral-900 shadow focus:ring-2 focus:ring-amber-500 dark:bg-neutral-800 dark:text-white"
+                                                className="h-9 w-16 rounded-lg border border-neutral-200 text-center font-medium text-neutral-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                             />
                                             <button
                                                 onClick={() => setMarksPerQuestion(marksPerQuestion + 1)}
-                                                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-neutral-600 shadow hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Total Marks Display */}
-                                <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-success-500 via-success-600 to-primary-600 p-6 text-center text-white">
-                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-white/20 to-transparent" />
-                                    <div className="relative">
-                                        <p className="text-sm font-medium text-success-50">Total Section Marks</p>
-                                        <div className="mt-2 flex items-center justify-center gap-3">
-                                            <span className="text-3xl font-bold">{questionCount}</span>
-                                            <span className="text-xl text-success-200">×</span>
-                                            <span className="text-3xl font-bold">{marksPerQuestion}</span>
-                                            <span className="text-xl text-success-200">=</span>
-                                            <span className="text-5xl font-black">{totalMarks}</span>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Total Marks</label>
+                                        <div className="flex h-9 items-center justify-center rounded-lg bg-success-100 text-lg font-bold text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                                            {questionCount} × {marksPerQuestion} = {totalMarks}
                                         </div>
-                                        <p className="mt-1 text-success-50">marks</p>
                                     </div>
                                 </div>
                             </div>
@@ -660,14 +648,18 @@ function SectionModal({
                         {/* Chapters Tab */}
                         {activeTab === "chapters" && (
                             <div className="animate-in fade-in duration-200">
-                                {chapters.length === 0 && !isLoadingChapters ? (
-                                    <div className="rounded-xl bg-amber-50 p-6 text-center dark:bg-amber-900/20">
-                                        <BookOpen className="mx-auto h-12 w-12 text-amber-500/50" />
+                                {isLoadingChapters ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <LoaderSpinner />
+                                    </div>
+                                ) : chapters.length === 0 ? (
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-900/20">
+                                        <BookOpen className="mx-auto h-10 w-10 text-amber-500/50" />
                                         <p className="mt-3 font-medium text-amber-800 dark:text-amber-300">
                                             No chapters available
                                         </p>
                                         <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
-                                            Please select a subject first, or add chapters to the selected subject.
+                                            Select a subject in the blueprint config to see chapters.
                                         </p>
                                     </div>
                                 ) : (
@@ -685,39 +677,35 @@ function SectionModal({
 
                         {/* Instructions Tab */}
                         {activeTab === "instructions" && (
-                            <div className="space-y-5 animate-in fade-in duration-200">
-                                <div className="rounded-xl bg-primary-50 p-4 dark:bg-primary-900/20">
+                            <div className="space-y-4 animate-in fade-in duration-200">
+                                <div className="rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20">
                                     <p className="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400">
                                         <Lightbulb className="h-4 w-4 shrink-0" />
                                         Instructions are shown to students before attempting this section.
                                     </p>
                                 </div>
-
                                 <div>
-                                    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        <span className="flex h-5 w-5 items-center justify-center rounded bg-success-100 text-[10px] dark:bg-success-900/30">EN</span>
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                         Instructions (English)
                                     </label>
                                     <textarea
                                         value={instructionsEn}
                                         onChange={(e) => setInstructionsEn(e.target.value)}
                                         rows={3}
-                                        placeholder="e.g. Fill in the blanks with correct answers. Each question carries 1 mark."
-                                        className="w-full rounded-xl border-0 bg-neutral-50 p-4 text-neutral-900 outline-none ring-1 ring-neutral-200 focus:ring-2 focus:ring-primary-500 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700"
+                                        placeholder="e.g. Fill in the blanks with correct answers..."
+                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        <span className="flex h-5 w-5 items-center justify-center rounded bg-primary-100 text-[10px] dark:bg-primary-900/30">MR</span>
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                         Instructions (Marathi)
                                     </label>
                                     <textarea
                                         value={instructionsMr}
                                         onChange={(e) => setInstructionsMr(e.target.value)}
                                         rows={3}
-                                        placeholder="e.g. रिकाम्या जागा योग्य उत्तरांनी भरा. प्रत्येक प्रश्न 1 गुणांचा आहे."
-                                        className="w-full rounded-xl border-0 bg-neutral-50 p-4 text-neutral-900 outline-none ring-1 ring-neutral-200 focus:ring-2 focus:ring-primary-500 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700"
+                                        placeholder="e.g. रिकाम्या जागा योग्य उत्तरांनी भरा..."
+                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -725,39 +713,26 @@ function SectionModal({
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between border-t border-neutral-200/50 bg-neutral-50/50 px-6 py-4 dark:border-neutral-700/50 dark:bg-neutral-800/50 shrink-0">
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-500">
-                            <span className="flex items-center gap-1">
-                                <span className="text-lg">{questionTypes.find(t => t.value === questionType)?.icon}</span>
-                                {questionTypes.find(t => t.value === questionType)?.label}
-                            </span>
-                            <span className="text-neutral-300 dark:text-neutral-600">|</span>
-                            <span className="font-medium text-neutral-900 dark:text-white">{totalMarks} marks</span>
+                    <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-800/50 shrink-0">
+                        <div className="flex items-center gap-2 text-sm text-neutral-500">
+                            <span>{questionTypes.find(t => t.value === questionType)?.icon}</span>
+                            <span>{questionTypes.find(t => t.value === questionType)?.label}</span>
+                            <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                            <span className="font-medium text-neutral-700 dark:text-neutral-300">{totalMarks} marks</span>
                             {chapterConfigs.length > 0 && (
                                 <>
-                                    <span className="text-neutral-300 dark:text-neutral-600">|</span>
-                                    <span className="flex items-center gap-1 text-success-600 dark:text-success-400">
-                                        <BookOpen className="h-3.5 w-3.5" />
-                                        {chapterConfigs.length} chapter{chapterConfigs.length > 1 ? "s" : ""} • {configuredQuestionCount} Q
-                                    </span>
-                                </>
-                            )}
-                            {!hasEnoughQuestions && chapterConfigs.length > 0 && (
-                                <>
-                                    <span className="text-neutral-300 dark:text-neutral-600">|</span>
-                                    <span className="text-amber-600 dark:text-amber-400">
-                                        ⚠️ {availableQuestions}/{questionCount} available
-                                    </span>
+                                    <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                                    <span className="text-success-600 dark:text-success-400">{chapterConfigs.length} chapters</span>
                                 </>
                             )}
                         </div>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={onClose}>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button onClick={handleSave} className="gap-2">
-                                <Check className="h-4 w-4" />
-                                {section ? "Update Section" : "Add Section"}
+                            <Button size="sm" onClick={handleSave} className="gap-1.5">
+                                <Check className="h-3.5 w-3.5" />
+                                {section ? "Update" : "Add Section"}
                             </Button>
                         </div>
                     </div>

@@ -11,7 +11,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { GlassCard, Badge } from '@/client/components/ui/premium';
+import { GlassCard, Badge, PageHeader } from '@/client/components/ui/premium';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
 import { useUpdateSchool, useDeleteSchool } from '@/client/hooks';
@@ -160,253 +160,125 @@ export function SchoolDetailsClient({ school }: SchoolDetailsClientProps) {
   ];
 
   return (
-    <div className="min-h-screen animate-in fade-in duration-500">
-      {/* Hero Section with Gradient Background */}
-      <div className="relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-linear-to-br from-primary-50 via-purple-50/50 to-blue-50 dark:from-primary-950/30 dark:via-purple-950/20 dark:to-blue-950/30" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
-
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary-200/30 dark:bg-primary-800/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-200/30 dark:bg-purple-800/10 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
-
-        <div className="relative px-6 py-8 lg:px-8">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-            <Link
-              href="/dashboard"
-              className="hover:text-neutral-900 dark:hover:text-white transition-colors"
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Page Header */}
+      <PageHeader
+        title={school.name}
+        description={location || "School details and management"}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Schools", href: "/dashboard/schools" },
+          { label: school.name },
+        ]}
+        action={
+          <div className="flex items-center gap-3">
+            <Badge
+              variant={isVerified ? "success" : "warning"}
+              className="text-xs font-medium"
+              size="md"
+              dot
             >
-              Dashboard
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              href="/dashboard/schools"
-              className="hover:text-neutral-900 dark:hover:text-white transition-colors"
-            >
-              Schools
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-neutral-900 dark:text-white font-medium truncate max-w-[200px]">
-              {school.name}
-            </span>
-          </nav>
-
-          {/* Back Button */}
-          <Link
-            href="/dashboard/schools"
-            className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Schools
-          </Link>
-
-          {/* School Header */}
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="flex items-start gap-5">
-              {/* School Icon */}
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25 dark:shadow-primary-900/50">
-                  <Building2 className="h-10 w-10 text-white" />
-                </div>
-                {isVerified && (
-                  <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center ring-3 ring-white dark:ring-neutral-900 shadow-lg">
-                    <CheckCircle2 className="h-4 w-4 text-white" />
-                  </div>
-                )}
-              </div>
-
-              {/* School Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white">
-                    {school.name}
-                  </h1>
-                  <Badge
-                    variant={isVerified ? "success" : "warning"}
-                    className="text-xs font-medium"
-                  >
-                    {isVerified ? (
-                      <>
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Verified
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-3 w-3 mr-1" />
-                        Pending Review
-                      </>
-                    )}
-                  </Badge>
-                  {school.is_user_added && (
-                    <Badge variant="info" className="text-xs">
-                      User Added
-                    </Badge>
-                  )}
-                </div>
-
-                {location && (
-                  <div className="flex items-center gap-2 mt-2 text-neutral-600 dark:text-neutral-400">
-                    <MapPin className="h-4 w-4" />
-                    <span>{location}</span>
-                  </div>
-                )}
-
-                {createdDate && (
-                  <div className="flex items-center gap-2 mt-1 text-sm text-neutral-500 dark:text-neutral-500">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>Added {createdDate}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link href={`/dashboard/users?schoolId=${school.id}`}>
-                <Button variant="secondary" className="gap-2 shadow-sm">
-                  <Users className="h-4 w-4" />
-                  View Students
-                  <Badge variant="default" className="ml-1 text-xs">
-                    {school.student_count || 0}
-                  </Badge>
-                </Button>
-              </Link>
-              {hasChanges() && (
-                <Button
-                  variant="primary"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="gap-2 shadow-lg shadow-primary-500/25"
-                >
-                  {isSaving ? (
-                    <Loader size="sm" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save Changes
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="px-6 lg:px-8 -mt-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Students Stat */}
-          <GlassCard className="p-5 group hover:scale-[1.02] transition-transform duration-200" bento>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                <GraduationCap className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">
-                  {school.student_count || 0}
-                </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Enrolled Students
-                </p>
-              </div>
-            </div>
-            <Link
-              href={`/dashboard/users?schoolId=${school.id}`}
-              className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 mt-3 hover:underline"
-            >
-              View all students
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </GlassCard>
-
-          {/* Status Stat */}
-          <GlassCard className="p-5 group hover:scale-[1.02] transition-transform duration-200" bento>
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200",
-                isVerified
-                  ? "bg-linear-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/50 dark:to-emerald-800/50"
-                  : "bg-linear-to-br from-amber-100 to-amber-200 dark:from-amber-900/50 dark:to-amber-800/50"
-              )}>
-                {isVerified ? (
-                  <Shield className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              {isVerified ? "Verified" : "Pending Review"}
+            </Badge>
+            {hasChanges() && (
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                {isSaving ? (
+                  <Loader size="sm" />
                 ) : (
-                  <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  <Save className="h-4 w-4" />
                 )}
-              </div>
-              <div>
-                <p className="text-xl font-bold text-neutral-900 dark:text-white">
-                  {isVerified ? "Verified" : "Pending"}
-                </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Trust Status
-                </p>
-              </div>
-            </div>
-          </GlassCard>
+                Save Changes
+              </Button>
+            )}
+          </div>
+        }
+      />
 
-          {/* Location Stat */}
-          <GlassCard className="p-5 group hover:scale-[1.02] transition-transform duration-200" bento>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-100 to-purple-200 dark:from-purple-900/50 dark:to-purple-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                <Globe className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-lg font-bold text-neutral-900 dark:text-white truncate">
-                  {school.location_state || school.location_city || "Not set"}
-                </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Location
-                </p>
-              </div>
+      {/* Stats Grid - Clickable Cards like class-level-detail */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href={`/dashboard/users?schoolId=${school.id}`}>
+          <GlassCard className="group flex items-center gap-4 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer h-full border-transparent hover:border-primary-200 dark:hover:border-primary-800">
+            <div className="rounded-xl p-3 bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+              <GraduationCap className="h-5 w-5" />
             </div>
+            <div className="flex-1">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{school.student_count || 0}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Students</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </GlassCard>
+        </Link>
 
-          {/* Activity Stat */}
-          <GlassCard className="p-5 group hover:scale-[1.02] transition-transform duration-200" bento>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-neutral-900 dark:text-white">
-                  Active
-                </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  School Status
-                </p>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className={cn(
+            "rounded-xl p-3",
+            isVerified
+              ? "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400"
+              : "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400"
+          )}>
+            <Shield className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-neutral-900 dark:text-white">
+              {isVerified ? "Verified" : "Pending"}
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Trust Status</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400">
+            <Globe className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold text-neutral-900 dark:text-white truncate">
+              {school.location_state || school.location_city || "Not set"}
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Location</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+            <Calendar className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-neutral-900 dark:text-white">
+              {createdDate || "Unknown"}
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Added</p>
+          </div>
+        </GlassCard>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="px-6 lg:px-8 mt-8">
-        <div className="border-b border-neutral-200 dark:border-neutral-800">
-          <nav className="flex gap-1 -mb-px">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200",
-                  activeTab === tab.id
-                    ? "border-primary-500 text-primary-600 dark:text-primary-400"
-                    : "border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
-                )}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <div className="border-b border-neutral-200 dark:border-neutral-800">
+        <nav className="flex gap-1 -mb-px">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200",
+                activeTab === tab.id
+                  ? "border-primary-500 text-primary-600 dark:text-primary-400"
+                  : "border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
+              )}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Tab Content */}
-      <div className="px-6 lg:px-8 py-6">
+      <div className="py-6">
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <div className="grid gap-6 lg:grid-cols-2 animate-in fade-in duration-300">

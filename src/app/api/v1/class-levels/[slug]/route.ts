@@ -23,7 +23,23 @@ export async function GET(
             return ApiErrors.notFound("Class level not found");
         }
 
-        return successResponse(classLevel);
+        // Transform to snake_case for API response consistency
+        const data = {
+            id: classLevel.id,
+            name_en: classLevel.nameEn,
+            name_mr: classLevel.nameMr,
+            slug: classLevel.slug,
+            description_en: classLevel.descriptionEn,
+            description_mr: classLevel.descriptionMr,
+            order_index: classLevel.orderIndex,
+            is_active: classLevel.isActive,
+            studentCount: classLevel.studentCount,
+            examStructureCount: classLevel.examStructureCount,
+            scheduledExamCount: classLevel.scheduledExamCount,
+            examAttemptCount: classLevel.examAttemptCount,
+        };
+
+        return successResponse(data);
     } catch (error) {
         return ApiErrors.serverError(error instanceof Error ? error.message : "Internal Server Error");
     }

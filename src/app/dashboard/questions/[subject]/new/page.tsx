@@ -1,4 +1,4 @@
-import { getSubjectWithParent, getChaptersBySubject } from "@/client/services";
+import { getSubjectWithParent as getSubjectWithParentService, getChaptersBySubject } from "@/client/services";
 import { QuestionEditor } from '@/client/components/features/questions/question-editor';
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -15,13 +15,18 @@ export async function generateMetadata({
 }
 
 /**
- * Fetches subject with parent info and computes the question table slug.
- * URL slugs use hyphens, but DB slugs use underscores.
+ * Wrapper for getSubjectWithParent that handles slug normalization
+ * and adds questionTableSlug property
  */
 async function getSubjectForQuestionPage(slug: string) {
-    // Normalize URL slug (hyphens) to DB slug (underscores)
+    // Try with underscore slug first (URL uses dashes, DB uses underscores)
     const dbSlug = slug.replace(/-/g, "_");
-    const subject = await getSubjectWithParent(dbSlug);
+    let subject = await getSubjectWithParentService(dbSlug);
+
+    // Fallback: try original slug if underscore version failed
+    if (!subject && dbSlug !== slug) {
+        subject = await getSubjectWithParentService(slug);
+    }
 
     if (!subject) return null;
 

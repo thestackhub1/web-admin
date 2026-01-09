@@ -17,3 +17,4 @@ export * from "./scheduled-exams.service";
 export * from "./exam-structures.service";
 export * from "./profile.service";
 export * from "./chapters.service";
+export * from "./class-levels.service";

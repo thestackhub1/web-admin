@@ -6,6 +6,7 @@ import {
   Badge,
   EmptyState,
   StatCardPremium,
+  PageHeader,
   DataTableContainer,
   DataTable,
   DataTableHead,
@@ -111,6 +112,16 @@ export function SchoolsClient() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Schools"
+        description="Manage registered schools and verification status"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Schools" },
+        ]}
+      />
+
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCardPremium

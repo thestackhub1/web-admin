@@ -16,6 +16,8 @@ export interface UserListOptions {
   search?: string;
   isActive?: boolean;
   schoolId?: string;
+  classLevelId?: string;
+  classLevelSlug?: string;
 }
 
 export interface UserListResult {
@@ -59,6 +61,32 @@ export class UsersService {
 
     if (options.schoolId) {
       conditions.push(eq(profiles.schoolId, options.schoolId));
+    }
+
+    // Handle classLevelId filter - need to resolve to slug
+    if (options.classLevelId || options.classLevelSlug) {
+      let classLevelSlug = options.classLevelSlug;
+      
+      if (options.classLevelId && !classLevelSlug) {
+        // Fetch class level by ID to get the slug and name
+        const [classLevel] = await db
+          .select({ slug: classLevels.slug, nameEn: classLevels.nameEn })
+          .from(classLevels)
+          .where(eq(classLevels.id, options.classLevelId))
+          .limit(1);
+        
+        if (classLevel) {
+          // Match by slug or nameEn (some legacy data might use name)
+          conditions.push(
+            or(
+              eq(profiles.classLevel, classLevel.slug),
+              eq(profiles.classLevel, classLevel.nameEn)
+            )!
+          );
+        }
+      } else if (classLevelSlug) {
+        conditions.push(eq(profiles.classLevel, classLevelSlug));
+      }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

@@ -11,6 +11,7 @@ import { useExamStructures } from '@/client/hooks/use-exam-structures';
 import { useSubjects } from '@/client/hooks/use-subjects';
 import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
 import { useMemo } from 'react';
+import { ClassLevelFilterBadge, useClassLevelFilter } from '@/client/components/ui/class-level-filter-badge';
 
 const subjectColors: Record<string, { bg: string; text: string; gradient: string; icon: React.ElementType }> = {
   scholarship: {
@@ -40,6 +41,30 @@ export function ExamStructuresClient() {
 
   const { data: structures, loading: isLoadingStructures } = useExamStructures();
   const { data: subjects, loading: isLoadingSubjects } = useSubjects();
+  const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
+
+  // Dynamic page content based on filter
+  const pageTitle = hasClassLevelFilter && activeClassLevel 
+    ? `Exam Structures - ${activeClassLevel.name_en}` 
+    : "Exam Structures";
+  const pageDescription = hasClassLevelFilter && activeClassLevel 
+    ? `Exam blueprints for ${activeClassLevel.name_en}` 
+    : "Define exam blueprints with sections and rules";
+  
+  const breadcrumbs = useMemo(() => {
+    if (hasClassLevelFilter && activeClassLevel) {
+      return [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Class Levels", href: "/dashboard/class-levels" },
+        { label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` },
+        { label: "Exam Structures" }
+      ];
+    }
+    return [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Exam Structures" }
+    ];
+  }, [hasClassLevelFilter, activeClassLevel]);
 
   // All hooks and memoized values must be before early returns
   // Enhance structures with subject information
@@ -101,16 +126,19 @@ export function ExamStructuresClient() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Exam Structures"
-        description="Define exam blueprints with sections and rules"
-        breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Exam Structures" }]}
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
         action={
-          <Link href="/dashboard/exam-structures/new">
-            <Button className="flex items-center gap-2 bg-linear-to-r from-primary-600 to-insight-600 hover:from-primary-700 hover:to-insight-700 text-white shadow-lg shadow-primary-500/25 border-0">
-              <Plus className="h-4 w-4" />
-              Create Structure
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <ClassLevelFilterBadge />
+            <Link href="/dashboard/exam-structures/new">
+              <Button className="flex items-center gap-2 bg-linear-to-r from-primary-600 to-insight-600 hover:from-primary-700 hover:to-insight-700 text-white shadow-lg shadow-primary-500/25 border-0">
+                <Plus className="h-4 w-4" />
+                Create Structure
+              </Button>
+            </Link>
+          </div>
         }
       />
 

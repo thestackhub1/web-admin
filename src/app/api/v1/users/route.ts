@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         const role = searchParams.get("role") || undefined;
         const search = searchParams.get("search") || undefined;
         const schoolId = searchParams.get("schoolId") || undefined;
+        const classLevelId = searchParams.get("classLevelId") || undefined;
         const isActiveParam = searchParams.get("isActive");
         const isActive = isActiveParam !== null ? isActiveParam === "true" : undefined;
 
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
                 search,
                 isActive,
                 schoolId,
+                classLevelId,
             },
             {
                 userId: authResult.user.id,

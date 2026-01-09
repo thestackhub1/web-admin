@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, User, BookOpen, Award, CheckCircle2, XCircle, Timer, FileText, Layers, TrendingUp, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User, BookOpen, Award, CheckCircle2, XCircle, Timer, FileText, Layers, TrendingUp, AlertTriangle, ChevronRight } from "lucide-react";
 import { authServerApi, isAuthenticated } from "@/lib/api";
-import { GlassCard } from '@/client/components/ui/premium';
+import { GlassCard, PageHeader, Badge } from '@/client/components/ui/premium';
 import { ExamAttemptDetailsClient } from "@/client/components/features/exams";
 
 interface PageProps {
@@ -129,26 +129,86 @@ export default async function ExamAttemptDetailsPage({ params }: PageProps) {
   const percentage = exam.percentage ? parseFloat(String(exam.percentage)) : 0;
   const isPassing = percentage >= passingPercentage;
 
+  const studentName = exam.profiles?.name || exam.profiles?.email?.split('@')[0] || "Student";
+
   return (
     <div className="space-y-6">
-      {/* Breadcrumb & Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard/exams"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 transition-all hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-              Exam Attempt Details
-            </h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Review student performance and answers
-            </p>
+      {/* Page Header */}
+      <PageHeader
+        title={`${studentName}'s Exam Attempt`}
+        description={exam.scheduled_exams?.name_en || "View detailed exam results and answers"}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Exam Attempts", href: "/dashboard/exams" },
+          { label: studentName },
+        ]}
+        action={
+          <div className="flex items-center gap-3">
+            {exam.subjects && (
+              <Badge variant="default" size="md">
+                {exam.subjects.name_en}
+              </Badge>
+            )}
+            <Badge 
+              variant={isPassing ? "success" : "error"} 
+              size="md"
+              dot
+            >
+              {isPassing ? "Passed" : "Failed"}
+            </Badge>
           </div>
-        </div>
+        }
+      />
+
+      {/* Stats Grid - Clickable Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+              {Math.round(percentage)}%
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Score</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+              {correctAnswers}/{totalQuestions}
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Correct</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400">
+            <Clock className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+              {durationMinutes} min
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Duration</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex items-center gap-4 p-5">
+          <div className="rounded-xl p-3 bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
+            <Award className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+              {exam.score || 0}/{exam.total_marks || 0}
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Marks</p>
+          </div>
+        </GlassCard>
       </div>
 
       {/* Main Content */}

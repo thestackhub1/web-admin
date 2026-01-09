@@ -118,9 +118,27 @@ export class ScheduledExamsService {
       subject_id: r.subjectId,
       exam_structure_id: r.examStructureId,
       max_attempts: r.maxAttempts,
-      class_levels: r.classLevel?.id ? r.classLevel : null,
-      subjects: r.subject?.id ? r.subject : null,
-      exam_structures: r.examStructure?.id ? r.examStructure : null,
+      class_levels: r.classLevel?.id ? {
+        id: r.classLevel.id,
+        name_en: r.classLevel.nameEn,
+        name_mr: r.classLevel.nameMr,
+        slug: r.classLevel.slug,
+      } : null,
+      subjects: r.subject?.id ? {
+        id: r.subject.id,
+        name_en: r.subject.nameEn,
+        name_mr: r.subject.nameMr,
+        slug: r.subject.slug,
+      } : null,
+      exam_structures: r.examStructure?.id ? {
+        id: r.examStructure.id,
+        name_en: r.examStructure.nameEn,
+        name_mr: r.examStructure.nameMr,
+        total_marks: r.examStructure.totalMarks,
+        total_questions: r.examStructure.totalQuestions,
+        duration_minutes: r.examStructure.durationMinutes,
+        sections: r.examStructure.sections,
+      } : null,
     }));
   }
 
@@ -212,9 +230,28 @@ export class ScheduledExamsService {
       max_attempts: exam.maxAttempts,
       publish_results: exam.publishResults,
       is_active: exam.isActive,
-      class_levels: exam.classLevel?.id ? exam.classLevel : null,
-      subjects: exam.subject?.id ? exam.subject : null,
-      exam_structures: exam.examStructure?.id ? exam.examStructure : null,
+      class_levels: exam.classLevel?.id ? {
+        id: exam.classLevel.id,
+        name_en: exam.classLevel.nameEn,
+        name_mr: exam.classLevel.nameMr,
+        slug: exam.classLevel.slug,
+      } : null,
+      subjects: exam.subject?.id ? {
+        id: exam.subject.id,
+        name_en: exam.subject.nameEn,
+        name_mr: exam.subject.nameMr,
+        slug: exam.subject.slug,
+      } : null,
+      exam_structures: exam.examStructure?.id ? {
+        id: exam.examStructure.id,
+        name_en: exam.examStructure.nameEn,
+        name_mr: exam.examStructure.nameMr,
+        total_marks: exam.examStructure.totalMarks,
+        total_questions: exam.examStructure.totalQuestions,
+        duration_minutes: exam.examStructure.durationMinutes,
+        passing_percentage: (exam.examStructure as any).passingPercentage,
+        sections: exam.examStructure.sections,
+      } : null,
       attempts_count: totalAttempts,
       completed_attempts: completedAttempts,
     };

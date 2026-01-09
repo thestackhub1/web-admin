@@ -71,6 +71,9 @@ export function QuestionsListView({
 }: QuestionsListViewProps) {
     const router = useRouter();
 
+    // Ensure questions is always an array
+    const questionsList = Array.isArray(questions) ? questions : [];
+
     const handleRowClick = (question: Question) => {
         router.push(`/dashboard/questions/${question.subject?.slug || 'english'}/${question.id}`);
     };
@@ -99,14 +102,14 @@ export function QuestionsListView({
                 </DataTableHead>
 
                 <DataTableBody>
-                    {questions.length === 0 ? (
+                    {questionsList.length === 0 ? (
                         <DataTableRow>
                             <DataTableCell colSpan={7} className="text-center py-12">
                                 <p className="text-neutral-500">No questions found</p>
                             </DataTableCell>
                         </DataTableRow>
                     ) : (
-                        questions.map((question) => {
+                        questionsList.map((question) => {
                             const SubjectIcon = SubjectIconMap[question.subject?.slug || 'english'] || BookOpen;
 
                             return (

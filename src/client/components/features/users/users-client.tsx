@@ -9,8 +9,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Trash2, PlusCircle } from "lucide-react";
-import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell } from '@/client/components/ui/premium';
+import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Trash2, PlusCircle, Users } from "lucide-react";
+import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell, PageHeader, StatCardPremium } from '@/client/components/ui/premium';
 import { SmartFilterChips } from '@/client/components/ui/question-components';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
@@ -127,17 +127,62 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
     }
   };
 
+  // Stats for users
+  const totalUsers = data?.pagination?.totalItems || users.length;
+  const activeUsers = users.filter(u => u.is_active).length;
+  const adminCount = users.filter(u => u.role === 'admin' || u.role === 'super_admin').length;
+  const studentCount = users.filter(u => u.role === 'student').length;
+
   return (
-    <div className="space-y-4">
-      {/* Action Bar */}
-      <div className="flex justify-end">
-        <Button
-          className="gap-2 bg-brand-blue-600 hover:bg-brand-blue-700 text-white"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          <PlusCircle className="h-4 w-4" />
-          Add User
-        </Button>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Users"
+        description="Manage all users including admins, teachers and students"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Users" },
+        ]}
+        action={
+          <Button
+            className="gap-2 bg-brand-blue-600 hover:bg-brand-blue-700 text-white"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add User
+          </Button>
+        }
+      />
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCardPremium
+          title="Total Users"
+          value={totalUsers}
+          icon={Users}
+          gradient="blue"
+        />
+        <StatCardPremium
+          title="Active Users"
+          value={activeUsers}
+          icon={ToggleRight}
+          gradient="green"
+          iconColor="text-success-500"
+        />
+        <StatCardPremium
+          title="Admins"
+          value={adminCount}
+          icon={Crown}
+          gradient="purple"
+          iconColor="text-purple-500"
+        />
+        <StatCardPremium
+          title="Students"
+          value={studentCount}
+          icon={GraduationCap}
+          gradient="amber"
+          iconColor="text-amber-500"
+        />
       </div>
 
       <DataTableContainer>

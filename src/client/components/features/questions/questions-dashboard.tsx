@@ -15,6 +15,7 @@ import { Button, buttonVariants } from "@/client/components/ui/button";
 import { Loader } from "@/client/components/ui/loader";
 import { QuestionsListView } from "./questions-list-view";
 import { QuestionsFilterDialog } from "./questions-filter-dialog";
+import { ClassLevelFilterBadge, useClassLevelFilter } from "@/client/components/ui/class-level-filter-badge";
 import {
     FileQuestion,
     Plus,
@@ -24,6 +25,7 @@ import {
     Search,
     X,
     SlidersHorizontal,
+    Upload,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -70,14 +72,16 @@ export default function QuestionsDashboard() {
             label: s.name_en,
         })) || [], [subjectsData]);
 
-    // Client-side Stats (Note: Real stats should come from API, this mimics structure)
-    // Using 0 as we don't have global stats API yet, similar to how screenshot showed 0
-    const stats = useMemo(() => ({
-        total: questions?.length || 0, // Placeholder
-        easy: 0,
-        medium: 0,
-        hard: 0,
-    }), [questions]);
+    // Calculate stats from filtered questions
+    const stats = useMemo(() => {
+        const questionsList = Array.isArray(questions) ? questions : [];
+        return {
+            total: questionsList.length,
+            easy: questionsList.filter(q => q.difficulty === 'easy').length,
+            medium: questionsList.filter(q => q.difficulty === 'medium').length,
+            hard: questionsList.filter(q => q.difficulty === 'hard').length,
+        };
+    }, [questions]);
 
 
     // Handlers
@@ -123,6 +127,28 @@ export default function QuestionsDashboard() {
         filterState.status
     ].filter(Boolean).length;
 
+    // Class level filter from URL
+    const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
+
+    // Dynamic page content based on filter
+    const pageTitle = hasClassLevelFilter && activeClassLevel 
+        ? `Question Bank - ${activeClassLevel.name_en}` 
+        : "Question Bank";
+    const pageDescription = hasClassLevelFilter && activeClassLevel 
+        ? `Questions for ${activeClassLevel.name_en}` 
+        : "Manage, organize, and filter questions across all subjects";
+    
+    const breadcrumbs = useMemo(() => {
+        if (hasClassLevelFilter && activeClassLevel) {
+            return [
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "Class Levels", href: "/dashboard/class-levels" },
+                { label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` },
+                { label: "Questions" }
+            ];
+        }
+        return [{ label: "Dashboard", href: "/dashboard" }, { label: "Questions" }];
+    }, [hasClassLevelFilter, activeClassLevel]);
 
     // Search State (Debounced effect handled by simply pushing URL, local state for input)
     const [localSearch, setLocalSearch] = useState(search);
@@ -138,60 +164,13 @@ export default function QuestionsDashboard() {
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Standard Header */}
             <PageHeader
-                title="Question Bank"
-                description="Manage, organize, and filter questions across all subjects"
-                breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Questions" }]}
+                title={pageTitle}
+                description={pageDescription}
+                breadcrumbs={breadcrumbs}
+                action={<ClassLevelFilterBadge />}
             />
 
-            {/* Compact Stats Bar - Styled like Scheduled Exams List */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                <div className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                            <FileQuestion className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-neutral-500">Total Questions</p>
-                            <p className="text-lg font-bold text-neutral-900 dark:text-white">-</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="rounded-xl border border-success-100 bg-success-50/50 p-3 dark:border-success-900/20 dark:bg-success-900/10">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
-                            <CheckCircle className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-success-600 dark:text-success-400">Easy</p>
-                            <p className="text-lg font-bold text-success-700 dark:text-success-300">-</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="rounded-xl border border-warning-100 bg-warning-50/50 p-3 dark:border-warning-900/20 dark:bg-warning-900/10">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
-                            <Target className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-warning-600 dark:text-warning-400">Medium</p>
-                            <p className="text-lg font-bold text-warning-700 dark:text-warning-300">-</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3 dark:border-purple-900/20 dark:bg-purple-900/10">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                            <BarChart3 className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Hard</p>
-                            <p className="text-lg font-bold text-purple-700 dark:text-purple-300">-</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Search & Filters Bar - Styled like Scheduled Exams List */}
+            {/* Search & Filters Bar */}
             <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     {/* Search Input */}
@@ -222,22 +201,38 @@ export default function QuestionsDashboard() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        {/* Create Question Button */}
                         <Link
-                            href="/dashboard/questions/import"
+                            href="/dashboard/questions/create"
                             className={clsx(buttonVariants({ variant: "primary" }), "hidden sm:flex")}
                         >
                             <Plus className="mr-2 h-4 w-4" />
                             Create Question
                         </Link>
                         <Link
-                            href="/dashboard/questions/import"
-                            className={clsx(buttonVariants({ size: "sm" }), "sm:hidden p-2")}
+                            href="/dashboard/questions/create"
+                            className={clsx(buttonVariants({ variant: "primary", size: "sm" }), "sm:hidden p-2.5")}
                             title="Create Question"
                         >
                             <Plus className="h-4 w-4" />
                         </Link>
 
+                        {/* Import Questions Button */}
+                        <Link
+                            href="/dashboard/questions/import"
+                            className={clsx(buttonVariants({ variant: "outline" }), "hidden sm:flex")}
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import
+                        </Link>
+                        <Link
+                            href="/dashboard/questions/import"
+                            className={clsx(buttonVariants({ variant: "outline", size: "sm" }), "sm:hidden p-2.5")}
+                            title="Import Questions"
+                        >
+                            <Upload className="h-4 w-4" />
+                        </Link>
 
                         {/* Filter Button */}
                         <button
@@ -263,11 +258,67 @@ export default function QuestionsDashboard() {
                 {/* Active Filter Pills */}
                 <FilterPills
                     filters={filterState}
-                    classLevels={[]} // Not really used for Questions in this context but prop required
+                    classLevels={[]}
                     subjects={subjectOptions}
                     onRemove={removeFilter}
                     className="pt-1"
                 />
+            </div>
+
+            {/* Stats Bar - Shows filtered results count */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+                <div className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                            <FileQuestion className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-neutral-500">Total Questions</p>
+                            <p className="text-lg font-bold text-neutral-900 dark:text-white">
+                                {loading ? <span className="inline-block w-8 h-5 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" /> : stats.total}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl border border-success-100 bg-success-50/50 p-3 dark:border-success-900/20 dark:bg-success-900/10">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
+                            <CheckCircle className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-success-600 dark:text-success-400">Easy</p>
+                            <p className="text-lg font-bold text-success-700 dark:text-success-300">
+                                {loading ? <span className="inline-block w-6 h-5 bg-success-200 dark:bg-success-900/50 rounded animate-pulse" /> : stats.easy}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl border border-warning-100 bg-warning-50/50 p-3 dark:border-warning-900/20 dark:bg-warning-900/10">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
+                            <Target className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-warning-600 dark:text-warning-400">Medium</p>
+                            <p className="text-lg font-bold text-warning-700 dark:text-warning-300">
+                                {loading ? <span className="inline-block w-6 h-5 bg-warning-200 dark:bg-warning-900/50 rounded animate-pulse" /> : stats.medium}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3 dark:border-purple-900/20 dark:bg-purple-900/10">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                            <BarChart3 className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Hard</p>
+                            <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                                {loading ? <span className="inline-block w-6 h-5 bg-purple-200 dark:bg-purple-900/50 rounded animate-pulse" /> : stats.hard}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Content */}
@@ -282,7 +333,7 @@ export default function QuestionsDashboard() {
                     description="There was a problem fetching the question bank. Please try again."
                     action={<Button onClick={() => window.location.reload()}>Try Again</Button>}
                 />
-            ) : !questions || questions.length === 0 ? (
+            ) : !questions || !Array.isArray(questions) || questions.length === 0 ? (
                 <EmptyState
                     icon={search || activeFilterCount > 0 ? Search : FileQuestion}
                     title={search || activeFilterCount > 0 ? "No matching questions" : "Question bank is empty"}

@@ -8,7 +8,12 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { api } from '@/client/api';
+
+export interface UseApiOptions {
+  autoExecute?: boolean;
+  /** Key that triggers re-execution when changed */
+  dependencyKey?: string;
+}
 
 export interface UseApiResult<T> {
   data: T | null;
@@ -20,12 +25,20 @@ export interface UseApiResult<T> {
 
 export function useApi<T>(
   apiCall: () => Promise<{ data: T | null; error: string | null }>,
-  autoExecute: boolean = false
+  optionsOrAutoExecute: boolean | UseApiOptions = false
 ): UseApiResult<T> {
+  // Normalize options
+  const options: UseApiOptions = typeof optionsOrAutoExecute === 'boolean'
+    ? { autoExecute: optionsOrAutoExecute }
+    : optionsOrAutoExecute;
+  
+  const { autoExecute = false, dependencyKey } = options;
+
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(autoExecute);
   const [error, setError] = useState<string | null>(null);
   const apiCallRef = useRef(apiCall);
+  const hasExecutedRef = useRef(false);
 
   // Update ref when apiCall changes
   useEffect(() => {
@@ -58,13 +71,16 @@ export function useApi<T>(
     setData(null);
     setError(null);
     setLoading(false);
+    hasExecutedRef.current = false;
   }, []);
 
+  // Auto-execute on mount or when dependencyKey changes
   useEffect(() => {
     if (autoExecute) {
       execute();
+      hasExecutedRef.current = true;
     }
-  }, [autoExecute, execute]);
+  }, [autoExecute, execute, dependencyKey]);
 
   return { data, loading, error, execute, reset };
 }

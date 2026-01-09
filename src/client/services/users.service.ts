@@ -93,6 +93,7 @@ export async function getUsers(filters: {
   schoolId?: string;
   role?: string;
   search?: string;
+  classLevelId?: string;
   page?: number;
   pageSize?: number;
 } = {}): Promise<UserProfile[]> {
@@ -102,6 +103,7 @@ export async function getUsers(filters: {
   if (filters.schoolId) params.append("schoolId", filters.schoolId);
   if (filters.role && filters.role !== "all") params.append("role", filters.role);
   if (filters.search) params.append("search", filters.search);
+  if (filters.classLevelId) params.append("classLevelId", filters.classLevelId);
   params.append("page", (filters.page || 1).toString());
   params.append("pageSize", (filters.pageSize || 100).toString());
 

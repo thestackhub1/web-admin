@@ -49,8 +49,11 @@ export function useChaptersWithCounts(slug: string) {
     order_index: number;
     question_count: number;
   }>>(async () => {
+    if (!slug) {
+      return { data: [], error: null };
+    }
     return api.get(`/api/v1/subjects/${slug}/chapters/with-counts`);
-  });
+  }, { autoExecute: !!slug, dependencyKey: slug }); // Re-fetch when slug changes
 }
 
 import { useMutation } from './use-mutations';

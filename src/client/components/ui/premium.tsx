@@ -242,21 +242,29 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  size?: "sm" | "md" | "lg";
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, size = "md" }: EmptyStateProps) {
+  const sizeClasses = {
+    sm: { wrapper: "py-6", icon: "h-6 w-6", iconWrapper: "p-2.5 mb-3", title: "text-base", desc: "text-xs" },
+    md: { wrapper: "py-12", icon: "h-8 w-8", iconWrapper: "p-4 mb-4", title: "text-lg", desc: "text-sm" },
+    lg: { wrapper: "py-16", icon: "h-10 w-10", iconWrapper: "p-5 mb-5", title: "text-xl", desc: "text-base" },
+  };
+  const s = sizeClasses[size];
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div className={`flex flex-col items-center justify-center text-center ${s.wrapper}`}>
       {Icon && (
-        <div className="mb-4 rounded-full bg-neutral-100 p-4 dark:bg-neutral-800">
-          <Icon className="h-8 w-8 text-neutral-400" />
+        <div className={`rounded-full bg-neutral-100 dark:bg-neutral-800 ${s.iconWrapper}`}>
+          <Icon className={`text-neutral-400 ${s.icon}`} />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{title}</h3>
+      <h3 className={`font-semibold text-neutral-900 dark:text-white ${s.title}`}>{title}</h3>
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
+        <p className={`mt-2 max-w-sm text-neutral-500 dark:text-neutral-400 ${s.desc}`}>{description}</p>
       )}
-      {action && <div className="mt-6">{action}</div>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

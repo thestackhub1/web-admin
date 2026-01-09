@@ -2,7 +2,7 @@
 
 "use client";
 
-import { ArrowUp, ArrowDown, Trash2, BookOpen } from "lucide-react";
+import { ArrowUp, ArrowDown, Trash2, BookOpen, Pencil } from "lucide-react";
 import { Badge } from '@/client/components/ui/premium';
 import { questionTypeLabels } from "@/client/types/questions";
 import type { QuestionType } from "@/client/types/questions";
@@ -41,85 +41,74 @@ export function ExamStructureSectionCard({
     onMove,
 }: ExamStructureSectionCardProps) {
     return (
-        <div className="group relative flex items-center gap-6 rounded-3xl bg-white p-6 shadow-sm border border-neutral-100 transition-all hover:shadow-md hover:border-primary-100 dark:bg-neutral-900 dark:border-neutral-800 dark:hover:border-primary-900/50">
-            {/* Index Pin */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-neutral-50 text-neutral-400 font-black text-xs uppercase tracking-tighter group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors dark:bg-neutral-800">
+        <div className="group relative flex items-center gap-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-4 transition-all hover:bg-neutral-100 dark:hover:bg-neutral-800">
+            {/* Index Badge */}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-600 text-xs font-bold dark:bg-primary-900/30 dark:text-primary-400">
                 {String(index + 1).padStart(2, '0')}
             </div>
 
-            {/* Drag/Move Handle */}
-            <div className="flex flex-col gap-1 shrink-0">
+            {/* Move Buttons */}
+            <div className="flex flex-col gap-0.5 shrink-0">
                 <button
                     onClick={() => onMove(index, "up")}
                     disabled={index === 0}
-                    className="p-1 rounded-lg text-neutral-300 hover:bg-neutral-50 hover:text-primary-500 disabled:opacity-0 transition-all dark:hover:bg-neutral-800"
+                    className="p-1 rounded text-neutral-400 hover:bg-white hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all dark:hover:bg-neutral-700"
                 >
-                    <ArrowUp className="h-4 w-4" />
+                    <ArrowUp className="h-3.5 w-3.5" />
                 </button>
                 <button
                     onClick={() => onMove(index, "down")}
                     disabled={index === totalSections - 1}
-                    className="p-1 rounded-lg text-neutral-300 hover:bg-neutral-50 hover:text-primary-500 disabled:opacity-0 transition-all dark:hover:bg-neutral-800"
+                    className="p-1 rounded text-neutral-400 hover:bg-white hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all dark:hover:bg-neutral-700"
                 >
-                    <ArrowDown className="h-4 w-4" />
+                    <ArrowDown className="h-3.5 w-3.5" />
                 </button>
             </div>
 
             {/* Section Info */}
             <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <h4 className="text-lg font-black text-neutral-900 dark:text-white leading-none">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
                         {section.name_en}
                     </h4>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-primary-100/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary-600 dark:bg-primary-900/40 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50">
+                    <Badge variant="info" size="sm">
                         {questionTypeLabels[section.question_type]}
-                    </span>
-                    {/* Chapter config badge */}
+                    </Badge>
                     {section.chapter_configs && section.chapter_configs.length > 0 ? (
-                        <span className="inline-flex items-center gap-2 rounded-full bg-success-100/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-success-600 dark:bg-success-900/40 dark:text-success-400 border border-success-200/50 dark:border-success-800/50">
-                            <BookOpen className="h-3 w-3" />
-                            {section.chapter_configs.length} Targeted Chapters
-                        </span>
+                        <Badge variant="success" size="sm">
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {section.chapter_configs.length} Chapters
+                        </Badge>
                     ) : (
-                        <span className="inline-flex items-center gap-2 rounded-full bg-neutral-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500 border border-neutral-100 dark:border-neutral-700">
-                            <BookOpen className="h-3 w-3" />
+                        <Badge variant="default" size="sm">
+                            <BookOpen className="h-3 w-3 mr-1" />
                             Global Scope
-                        </span>
+                        </Badge>
                     )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-neutral-400">Yield:</span>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">{section.total_marks} Marks</span>
-                    </div>
-                    <div className="h-1 w-1 rounded-full bg-neutral-200 dark:bg-neutral-700" />
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-neutral-400">Questions:</span>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">{section.question_count} × {section.marks_per_question}</span>
-                    </div>
+                <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                    <span>Yield: <span className="font-medium text-neutral-700 dark:text-neutral-300">{section.total_marks} Marks</span></span>
+                    <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                    <span>Questions: <span className="font-medium text-neutral-700 dark:text-neutral-300">{section.question_count} × {section.marks_per_question}</span></span>
                 </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pl-4 border-l border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center gap-1">
                 <button
                     onClick={() => onEdit(section)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-400 hover:bg-primary-50 hover:text-primary-600 transition-all dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 hover:bg-white hover:text-primary-600 transition-all dark:hover:bg-neutral-700 dark:hover:text-primary-400"
                     title="Edit Section"
                 >
-                    <Trash2 className="hidden" /> {/* Placeholder just to keep Trash2 imported if I didn't mean to remove it */}
-                    <div className="relative">
-                        <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
-                    </div>
+                    <Pencil className="h-4 w-4" />
                 </button>
                 <button
                     onClick={() => onDelete(section.id)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-400 hover:bg-danger-50 hover:text-danger-500 transition-all dark:hover:bg-danger-900/20 dark:hover:text-danger-500"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 hover:bg-rose-50 hover:text-rose-500 transition-all dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                     title="Delete Section"
                 >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="h-4 w-4" />
                 </button>
             </div>
         </div>

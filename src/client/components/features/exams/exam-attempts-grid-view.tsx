@@ -180,8 +180,8 @@ function PremiumExamCard({
 
   const scorePercentage = exam.percentage !== null && exam.percentage !== undefined
     ? Math.round(exam.percentage)
-    : (exam.total_marks > 0 && exam.score !== null 
-        ? Math.round((exam.score / exam.total_marks) * 100) 
+    : ((exam.total_marks ?? 0) > 0 && exam.score !== null 
+        ? Math.round((exam.score / (exam.total_marks ?? 1)) * 100) 
         : null);
   const isPassing = scorePercentage !== null && scorePercentage >= 35;
 
@@ -194,8 +194,8 @@ function PremiumExamCard({
     });
   };
 
-  const formatDuration = (startedAt: string, completedAt: string | null) => {
-    if (!completedAt) return null;
+  const formatDuration = (startedAt: string | null, completedAt: string | null) => {
+    if (!startedAt || !completedAt) return null;
     const startTime = new Date(startedAt).getTime();
     const endTime = new Date(completedAt).getTime();
     const seconds = Math.floor((endTime - startTime) / 1000);

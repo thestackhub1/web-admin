@@ -6,6 +6,8 @@ export interface ExamStructure {
   name_mr: string | null;
   subject_id: string;
   class_level: string;
+  class_level_id: string | null;
+  is_template: boolean;
   duration_minutes: number;
   total_marks: number;
   passing_percentage: number;

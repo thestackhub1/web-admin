@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { GlassCard, Badge } from '@/client/components/ui/premium';
+import { GlassCard, Badge, PageHeader } from '@/client/components/ui/premium';
 import {
   DonutChart,
   TrendLineChart,
@@ -230,7 +230,28 @@ export function AnalyticsClient() {
 
   return (
     <div className="space-y-6">
-      {/* Simplified Header with Filters Toggle */}
+      {/* Page Header */}
+      <PageHeader
+        title="Analytics"
+        description="Platform-wide performance metrics and insights"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Analytics" },
+        ]}
+        action={
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-blue-600/20 transition-all hover:bg-brand-blue-700 hover:shadow-lg hover:shadow-brand-blue-600/30"
+            >
+              <Download className="h-4 w-4" />
+              Export Report
+            </button>
+          </div>
+        }
+      />
+
+      {/* Filters Toggle */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -242,13 +263,6 @@ export function AnalyticsClient() {
             {activeFiltersCount > 0 && (
               <Badge variant="brand" size="sm">{activeFiltersCount}</Badge>
             )}
-          </button>
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-blue-600/20 transition-all hover:bg-brand-blue-700 hover:shadow-lg hover:shadow-brand-blue-600/30"
-          >
-            <Download className="h-4 w-4" />
-            Export Report
           </button>
         </div>
         <div className="flex items-center gap-2">

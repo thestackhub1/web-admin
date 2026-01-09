@@ -36,9 +36,9 @@ export interface ExamAttempt {
   user_id: string;
   status: string;
   score: number | null;
-  total_marks: number;
+  total_marks: number | null;
   percentage: number | null;
-  started_at: string;
+  started_at: string | null;
   completed_at: string | null;
   profiles: {
     name: string | null;
