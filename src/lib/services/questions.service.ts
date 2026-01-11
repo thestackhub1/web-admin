@@ -80,6 +80,16 @@ export class QuestionsService {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
 
+    // Get subject name from slug
+    const subjectNames: Record<string, string> = {
+      'scholarship': 'Scholarship',
+      'english': 'English',
+      'information-technology': 'Information Technology',
+      'information_technology': 'Information Technology',
+    };
+    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
+    const normalizedSlug = subjectSlug.replace(/_/g, '-');
+
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const conditions = [];
@@ -119,7 +129,7 @@ export class QuestionsService {
 
     const results = await baseQuery;
 
-    // Transform to API format
+    // Transform to API format (including subject info)
     return results.map((q) => ({
       id: q.id,
       question_text: q.questionText,
@@ -136,6 +146,7 @@ export class QuestionsService {
       created_by: q.createdBy,
       created_at: q.createdAt?.toISOString(),
       updated_at: q.updatedAt?.toISOString(),
+      subject: { slug: normalizedSlug, name: subjectName },
     }));
   }
 
@@ -155,6 +166,16 @@ export class QuestionsService {
     if (!table) {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
+
+    // Get subject name from slug
+    const subjectNames: Record<string, string> = {
+      'scholarship': 'Scholarship',
+      'english': 'English',
+      'information-technology': 'Information Technology',
+      'information_technology': 'Information Technology',
+    };
+    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
+    const normalizedSlug = subjectSlug.replace(/_/g, '-');
 
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
@@ -179,6 +200,7 @@ export class QuestionsService {
       created_by: q.createdBy,
       created_at: q.createdAt?.toISOString(),
       updated_at: q.updatedAt?.toISOString(),
+      subject: { slug: normalizedSlug, name: subjectName },
     }));
   }
 
@@ -194,6 +216,16 @@ export class QuestionsService {
     if (!table) {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
+
+    // Get subject name from slug
+    const subjectNames: Record<string, string> = {
+      'scholarship': 'Scholarship',
+      'english': 'English',
+      'information-technology': 'Information Technology',
+      'information_technology': 'Information Technology',
+    };
+    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
+    const normalizedSlug = subjectSlug.replace(/_/g, '-');
 
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
@@ -223,6 +255,7 @@ export class QuestionsService {
       created_by: question.createdBy,
       created_at: question.createdAt?.toISOString(),
       updated_at: question.updatedAt?.toISOString(),
+      subject: { slug: normalizedSlug, name: subjectName },
     };
   }
 

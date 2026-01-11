@@ -7,6 +7,8 @@ export const metadata: Metadata = {
     title: "Edit Question - The Stack Hub Admin",
 };
 
+// Map of valid question table slugs to their display names
+// Note: Some question tables (like 'english') may not have a corresponding entry in the subjects table
 const subjectDisplayMap: Record<string, string> = {
     scholarship: "Scholarship",
     english: "English",
@@ -25,21 +27,26 @@ export default async function EditQuestionPage({
         notFound();
     }
 
-    const [question, chapters, subjectData] = await Promise.all([
-        getQuestionById(subject, id), 
-        getChaptersBySubject(subject),
-        getSubjectWithParent(subject)
-    ]);
-
-    if (!question || !subjectData) {
+    // Fetch question first - this is required
+    const question = await getQuestionById(subject, id);
+    if (!question) {
         notFound();
     }
+
+    // Fetch chapters and subject data (these might fail for subjects not in the subjects table)
+    const [chapters, subjectData] = await Promise.all([
+        getChaptersBySubject(subject).catch(() => []),
+        getSubjectWithParent(subject).catch(() => null),
+    ]);
+
+    // Use subjectData if available, otherwise use the display map fallback
+    const subjectName = subjectData?.name_en || displayName;
 
     return (
         <div className="space-y-6">
             <QuestionEditor 
                 subjectSlug={subject} 
-                subjectName={subjectData.name_en}
+                subjectName={subjectName}
                 subjectDisplaySlug={subject}
                 chapters={chapters} 
                 mode="edit" 
