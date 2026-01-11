@@ -166,6 +166,194 @@ export async function seedScheduledExams() {
     );
   }
 
+  // Find Class 11 for IT exams
+  const class11 = allClassLevels.find((c) => c.slug === "class-11");
+  const class11ExamStructure = allExamStructures.find((es) => 
+    es.subjectId === itSubject?.id && es.classLevelId === class11?.id
+  );
+
+  // IT Exams (Class 11) - Link to exam structures
+  if (itSubject && class11) {
+    const now = new Date();
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const twoMonths = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
+    scheduledExamsData.push(
+      // Completed exams
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Chapter 1 Test - Introduction to IT",
+        nameMr: "अध्याय १ चाचणी - IT चा परिचय",
+        descriptionEn: "Chapter test on Introduction to Information Technology",
+        descriptionMr: "माहिती तंत्रज्ञानाच्या परिचयावर अध्याय चाचणी",
+        totalMarks: 15,
+        durationMinutes: 30,
+        orderIndex: 1,
+        status: "completed",
+        scheduledDate: lastWeek.toISOString().split('T')[0],
+        scheduledTime: "10:00:00",
+        publishResults: true,
+        isActive: true,
+      },
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Unit Test 1 - Basics of IT",
+        nameMr: "घटक चाचणी १ - IT मूलभूत",
+        descriptionEn: "First unit test covering basics of IT",
+        descriptionMr: "IT मूलभूत गोष्टी समाविष्ट करणारी पहिली घटक चाचणी",
+        totalMarks: 25,
+        durationMinutes: 45,
+        orderIndex: 2,
+        status: "completed",
+        scheduledDate: twoDaysAgo.toISOString().split('T')[0],
+        scheduledTime: "11:00:00",
+        publishResults: true,
+        isActive: true,
+      },
+      // Active exam
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Chapter 2 Test - Computer Networks",
+        nameMr: "अध्याय २ चाचणी - संगणक नेटवर्क",
+        descriptionEn: "Chapter test on Computer Networks",
+        descriptionMr: "संगणक नेटवर्क वर अध्याय चाचणी",
+        totalMarks: 15,
+        durationMinutes: 30,
+        orderIndex: 3,
+        status: "active",
+        scheduledDate: now.toISOString().split('T')[0],
+        scheduledTime: "14:00:00",
+        publishResults: false,
+        isActive: true,
+      },
+      // Scheduled exams
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Unit Test 2 - Networks & Internet",
+        nameMr: "घटक चाचणी २ - नेटवर्क आणि इंटरनेट",
+        descriptionEn: "Second unit test on Networks and Internet",
+        descriptionMr: "नेटवर्क आणि इंटरनेट वर दुसरी घटक चाचणी",
+        totalMarks: 25,
+        durationMinutes: 45,
+        orderIndex: 4,
+        status: "scheduled",
+        scheduledDate: nextWeek.toISOString().split('T')[0],
+        scheduledTime: "10:00:00",
+        publishResults: false,
+        isActive: true,
+      },
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Semester 1 Exam",
+        nameMr: "सत्र १ परीक्षा",
+        descriptionEn: "First semester examination for Class 11 IT",
+        descriptionMr: "अकरावी IT साठी पहिली सत्र परीक्षा",
+        totalMarks: 50,
+        durationMinutes: 90,
+        orderIndex: 5,
+        status: "scheduled",
+        scheduledDate: twoWeeks.toISOString().split('T')[0],
+        scheduledTime: "09:00:00",
+        publishResults: false,
+        isActive: true,
+      },
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Chapter 3 Test - Web Technologies",
+        nameMr: "अध्याय ३ चाचणी - वेब तंत्रज्ञान",
+        descriptionEn: "Chapter test on Web Technologies",
+        descriptionMr: "वेब तंत्रज्ञान वर अध्याय चाचणी",
+        totalMarks: 15,
+        durationMinutes: 30,
+        orderIndex: 6,
+        status: "scheduled",
+        scheduledDate: nextMonth.toISOString().split('T')[0],
+        scheduledTime: "10:00:00",
+        publishResults: false,
+        isActive: true,
+      },
+      // Draft exams
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Annual Exam",
+        nameMr: "वार्षिक परीक्षा",
+        descriptionEn: "Annual examination for Class 11 IT",
+        descriptionMr: "अकरावी IT साठी वार्षिक परीक्षा",
+        totalMarks: 80,
+        durationMinutes: 180,
+        orderIndex: 7,
+        status: "draft",
+        isActive: true,
+      },
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Practice Test - Chapter 1 to 3",
+        nameMr: "सराव चाचणी - अध्याय १ ते ३",
+        descriptionEn: "Practice test covering Chapters 1 to 3",
+        descriptionMr: "अध्याय १ ते ३ समाविष्ट करणारी सराव चाचणी",
+        totalMarks: 20,
+        durationMinutes: 30,
+        orderIndex: 8,
+        status: "draft",
+        maxAttempts: 5,
+        isActive: true,
+      },
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Revision Test 1",
+        nameMr: "पुनरावलोकन चाचणी १",
+        descriptionEn: "Quick revision test for Class 11 IT",
+        descriptionMr: "अकरावी IT साठी द्रुत पुनरावलोकन चाचणी",
+        totalMarks: 20,
+        durationMinutes: 30,
+        orderIndex: 9,
+        status: "draft",
+        maxAttempts: 0, // Unlimited
+        isActive: true,
+      },
+      // Cancelled exam (for testing UI)
+      {
+        classLevelId: class11.id,
+        subjectId: itSubject.id,
+        examStructureId: class11ExamStructure?.id || null,
+        nameEn: "Unit Test 3 (Cancelled)",
+        nameMr: "घटक चाचणी ३ (रद्द)",
+        descriptionEn: "This exam was cancelled due to schedule conflict",
+        descriptionMr: "वेळापत्रक संघर्षामुळे ही परीक्षा रद्द करण्यात आली",
+        totalMarks: 25,
+        durationMinutes: 45,
+        orderIndex: 10,
+        status: "cancelled",
+        scheduledDate: tomorrow.toISOString().split('T')[0],
+        scheduledTime: "11:00:00",
+        isActive: false,
+      }
+    );
+  }
+
   // Scholarship Exams (Class 8) - Link to exam structures
   if (scholarshipCategory && class8) {
     const now = new Date();
