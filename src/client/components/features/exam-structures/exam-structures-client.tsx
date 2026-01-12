@@ -1,76 +1,103 @@
 "use client";
 
-// Client-side only — no server secrets or database access here
+/**
+ * Exam Structures Client - Premium SaaS Design
+ * 
+ * List view for all exam structures/blueprints with smart filtering.
+ * Follows the premium design system (Linear/Raycast/Vercel inspired).
+ */
 
-import { useSearchParams } from "next/navigation";
-import { PageHeader, GlassCard, Badge, EmptyState } from '@/client/components/ui/premium';
-import { Layers, Clock, HelpCircle, Plus, BookOpen, CheckCircle, FileText, Target, Award, GraduationCap, Monitor } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { clsx } from "clsx";
+import {
+  Layers,
+  Clock,
+  HelpCircle,
+  Plus,
+  BookOpen,
+  CheckCircle,
+  FileText,
+  Target,
+  Award,
+  GraduationCap,
+  Monitor,
+  Search,
+  X,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from '@/client/components/ui/button';
+import { PageHeader, GlassCard, Badge, EmptyState } from '@/client/components/ui/premium';
 import { useExamStructures } from '@/client/hooks/use-exam-structures';
 import { useSubjects } from '@/client/hooks/use-subjects';
-import { PageLoader, LoaderSpinner } from '@/client/components/ui/loader';
-import { useMemo } from 'react';
-import { ClassLevelFilterBadge, useClassLevelFilter } from '@/client/components/ui/class-level-filter-badge';
+import { PageLoader } from '@/client/components/ui/loader';
 
-const subjectColors: Record<string, { bg: string; text: string; gradient: string; icon: React.ElementType }> = {
+// ============================================
+// Subject Colors Config
+// ============================================
+const subjectColors: Record<string, { bg: string; text: string; gradient: string; border: string; icon: React.ElementType }> = {
   scholarship: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
+    bg: "bg-purple-50 dark:bg-purple-900/20",
     text: "text-purple-600 dark:text-purple-400",
     gradient: "from-purple-500 to-pink-500",
+    border: "border-purple-200 dark:border-purple-800",
     icon: GraduationCap,
   },
   english: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
+    bg: "bg-blue-50 dark:bg-blue-900/20",
     text: "text-blue-600 dark:text-blue-400",
     gradient: "from-blue-500 to-cyan-500",
+    border: "border-blue-200 dark:border-blue-800",
     icon: BookOpen,
   },
   information_technology: {
-    bg: "bg-green-100 dark:bg-green-900/30",
+    bg: "bg-green-50 dark:bg-green-900/20",
     text: "text-green-600 dark:text-green-400",
     gradient: "from-green-500 to-emerald-500",
+    border: "border-green-200 dark:border-green-800",
     icon: Monitor,
   },
 };
 
+// ============================================
+// Main Component
+// ============================================
 export function ExamStructuresClient() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Parse URL params
   const subjectFilter = searchParams.get('subject');
   const statusFilter = searchParams.get('status');
+  
+  // Local state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  // Fetch data with auto-execute
   const { data: structures, loading: isLoadingStructures } = useExamStructures();
   const { data: subjects, loading: isLoadingSubjects } = useSubjects();
-  const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
 
-  // Dynamic page content based on filter
-  const pageTitle = hasClassLevelFilter && activeClassLevel 
-    ? `Exam Structures - ${activeClassLevel.name_en}` 
-    : "Exam Structures";
-  const pageDescription = hasClassLevelFilter && activeClassLevel 
-    ? `Exam blueprints for ${activeClassLevel.name_en}` 
-    : "Define exam blueprints with sections and rules";
-  
-  const breadcrumbs = useMemo(() => {
-    if (hasClassLevelFilter && activeClassLevel) {
-      return [
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Class Levels", href: "/dashboard/class-levels" },
-        { label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` },
-        { label: "Exam Structures" }
-      ];
-    }
-    return [
-      { label: "Dashboard", href: "/dashboard" },
-      { label: "Exam Structures" }
-    ];
-  }, [hasClassLevelFilter, activeClassLevel]);
+  // Build URL with params helper
+  const buildUrl = useCallback((params: { subject?: string | null; status?: string | null }) => {
+    const newParams = new URLSearchParams();
+    
+    const newSubject = params.subject !== undefined ? params.subject : subjectFilter;
+    const newStatus = params.status !== undefined ? params.status : statusFilter;
+    
+    if (newSubject && newSubject !== 'all') newParams.set('subject', newSubject);
+    if (newStatus && newStatus !== 'all') newParams.set('status', newStatus);
+    
+    return newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
+  }, [pathname, subjectFilter, statusFilter]);
 
-  // All hooks and memoized values must be before early returns
   // Enhance structures with subject information
   const structuresWithSubjects = useMemo(() => {
     if (!structures || !subjects) return [];
-
+    
     return structures.map((structure) => {
       const subject = subjects.find((s) => s.id === structure.subject_id);
       return {
@@ -80,236 +107,344 @@ export function ExamStructuresClient() {
     });
   }, [structures, subjects]);
 
-  // Filter structures based on search params
-  /* eslint-disable react-hooks/exhaustive-deps */
+  // Filter structures
   const filteredStructures = useMemo(() => {
     let filtered = structuresWithSubjects;
 
-    // Filter by class level (from URL)
-    const classLevelId = searchParams.get('classLevelId');
-    if (classLevelId) {
-      filtered = filtered.filter((s: any) => s.class_level_id === classLevelId);
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((s) => 
+        s.name_en.toLowerCase().includes(query) ||
+        (s.name_mr?.toLowerCase().includes(query) ?? false) ||
+        (s.subjects?.name_en.toLowerCase().includes(query) ?? false)
+      );
     }
 
+    // Subject filter
     if (subjectFilter && subjectFilter !== "all") {
-      filtered = filtered.filter((s: any) => s.subjects?.slug === subjectFilter);
+      filtered = filtered.filter((s) => s.subjects?.slug === subjectFilter);
     }
 
+    // Status filter
     if (statusFilter === "active") {
-      filtered = filtered.filter((s: any) => s.is_active);
+      filtered = filtered.filter((s) => s.is_active);
     } else if (statusFilter === "draft") {
-      filtered = filtered.filter((s: any) => !s.is_active);
+      filtered = filtered.filter((s) => !s.is_active);
     }
 
     return filtered;
-  }, [structuresWithSubjects, subjectFilter, statusFilter, searchParams]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  }, [structuresWithSubjects, searchQuery, subjectFilter, statusFilter]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalStructures = structuresWithSubjects.length;
-    const activeStructures = structuresWithSubjects.filter((s: any) => s.is_active).length;
-    const totalQuestions = structuresWithSubjects.reduce((acc: number, s: any) => acc + (s.total_questions || 0), 0);
-    const totalMarks = structuresWithSubjects.reduce((acc: number, s: any) => {
-      const sections = s.sections || [];
-      return acc + sections.reduce((sum: number, sec: any) => sum + (sec.total_marks || 0), 0);
-    }, 0);
-
-    return { totalStructures, activeStructures, totalQuestions, totalMarks };
+    const all = structuresWithSubjects;
+    return {
+      total: all.length,
+      active: all.filter((s) => s.is_active).length,
+      draft: all.filter((s) => !s.is_active).length,
+      totalQuestions: all.reduce((acc, s) => acc + (s.total_questions || 0), 0),
+      totalMarks: all.reduce((acc, s) => {
+        const sections = s.sections || [];
+        return acc + sections.reduce((sum: number, sec: { total_marks?: number }) => sum + (sec.total_marks || 0), 0);
+      }, 0),
+    };
   }, [structuresWithSubjects]);
 
-  // Early return after all hooks
+  // Subject stats for filter pills
+  const subjectStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    structuresWithSubjects.forEach((s) => {
+      const slug = s.subjects?.slug || 'unknown';
+      stats[slug] = (stats[slug] || 0) + 1;
+    });
+    return stats;
+  }, [structuresWithSubjects]);
+
+  // Active filter count
+  const activeFilterCount = [subjectFilter, statusFilter].filter(Boolean).length;
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    router.push(pathname);
+  }, [router, pathname]);
+
+  // Loading state
   if (isLoadingStructures || isLoadingSubjects) {
     return <PageLoader message="Loading exam structures..." />;
   }
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <PageHeader
-        title={pageTitle}
-        description={pageDescription}
-        breadcrumbs={breadcrumbs}
+        title="Exam Structures"
+        description="Define exam blueprints with sections and rules"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Exam Structures" }
+        ]}
         action={
-          <div className="flex items-center gap-3">
-            <ClassLevelFilterBadge />
-            <Link href="/dashboard/exam-structures/new">
-              <Button className="flex items-center gap-2 bg-linear-to-r from-primary-600 to-insight-600 hover:from-primary-700 hover:to-insight-700 text-white shadow-lg shadow-primary-500/25 border-0">
-                <Plus className="h-4 w-4" />
-                Create Structure
-              </Button>
-            </Link>
-          </div>
+          <Link href="/dashboard/exam-structures/new">
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Create Structure
+            </Button>
+          </Link>
         }
       />
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <GlassCard className="flex items-center gap-4" hover>
-          <div className="rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 p-3 text-white shadow-lg shadow-blue-500/25">
-            <Layers className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalStructures}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Total Blueprints</p>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="flex items-center gap-4" hover>
-          <div className="rounded-xl bg-linear-to-br from-green-500 to-emerald-600 p-3 text-white shadow-lg shadow-green-500/25">
-            <CheckCircle className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.activeStructures}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Active</p>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="flex items-center gap-4" hover>
-          <div className="rounded-xl bg-linear-to-br from-purple-500 to-pink-600 p-3 text-white shadow-lg shadow-purple-500/25">
-            <FileText className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalQuestions}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Total Questions</p>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="flex items-center gap-4" hover>
-          <div className="rounded-xl bg-linear-to-br from-amber-500 to-amber-600 p-3 text-white shadow-lg shadow-amber-500/25">
-            <Award className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalMarks}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Total Marks</p>
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* Smart Filters */}
-      <GlassCard className="space-y-4">
-        <div className="flex flex-wrap items-center gap-6">
-          {/* Subject Filter */}
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-              Subject
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/dashboard/exam-structures"
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${!subjectFilter || subjectFilter === "all"
-                  ? "bg-linear-to-r from-primary-500 to-insight-500 text-white shadow-lg shadow-primary-500/25"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                  }`}
-              >
-                <BookOpen className="h-4 w-4" />
-                All Subjects
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">
-                  {structuresWithSubjects.length}
-                </span>
-              </Link>
-              {subjects?.map((subject: any) => {
-                const count = structuresWithSubjects.filter((s: any) => s.subjects?.slug === subject.slug).length;
-                const colors = subjectColors[subject.slug] || subjectColors.scholarship;
-                return (
-                  <Link
-                    key={subject.id}
-                    href={`/dashboard/exam-structures?subject=${subject.slug}${statusFilter ? `&status=${statusFilter}` : ""}`}
-                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${subjectFilter === subject.slug
-                      ? `bg-linear-to-r ${colors.gradient} text-white shadow-lg`
-                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                      }`}
-                  >
-                    <colors.icon className="h-4 w-4" />
-                    {subject.name_en}
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${subjectFilter === subject.slug
-                      ? "bg-white/20 text-white"
-                      : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
-                      }`}>
-                      {count}
-                    </span>
-                  </Link>
-                );
-              })}
+      {/* Compact Stats Bar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+              <Layers className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-neutral-500">Total Blueprints</p>
+              <p className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total}</p>
             </div>
           </div>
+        </div>
+        <div className="rounded-xl border border-success-100 bg-success-50/50 p-3 dark:border-success-900/20 dark:bg-success-900/10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-success-600 dark:text-success-400">Active</p>
+              <p className="text-lg font-bold text-success-700 dark:text-success-300">{stats.active}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3 dark:border-purple-900/20 dark:bg-purple-900/10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Questions</p>
+              <p className="text-lg font-bold text-purple-700 dark:text-purple-300">{stats.totalQuestions}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/20 dark:bg-amber-900/10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+              <Award className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Total Marks</p>
+              <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{stats.totalMarks}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          {/* Divider */}
-          <div className="hidden h-10 w-px bg-neutral-200 dark:bg-neutral-700 lg:block" />
+      {/* Search & Filters Bar */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search blueprints by name or subject..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={clsx(
+                "w-full h-11 rounded-xl border pl-10 pr-4 text-sm",
+                "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900",
+                "placeholder:text-neutral-400",
+                "focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              )}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-          {/* Status Filter */}
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-              Status
-            </p>
-            <div className="flex gap-2">
-              <Link
-                href={`/dashboard/exam-structures${subjectFilter ? `?subject=${subjectFilter}` : ""}`}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${!statusFilter
-                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                  }`}
+          {/* View Toggles */}
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-xl border border-neutral-200 bg-white p-1 dark:border-neutral-700 dark:bg-neutral-900">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={clsx(
+                  "rounded-lg p-2 transition-colors",
+                  viewMode === "grid"
+                    ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                    : "text-neutral-400 hover:text-neutral-600"
+                )}
+                title="Grid View"
               >
-                All
-              </Link>
-              <Link
-                href={`/dashboard/exam-structures?${subjectFilter ? `subject=${subjectFilter}&` : ""}status=active`}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${statusFilter === "active"
-                  ? "bg-green-600 text-white shadow-lg shadow-green-600/25"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                  }`}
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={clsx(
+                  "rounded-lg p-2 transition-colors",
+                  viewMode === "list"
+                    ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                    : "text-neutral-400 hover:text-neutral-600"
+                )}
+                title="List View"
               >
-                <span className="h-2 w-2 rounded-full bg-current" />
-                Active
-              </Link>
-              <Link
-                href={`/dashboard/exam-structures?${subjectFilter ? `subject=${subjectFilter}&` : ""}status=draft`}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${statusFilter === "draft"
-                  ? "bg-neutral-600 text-white shadow-lg"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                  }`}
-              >
-                <span className="h-2 w-2 rounded-full bg-current" />
-                Draft
-              </Link>
+                <List className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Active Filters Summary */}
-        {(subjectFilter || statusFilter) && (
-          <div className="flex items-center gap-2 border-t border-neutral-200/50 pt-4 dark:border-neutral-700/50">
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Showing:</span>
-            <span className="text-sm font-medium text-neutral-900 dark:text-white">
-              {filteredStructures.length} structure{filteredStructures.length !== 1 ? "s" : ""}
-            </span>
-            {(subjectFilter || statusFilter) && (
-              <Link
-                href="/dashboard/exam-structures"
-                className="ml-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
-              >
-                Clear filters
-              </Link>
-            )}
+        {/* Smart Filter Pills */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Subject Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Subject:</span>
+            <button
+              onClick={() => router.push(buildUrl({ subject: null }))}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                !subjectFilter || subjectFilter === 'all'
+                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              )}
+            >
+              All
+              <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-xs font-bold dark:bg-black/20">
+                {structuresWithSubjects.length}
+              </span>
+            </button>
+            {subjects?.filter(s => !s.is_category || s.slug === 'scholarship').map((subject) => {
+              const count = subjectStats[subject.slug] || 0;
+              const colors = subjectColors[subject.slug] || subjectColors.scholarship;
+              const SubjectIcon = colors.icon;
+              const isActive = subjectFilter === subject.slug;
+              
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => router.push(buildUrl({ subject: subject.slug }))}
+                  className={clsx(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                    isActive
+                      ? `bg-linear-to-r ${colors.gradient} text-white shadow-lg`
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  )}
+                >
+                  <SubjectIcon className="h-3.5 w-3.5" />
+                  {subject.name_en}
+                  <span className={clsx(
+                    "rounded-full px-1.5 py-0.5 text-xs font-bold",
+                    isActive ? "bg-white/20" : "bg-neutral-200 dark:bg-neutral-700"
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        )}
-      </GlassCard>
 
-      {/* Structures Grid */}
+          {/* Divider */}
+          <div className="hidden h-6 w-px bg-neutral-200 dark:bg-neutral-700 sm:block" />
+
+          {/* Status Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Status:</span>
+            <button
+              onClick={() => router.push(buildUrl({ status: null }))}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                !statusFilter
+                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              )}
+            >
+              All
+            </button>
+            <button
+              onClick={() => router.push(buildUrl({ status: 'active' }))}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                statusFilter === 'active'
+                  ? "bg-success-600 text-white shadow-lg shadow-success-600/25"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full bg-current" />
+              Active
+              <span className={clsx(
+                "rounded-full px-1.5 py-0.5 text-xs font-bold",
+                statusFilter === 'active' ? "bg-white/20" : "bg-neutral-200 dark:bg-neutral-700"
+              )}>
+                {stats.active}
+              </span>
+            </button>
+            <button
+              onClick={() => router.push(buildUrl({ status: 'draft' }))}
+              className={clsx(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                statusFilter === 'draft'
+                  ? "bg-neutral-600 text-white shadow-lg"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full bg-current" />
+              Draft
+              <span className={clsx(
+                "rounded-full px-1.5 py-0.5 text-xs font-bold",
+                statusFilter === 'draft' ? "bg-white/20" : "bg-neutral-200 dark:bg-neutral-700"
+              )}>
+                {stats.draft}
+              </span>
+            </button>
+          </div>
+
+          {/* Clear Filters */}
+          {(activeFilterCount > 0 || searchQuery) && (
+            <>
+              <div className="hidden h-6 w-px bg-neutral-200 dark:bg-neutral-700 sm:block" />
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
+              >
+                Clear all
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          Showing <span className="font-medium text-neutral-900 dark:text-white">{filteredStructures.length}</span> of {structuresWithSubjects.length} structures
+        </p>
+      </div>
+
+      {/* Structures Grid/List */}
       {filteredStructures.length === 0 ? (
         <GlassCard>
           <EmptyState
-            icon={Layers}
-            title={subjectFilter || statusFilter ? "No matching structures" : "No exam structures"}
+            icon={searchQuery || activeFilterCount > 0 ? Search : Layers}
+            title={searchQuery || activeFilterCount > 0 ? "No matching structures" : "No exam structures"}
             description={
-              subjectFilter || statusFilter
-                ? "Try adjusting your filters to find what you're looking for"
+              searchQuery || activeFilterCount > 0
+                ? "Try adjusting your search or filters to find what you're looking for"
                 : "Create exam blueprints to define how exams are structured"
             }
             action={
-              subjectFilter || statusFilter ? (
-                <Link href="/dashboard/exam-structures">
-                  <Button variant="secondary">Clear Filters</Button>
-                </Link>
+              searchQuery || activeFilterCount > 0 ? (
+                <Button variant="secondary" onClick={clearAllFilters}>
+                  <X className="mr-2 h-4 w-4" />
+                  Clear Filters
+                </Button>
               ) : (
                 <Link href="/dashboard/exam-structures/new">
                   <Button>
@@ -321,12 +456,78 @@ export function ExamStructuresClient() {
             }
           />
         </GlassCard>
+      ) : viewMode === 'list' ? (
+        /* List View */
+        <div className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Subject</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Duration</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Questions</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Marks</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {filteredStructures.map((structure) => {
+                const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
+                const sections = structure.sections || [];
+                const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
+                
+                return (
+                  <tr key={structure.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div>
+                        <p className="font-medium text-neutral-900 dark:text-white">{structure.name_en}</p>
+                        <p className="text-sm text-neutral-500">{structure.name_mr}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      {structure.subjects && (
+                        <span className={clsx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", colors.bg, colors.text)}>
+                          <colors.icon className="h-3 w-3" />
+                          {structure.subjects.name_en}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400">{structure.duration_minutes} min</span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{structure.total_questions}</span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{totalSectionMarks || structure.total_marks}</span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <Badge variant={structure.is_active ? "success" : "default"} dot size="sm">
+                        {structure.is_active ? "Active" : "Draft"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <Link
+                        href={`/dashboard/exam-structures/${structure.id}`}
+                        className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                      >
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredStructures.map((structure: any) => {
-            const colors = subjectColors[structure.subjects?.slug] || subjectColors.scholarship;
+        /* Grid View */
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {filteredStructures.map((structure) => {
+            const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
             const sections = structure.sections || [];
-            const totalSectionMarks = sections.reduce((acc: number, s: any) => acc + (s.total_marks || 0), 0);
+            const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
 
             return (
               <GlassCard key={structure.id} hover className="group relative flex flex-col overflow-hidden">
@@ -343,15 +544,13 @@ export function ExamStructuresClient() {
                     </h3>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">{structure.name_mr}</p>
                   </div>
-                  <div className={`rounded-xl ${colors.bg} p-2.5 ${colors.text} transition-transform group-hover:scale-110`}>
+                  <div className={clsx("rounded-xl p-2.5 transition-transform group-hover:scale-110", colors.bg, colors.text)}>
                     <colors.icon className="h-6 w-6" />
                   </div>
                 </div>
 
                 {structure.subjects && (
-                  <span
-                    className={`mt-3 inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${colors.bg} ${colors.text}`}
-                  >
+                  <span className={clsx("mt-3 inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium", colors.bg, colors.text)}>
                     {structure.subjects.name_en}
                   </span>
                 )}
@@ -386,7 +585,7 @@ export function ExamStructuresClient() {
                       Sections ({sections.length})
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {sections.slice(0, 3).map((section: any, i: number) => (
+                      {sections.slice(0, 3).map((section: { name_en?: string; name?: string }, i: number) => (
                         <span
                           key={i}
                           className="rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"

@@ -48,13 +48,13 @@ export function useExamStructures(subjectId?: string) {
       ? `/api/v1/exam-structures?subject_id=${subjectId}`
       : '/api/v1/exam-structures';
     return api.get<ExamStructure[]>(url);
-  });
+  }, true); // Auto-execute on mount
 }
 
 export function useExamStructure(id: string) {
   return useApi<ExamStructure>(async () => {
     return api.get<ExamStructure>(`/api/v1/exam-structures/${id}`);
-  });
+  }, true); // Auto-execute on mount
 }
 
 export function useAvailableExamStructures(subjectId: string, classLevelId?: string) {
