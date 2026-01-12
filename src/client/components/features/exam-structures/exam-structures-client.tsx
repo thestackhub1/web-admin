@@ -3,8 +3,15 @@
 /**
  * Exam Structures Client - Premium SaaS Design
  * 
- * List view for all exam structures/blueprints with smart filtering.
+ * List view for all exam structures/blueprints with smart filtering and pagination.
  * Follows the premium design system (Linear/Raycast/Vercel inspired).
+ * 
+ * Features:
+ * - Smart subject and status filters
+ * - Full-text search
+ * - Grid/List view toggle
+ * - Client-side pagination for scalability
+ * - Responsive design
  */
 
 import { useState, useMemo, useCallback } from "react";
@@ -26,13 +33,22 @@ import {
   X,
   LayoutGrid,
   List,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from '@/client/components/ui/button';
 import { PageHeader, GlassCard, Badge, EmptyState } from '@/client/components/ui/premium';
 import { useExamStructures } from '@/client/hooks/use-exam-structures';
 import { useSubjects } from '@/client/hooks/use-subjects';
+import { usePagination } from '@/client/hooks/use-pagination';
 import { PageLoader } from '@/client/components/ui/loader';
+
+// ============================================
+// Constants
+// ============================================
+const DEFAULT_PAGE_SIZE_GRID = 9; // 3x3 grid
+const DEFAULT_PAGE_SIZE_LIST = 10;
 
 // ============================================
 // Subject Colors Config
@@ -60,6 +76,109 @@ const subjectColors: Record<string, { bg: string; text: string; gradient: string
     icon: Monitor,
   },
 };
+
+// ============================================
+// Pagination Controls Component
+// ============================================
+interface PaginationControlsProps {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  goToPage: (page: number) => void;
+  nextPage: () => void;
+  previousPage: () => void;
+  itemLabel?: string;
+}
+
+function PaginationControls({
+  page,
+  pageSize,
+  totalPages,
+  totalItems,
+  hasNextPage,
+  hasPreviousPage,
+  goToPage,
+  nextPage,
+  previousPage,
+  itemLabel = "structures",
+}: PaginationControlsProps) {
+  const getPageNumbers = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, page - 2);
+    const end = Math.min(totalPages, start + 4);
+    
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2">
+      <p className="text-sm text-neutral-500">
+        Showing{" "}
+        <span className="font-medium text-neutral-900 dark:text-white">
+          {Math.min((page - 1) * pageSize + 1, totalItems)}
+        </span>{" "}
+        to{" "}
+        <span className="font-medium text-neutral-900 dark:text-white">
+          {Math.min(page * pageSize, totalItems)}
+        </span>{" "}
+        of{" "}
+        <span className="font-medium text-neutral-900 dark:text-white">
+          {totalItems}
+        </span>{" "}
+        {itemLabel}
+      </p>
+      
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={previousPage}
+          disabled={!hasPreviousPage}
+          className="h-9 w-9 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <div className="flex items-center gap-1 bg-neutral-100/50 dark:bg-neutral-800/50 rounded-xl p-1">
+          {getPageNumbers().map((pageNum) => (
+            <button
+              key={pageNum}
+              onClick={() => goToPage(pageNum)}
+              className={clsx(
+                "h-8 w-8 text-sm font-medium rounded-lg transition-all",
+                page === pageNum
+                  ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+              )}
+            >
+              {pageNum}
+            </button>
+          ))}
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={nextPage}
+          disabled={!hasNextPage}
+          className="h-9 w-9 p-0"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // ============================================
 // Main Component
@@ -136,6 +255,28 @@ export function ExamStructuresClient() {
     return filtered;
   }, [structuresWithSubjects, searchQuery, subjectFilter, statusFilter]);
 
+  // Pagination - page size depends on view mode
+  const pageSize = viewMode === "grid" ? DEFAULT_PAGE_SIZE_GRID : DEFAULT_PAGE_SIZE_LIST;
+  
+  const {
+    page,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    hasNextPage,
+    hasPreviousPage,
+    goToPage,
+    nextPage,
+    previousPage,
+    resetPage,
+  } = usePagination(filteredStructures, { initialPageSize: pageSize });
+
+  // Reset to first page when filters change
+  const handleViewModeChange = useCallback((mode: "grid" | "list") => {
+    setViewMode(mode);
+    resetPage();
+  }, [resetPage]);
+
   // Calculate stats
   const stats = useMemo(() => {
     const all = structuresWithSubjects;
@@ -164,11 +305,18 @@ export function ExamStructuresClient() {
   // Active filter count
   const activeFilterCount = [subjectFilter, statusFilter].filter(Boolean).length;
 
-  // Clear all filters
+  // Clear all filters and reset pagination
   const clearAllFilters = useCallback(() => {
     setSearchQuery("");
+    resetPage();
     router.push(pathname);
-  }, [router, pathname]);
+  }, [router, pathname, resetPage]);
+
+  // Handle search change with pagination reset
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    resetPage();
+  }, [resetPage]);
 
   // Loading state
   if (isLoadingStructures || isLoadingSubjects) {
@@ -253,7 +401,7 @@ export function ExamStructuresClient() {
               type="text"
               placeholder="Search blueprints by name or subject..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className={clsx(
                 "w-full h-11 rounded-xl border pl-10 pr-4 text-sm",
                 "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900",
@@ -263,7 +411,7 @@ export function ExamStructuresClient() {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => handleSearchChange("")}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
               >
                 <X className="h-4 w-4" />
@@ -275,7 +423,7 @@ export function ExamStructuresClient() {
           <div className="flex items-center gap-3">
             <div className="flex rounded-xl border border-neutral-200 bg-white p-1 dark:border-neutral-700 dark:bg-neutral-900">
               <button
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleViewModeChange("grid")}
                 className={clsx(
                   "rounded-lg p-2 transition-colors",
                   viewMode === "grid"
@@ -287,7 +435,7 @@ export function ExamStructuresClient() {
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
-                onClick={() => setViewMode("list")}
+                onClick={() => handleViewModeChange("list")}
                 className={clsx(
                   "rounded-lg p-2 transition-colors",
                   viewMode === "list"
@@ -421,15 +569,39 @@ export function ExamStructuresClient() {
         </div>
       </div>
 
-      {/* Results Count */}
+      {/* Results Count & Pagination Info */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Showing <span className="font-medium text-neutral-900 dark:text-white">{filteredStructures.length}</span> of {structuresWithSubjects.length} structures
+          {totalItems > 0 ? (
+            <>
+              Showing{" "}
+              <span className="font-medium text-neutral-900 dark:text-white">
+                {Math.min((page - 1) * pageSize + 1, totalItems)}
+              </span>
+              {" "}to{" "}
+              <span className="font-medium text-neutral-900 dark:text-white">
+                {Math.min(page * pageSize, totalItems)}
+              </span>
+              {" "}of{" "}
+              <span className="font-medium text-neutral-900 dark:text-white">{totalItems}</span>
+              {" "}structures
+              {totalItems !== structuresWithSubjects.length && (
+                <span className="text-neutral-400"> (filtered from {structuresWithSubjects.length})</span>
+              )}
+            </>
+          ) : (
+            <>No structures found</>
+          )}
         </p>
+        {totalPages > 1 && (
+          <p className="text-sm text-neutral-400">
+            Page {page} of {totalPages}
+          </p>
+        )}
       </div>
 
       {/* Structures Grid/List */}
-      {filteredStructures.length === 0 ? (
+      {totalItems === 0 ? (
         <GlassCard>
           <EmptyState
             icon={searchQuery || activeFilterCount > 0 ? Search : Layers}
@@ -458,24 +630,25 @@ export function ExamStructuresClient() {
         </GlassCard>
       ) : viewMode === 'list' ? (
         /* List View */
-        <div className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Subject</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Duration</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Questions</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Marks</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-              {filteredStructures.map((structure) => {
-                const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
-                const sections = structure.sections || [];
-                const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
+        <div className="space-y-4">
+          <div className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">Subject</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Duration</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Questions</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Marks</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {paginatedItems.map((structure) => {
+                  const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
+                  const sections = structure.sections || [];
+                  const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
                 
                 return (
                   <tr key={structure.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
@@ -521,33 +694,51 @@ export function ExamStructuresClient() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls for List View */}
+        {totalPages > 1 && (
+          <PaginationControls
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={hasPreviousPage}
+            goToPage={goToPage}
+            nextPage={nextPage}
+            previousPage={previousPage}
+            itemLabel="blueprints"
+          />
+        )}
+      </div>
       ) : (
         /* Grid View */
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {filteredStructures.map((structure) => {
-            const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
-            const sections = structure.sections || [];
-            const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
+        <div className="space-y-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {paginatedItems.map((structure) => {
+              const colors = subjectColors[structure.subjects?.slug || ''] || subjectColors.scholarship;
+              const sections = structure.sections || [];
+              const totalSectionMarks = sections.reduce((acc: number, s: { total_marks?: number }) => acc + (s.total_marks || 0), 0);
 
-            return (
-              <GlassCard key={structure.id} hover className="group relative flex flex-col overflow-hidden">
-                {/* Gradient Accent */}
-                <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${colors.gradient}`} />
+              return (
+                <GlassCard key={structure.id} hover className="group relative flex flex-col overflow-hidden">
+                  {/* Gradient Accent */}
+                  <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${colors.gradient}`} />
 
-                <div className="flex items-start justify-between pt-1">
-                  <div>
-                    <Badge variant={structure.is_active ? "success" : "default"} dot size="sm">
-                      {structure.is_active ? "Active" : "Draft"}
-                    </Badge>
-                    <h3 className="mt-2 text-lg font-bold text-neutral-900 dark:text-white">
-                      {structure.name_en}
-                    </h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{structure.name_mr}</p>
+                  <div className="flex items-start justify-between pt-1">
+                    <div>
+                      <Badge variant={structure.is_active ? "success" : "default"} dot size="sm">
+                        {structure.is_active ? "Active" : "Draft"}
+                      </Badge>
+                      <h3 className="mt-2 text-lg font-bold text-neutral-900 dark:text-white">
+                        {structure.name_en}
+                      </h3>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">{structure.name_mr}</p>
+                    </div>
+                    <div className={clsx("rounded-xl p-2.5 transition-transform group-hover:scale-110", colors.bg, colors.text)}>
+                      <colors.icon className="h-6 w-6" />
+                    </div>
                   </div>
-                  <div className={clsx("rounded-xl p-2.5 transition-transform group-hover:scale-110", colors.bg, colors.text)}>
-                    <colors.icon className="h-6 w-6" />
-                  </div>
-                </div>
 
                 {structure.subjects && (
                   <span className={clsx("mt-3 inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium", colors.bg, colors.text)}>
@@ -615,6 +806,23 @@ export function ExamStructuresClient() {
             );
           })}
         </div>
+        
+        {/* Pagination Controls for Grid View */}
+        {totalPages > 1 && (
+          <PaginationControls
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={hasPreviousPage}
+            goToPage={goToPage}
+            nextPage={nextPage}
+            previousPage={previousPage}
+            itemLabel="blueprints"
+          />
+        )}
+      </div>
       )}
     </div>
   );

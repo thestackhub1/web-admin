@@ -12,23 +12,17 @@ import {
     Save,
     X,
     Check,
-    Target,
-    HelpCircle,
     BookOpen,
     ClipboardList,
-    Lightbulb,
-    Clock,
-    Layers,
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { Button } from '@/client/components/ui/button';
-import { TextInput } from "@/client/components/ui/input";
 import { useChaptersWithCounts, useCreateExamStructure, useUpdateExamStructure } from "@/client/hooks";
 import { ChapterSelector, type ChapterQuestionConfig, type ChapterWithCount } from '@/client/components/features/subjects/chapter-selector';
 import { type QuestionType } from "@/client/types/questions";
 import { ExamStructureFormFields } from './exam-structure-form-fields';
 import { ExamStructureSectionsList } from './exam-structure-sections-list';
-import { PageHeader, GlassCard, Badge } from '@/client/components/ui/premium';
+import { PageHeader, Badge } from '@/client/components/ui/premium';
 
 interface Section {
     id: string;
@@ -246,34 +240,6 @@ export function ExamStructureEditor({
         }
     };
 
-    // Stats for the header
-    const stats = [
-        {
-            label: "Total Marks",
-            value: totalMarks,
-            icon: Target,
-            color: "primary",
-        },
-        {
-            label: "Sections",
-            value: sections.length,
-            icon: Layers,
-            color: "insight",
-        },
-        {
-            label: "Questions",
-            value: totalQuestions,
-            icon: HelpCircle,
-            color: "success",
-        },
-        {
-            label: "Duration",
-            value: `${duration} min`,
-            icon: Clock,
-            color: "warning",
-        },
-    ];
-
     return (
         <div className="space-y-6 pb-20">
             {/* Premium Header */}
@@ -322,66 +288,49 @@ export function ExamStructureEditor({
                 }
             />
 
-            {/* Stats Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat, index) => {
-                    const Icon = stat.icon;
-                    const colorClasses: Record<string, string> = {
-                        primary: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
-                        success: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
-                        warning: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
-                        insight: "bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400",
-                    };
+            {/* Two-Column Layout */}
+            <div className="grid gap-6 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
+                {/* Left Column - Config (Sticky on Desktop) */}
+                <div className="lg:sticky lg:top-6 lg:self-start space-y-0">
+                    <ExamStructureFormFields
+                        nameEn={nameEn}
+                        nameMr={nameMr}
+                        subjectId={subjectId}
+                        classLevel={classLevel}
+                        classLevelId={classLevelId}
+                        isTemplate={isTemplate}
+                        duration={duration}
+                        passingPercentage={passingPercentage}
+                        isActive={isActive}
+                        subjects={subjects}
+                        classLevelOptions={classLevelOptions}
+                        staticClassLevels={staticClassLevels}
+                        hasClassLevelsList={!!classLevelsList && classLevelsList.length > 0}
+                        totalMarks={totalMarks}
+                        totalQuestions={totalQuestions}
+                        sectionsCount={sections.length}
+                        onNameEnChange={setNameEn}
+                        onNameMrChange={setNameMr}
+                        onSubjectIdChange={setSubjectId}
+                        onClassLevelChange={setClassLevel}
+                        onClassLevelIdChange={setClassLevelId}
+                        onIsTemplateChange={setIsTemplate}
+                        onDurationChange={setDuration}
+                        onPassingPercentageChange={setPassingPercentage}
+                        onIsActiveChange={setIsActive}
+                    />
+                </div>
 
-                    return (
-                        <GlassCard key={index} className="flex items-center gap-4 p-5">
-                            <div className={`rounded-xl p-3 ${colorClasses[stat.color]}`}>
-                                <Icon className="h-5 w-5" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</p>
-                            </div>
-                        </GlassCard>
-                    );
-                })}
-            </div>
-
-            <div className="max-w-7xl mx-auto space-y-10">
-                {/* Basic Info */}
-                <ExamStructureFormFields
-                    nameEn={nameEn}
-                    nameMr={nameMr}
-                    subjectId={subjectId}
-                    classLevel={classLevel}
-                    classLevelId={classLevelId}
-                    isTemplate={isTemplate}
-                    duration={duration}
-                    passingPercentage={passingPercentage}
-                    isActive={isActive}
-                    subjects={subjects}
-                    classLevelOptions={classLevelOptions}
-                    staticClassLevels={staticClassLevels}
-                    hasClassLevelsList={!!classLevelsList && classLevelsList.length > 0}
-                    onNameEnChange={setNameEn}
-                    onNameMrChange={setNameMr}
-                    onSubjectIdChange={setSubjectId}
-                    onClassLevelChange={setClassLevel}
-                    onClassLevelIdChange={setClassLevelId}
-                    onIsTemplateChange={setIsTemplate}
-                    onDurationChange={setDuration}
-                    onPassingPercentageChange={setPassingPercentage}
-                    onIsActiveChange={setIsActive}
-                />
-
-                {/* Sections List */}
-                <ExamStructureSectionsList
-                    sections={sections}
-                    onAddSection={addSection}
-                    onEditSection={editSection}
-                    onDeleteSection={deleteSection}
-                    onMoveSection={moveSection}
-                />
+                {/* Right Column - Sections */}
+                <div>
+                    <ExamStructureSectionsList
+                        sections={sections}
+                        onAddSection={addSection}
+                        onEditSection={editSection}
+                        onDeleteSection={deleteSection}
+                        onMoveSection={moveSection}
+                    />
+                </div>
             </div>
 
             {/* Section Modal */}
@@ -402,7 +351,7 @@ export function ExamStructureEditor({
     );
 }
 
-// Section Modal Component - Compact Premium Design
+// Section Modal Component - Simplified Premium Design
 function SectionModal({
     section,
     chapters,
@@ -426,9 +375,8 @@ function SectionModal({
     const [questionCount, setQuestionCount] = useState(section?.question_count || 10);
     const [marksPerQuestion, setMarksPerQuestion] = useState(section?.marks_per_question || 1);
     const [instructionsEn, setInstructionsEn] = useState(section?.instructions_en || "");
-    const [instructionsMr, setInstructionsMr] = useState(section?.instructions_mr || "");
     const [chapterConfigs, setChapterConfigs] = useState<ChapterQuestionConfig[]>(section?.chapter_configs || []);
-    const [activeTab, setActiveTab] = useState<"basic" | "chapters" | "instructions">("basic");
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     const handleSave = () => {
         if (!nameEn.trim()) {
@@ -446,7 +394,7 @@ function SectionModal({
             marks_per_question: marksPerQuestion,
             total_marks: questionCount * marksPerQuestion,
             instructions_en: instructionsEn,
-            instructions_mr: instructionsMr,
+            instructions_mr: "",
             order_index: section?.order_index || nextIndex,
             chapter_configs: chapterConfigs.length > 0 ? chapterConfigs : undefined,
         });
@@ -454,147 +402,131 @@ function SectionModal({
 
     const totalMarks = questionCount * marksPerQuestion;
 
-    // Group question types
-    const objectiveTypes = questionTypes.filter(t =>
-        ["fill_blank", "true_false", "mcq_single", "mcq_two", "mcq_three"].includes(t.value)
-    );
-    const subjectiveTypes = questionTypes.filter(t =>
-        ["match", "short_answer", "long_answer", "programming"].includes(t.value)
-    );
+    // All question types in a single grid
+    const allQuestionTypes = questionTypes;
+
+    // Check if advanced options have any values set
+    const hasAdvancedConfig = chapterConfigs.length > 0 || instructionsEn.trim() || nameMr.trim();
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-full max-w-lg animate-in fade-in zoom-in-95 duration-200">
                 <div className="relative overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-900 max-h-[85vh] flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 px-6 py-4 shrink-0">
+                    <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 px-5 py-4 shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                                <ClipboardList className="h-4 w-4" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                                <ClipboardList className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
-                                    {section ? "Edit Section" : "Add New Section"}
+                                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                                    {section ? "Edit Section" : "New Section"}
                                 </h3>
                                 <p className="text-xs text-neutral-500">Section {section?.order_index || nextIndex}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-1.5 dark:bg-neutral-800">
-                                <span className="text-lg font-bold text-neutral-900 dark:text-white">{totalMarks}</span>
-                                <span className="text-xs text-neutral-500">marks</span>
+                            <div className="flex items-center gap-1.5 rounded-lg bg-success-100 px-3 py-1.5 dark:bg-success-900/30">
+                                <span className="text-lg font-bold text-success-700 dark:text-success-400">{totalMarks}</span>
+                                <span className="text-xs text-success-600 dark:text-success-400">marks</span>
                             </div>
                             <button
                                 onClick={onClose}
                                 className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-all dark:hover:bg-neutral-800"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-5 w-5" />
                             </button>
                         </div>
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-1 border-b border-neutral-100 px-6 dark:border-neutral-800 shrink-0">
-                        {[
-                            { id: "basic", label: "Basic Info & Marks" },
-                            { id: "chapters", label: "Chapters", badge: chapterConfigs.length > 0 ? chapterConfigs.length : undefined },
-                            { id: "instructions", label: "Instructions" },
-                        ].map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                                className={clsx(
-                                    "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
-                                    activeTab === tab.id
-                                        ? "border-primary-600 text-primary-600 dark:text-primary-400"
-                                        : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                                )}
-                            >
-                                {tab.label}
-                                {tab.badge !== undefined && (
-                                    <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                                        {tab.badge}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                    <div className="flex gap-1 border-b border-neutral-100 px-5 dark:border-neutral-800 shrink-0">
+                        <button
+                            onClick={() => setShowAdvanced(false)}
+                            className={clsx(
+                                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
+                                !showAdvanced
+                                    ? "border-primary-600 text-primary-600 dark:text-primary-400"
+                                    : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                            )}
+                        >
+                            Basic Info
+                        </button>
+                        <button
+                            onClick={() => setShowAdvanced(true)}
+                            className={clsx(
+                                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
+                                showAdvanced
+                                    ? "border-primary-600 text-primary-600 dark:text-primary-400"
+                                    : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                            )}
+                        >
+                            Advanced
+                            {hasAdvancedConfig && (
+                                <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                                    ✓
+                                </span>
+                            )}
+                        </button>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-6 overflow-y-auto flex-1">
-                        {/* Basic Info & Marks Tab */}
-                        {activeTab === "basic" && (
+                    {/* Content - Tab Based */}
+                    <div className="p-5 space-y-5 overflow-y-auto flex-1">
+                        {!showAdvanced ? (
+                            /* Basic Info Tab */
                             <div className="space-y-5 animate-in fade-in duration-200">
-                                {/* Section Names */}
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <TextInput
-                                        label="Name (English) *"
+                                {/* Section Name */}
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        Section Name *
+                                    </label>
+                                    <input
+                                        type="text"
                                         value={nameEn}
                                         onChange={(e) => setNameEn(e.target.value)}
-                                        placeholder="e.g. Fill in the Blanks"
-                                    />
-                                    <TextInput
-                                        label="Name (Marathi)"
-                                        value={nameMr}
-                                        onChange={(e) => setNameMr(e.target.value)}
-                                        placeholder="e.g. रिकाम्या जागा भरा"
+                                        placeholder="e.g., Fill in the Blanks"
+                                        className="w-full h-10 rounded-lg border border-neutral-200 px-3 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        autoFocus
                                     />
                                 </div>
 
-                                {/* Question Type */}
+                                {/* Question Type - Compact Grid */}
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                         Question Type
                                     </label>
-                                    <div className="space-y-3">
-                                        <div className="flex flex-wrap gap-2">
-                                            {objectiveTypes.map((type) => (
-                                                <button
-                                                    key={type.value}
-                                                    onClick={() => setQuestionType(type.value)}
-                                                    className={clsx(
-                                                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                                                        questionType === type.value
-                                                            ? "bg-primary-100 text-primary-700 ring-2 ring-primary-500 dark:bg-primary-900/30 dark:text-primary-400"
-                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                                                    )}
-                                                >
-                                                    <span>{type.icon}</span>
-                                                    {type.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {subjectiveTypes.map((type) => (
-                                                <button
-                                                    key={type.value}
-                                                    onClick={() => setQuestionType(type.value)}
-                                                    className={clsx(
-                                                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                                                        questionType === type.value
-                                                            ? "bg-insight-100 text-insight-700 ring-2 ring-insight-500 dark:bg-insight-900/30 dark:text-insight-400"
-                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                                                    )}
-                                                >
-                                                    <span>{type.icon}</span>
-                                                    {type.label}
-                                                </button>
-                                            ))}
-                                        </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {allQuestionTypes.map((type) => (
+                                            <button
+                                                key={type.value}
+                                                onClick={() => setQuestionType(type.value)}
+                                                className={clsx(
+                                                    "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                                                    questionType === type.value
+                                                        ? "bg-primary-100 text-primary-700 ring-2 ring-primary-500 dark:bg-primary-900/30 dark:text-primary-400"
+                                                        : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                                )}
+                                            >
+                                                <span className="text-base">{type.icon}</span>
+                                                <span className="truncate">{type.label.replace('MCQ ', '').replace('(', '').replace(')', '')}</span>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* Marks Configuration */}
-                                <div className="grid gap-4 sm:grid-cols-3">
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Questions</label>
-                                        <div className="flex items-center gap-2">
+                                {/* Marks Configuration - Inline */}
+                                <div className="flex items-end gap-4">
+                                    <div className="flex-1">
+                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                            Questions
+                                        </label>
+                                        <div className="flex items-center">
                                             <button
                                                 onClick={() => setQuestionCount(Math.max(1, questionCount - 1))}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Minus className="h-4 w-4" />
                                             </button>
@@ -602,22 +534,25 @@ function SectionModal({
                                                 type="number"
                                                 value={questionCount}
                                                 onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value)))}
-                                                className="h-9 w-16 rounded-lg border border-neutral-200 text-center font-medium text-neutral-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                                className="h-10 w-14 border-y border-neutral-200 text-center font-medium text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                             />
                                             <button
                                                 onClick={() => setQuestionCount(questionCount + 1)}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Marks Each</label>
-                                        <div className="flex items-center gap-2">
+                                    
+                                    <div className="flex-1">
+                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                            Marks Each
+                                        </label>
+                                        <div className="flex items-center">
                                             <button
                                                 onClick={() => setMarksPerQuestion(Math.max(1, marksPerQuestion - 1))}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Minus className="h-4 w-4" />
                                             </button>
@@ -625,104 +560,106 @@ function SectionModal({
                                                 type="number"
                                                 value={marksPerQuestion}
                                                 onChange={(e) => setMarksPerQuestion(Math.max(1, Number(e.target.value)))}
-                                                className="h-9 w-16 rounded-lg border border-neutral-200 text-center font-medium text-neutral-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                                className="h-10 w-14 border-y border-neutral-200 text-center font-medium text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                             />
                                             <button
                                                 onClick={() => setMarksPerQuestion(marksPerQuestion + 1)}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Total Marks</label>
-                                        <div className="flex h-9 items-center justify-center rounded-lg bg-success-100 text-lg font-bold text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                                            {questionCount} × {marksPerQuestion} = {totalMarks}
+
+                                    <div className="flex-1">
+                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                            Total
+                                        </label>
+                                        <div className="flex h-10 items-center justify-center rounded-lg bg-success-100 font-bold text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                                            {totalMarks} marks
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Chapters Tab */}
-                        {activeTab === "chapters" && (
-                            <div className="animate-in fade-in duration-200">
-                                {isLoadingChapters ? (
-                                    <div className="flex items-center justify-center py-12">
-                                        <LoaderSpinner />
-                                    </div>
-                                ) : chapters.length === 0 ? (
-                                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-900/20">
-                                        <BookOpen className="mx-auto h-10 w-10 text-amber-500/50" />
-                                        <p className="mt-3 font-medium text-amber-800 dark:text-amber-300">
-                                            No chapters available
-                                        </p>
-                                        <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
-                                            Select a subject in the blueprint config to see chapters.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <ChapterSelector
-                                        chapters={chapters}
-                                        chapterConfigs={chapterConfigs}
-                                        onConfigChange={setChapterConfigs}
-                                        questionType={questionType}
-                                        requiredQuestionCount={questionCount}
-                                        isLoading={isLoadingChapters}
-                                    />
-                                )}
-                            </div>
-                        )}
-
-                        {/* Instructions Tab */}
-                        {activeTab === "instructions" && (
-                            <div className="space-y-4 animate-in fade-in duration-200">
-                                <div className="rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20">
-                                    <p className="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400">
-                                        <Lightbulb className="h-4 w-4 shrink-0" />
-                                        Instructions are shown to students before attempting this section.
-                                    </p>
-                                </div>
+                        ) : (
+                            /* Advanced Tab */
+                            <div className="space-y-5 animate-in fade-in duration-200">
+                                {/* Marathi Name */}
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Instructions (English)
+                                        Name (Marathi)
                                     </label>
+                                    <input
+                                        type="text"
+                                        value={nameMr}
+                                        onChange={(e) => setNameMr(e.target.value)}
+                                        placeholder="e.g., रिकाम्या जागा भरा"
+                                        className="w-full h-10 rounded-lg border border-neutral-200 px-3 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                    />
+                                </div>
+
+                                {/* Instructions */}
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        Instructions (Optional)
+                                    </label>
+                                    <p className="mb-2 text-xs text-neutral-500">
+                                        Instructions shown to students before attempting this section.
+                                    </p>
                                     <textarea
                                         value={instructionsEn}
                                         onChange={(e) => setInstructionsEn(e.target.value)}
                                         rows={3}
-                                        placeholder="e.g. Fill in the blanks with correct answers..."
-                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        placeholder="e.g., Fill in the blanks with the correct answer..."
+                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                     />
                                 </div>
+
+                                {/* Chapter Selection */}
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Instructions (Marathi)
+                                        Chapters ({chapterConfigs.length} selected)
                                     </label>
-                                    <textarea
-                                        value={instructionsMr}
-                                        onChange={(e) => setInstructionsMr(e.target.value)}
-                                        rows={3}
-                                        placeholder="e.g. रिकाम्या जागा योग्य उत्तरांनी भरा..."
-                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                                    />
+                                    {isLoadingChapters ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <LoaderSpinner />
+                                        </div>
+                                    ) : chapters.length === 0 ? (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-800 dark:bg-amber-900/20">
+                                            <BookOpen className="mx-auto h-8 w-8 text-amber-500/50" />
+                                            <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+                                                No chapters available
+                                            </p>
+                                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                                Select a subject first to see chapters.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <ChapterSelector
+                                            chapters={chapters}
+                                            chapterConfigs={chapterConfigs}
+                                            onConfigChange={setChapterConfigs}
+                                            questionType={questionType}
+                                            requiredQuestionCount={questionCount}
+                                            isLoading={isLoadingChapters}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-800/50 shrink-0">
+                    <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-5 py-4 dark:border-neutral-700 dark:bg-neutral-800/50 shrink-0">
                         <div className="flex items-center gap-2 text-sm text-neutral-500">
-                            <span>{questionTypes.find(t => t.value === questionType)?.icon}</span>
-                            <span>{questionTypes.find(t => t.value === questionType)?.label}</span>
+                            <span>{allQuestionTypes.find(t => t.value === questionType)?.icon}</span>
+                            <span>{allQuestionTypes.find(t => t.value === questionType)?.label}</span>
                             <span className="text-neutral-300 dark:text-neutral-600">•</span>
                             <span className="font-medium text-neutral-700 dark:text-neutral-300">{totalMarks} marks</span>
                             {chapterConfigs.length > 0 && (
                                 <>
                                     <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                                    <span className="text-success-600 dark:text-success-400">{chapterConfigs.length} chapters</span>
+                                    <span className="text-primary-600 dark:text-primary-400">{chapterConfigs.length} chapters</span>
                                 </>
                             )}
                         </div>
@@ -731,8 +668,8 @@ function SectionModal({
                                 Cancel
                             </Button>
                             <Button size="sm" onClick={handleSave} className="gap-1.5">
-                                <Check className="h-3.5 w-3.5" />
-                                {section ? "Update" : "Add Section"}
+                                <Check className="h-4 w-4" />
+                                {section ? "Save Changes" : "Add Section"}
                             </Button>
                         </div>
                     </div>

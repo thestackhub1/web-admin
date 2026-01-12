@@ -2,7 +2,17 @@
 
 "use client";
 
-import { BookOpen, ScrollText, Target } from "lucide-react";
+import { clsx } from "clsx";
+import { 
+    BookOpen, 
+    ScrollText, 
+    Target, 
+    Clock, 
+    Award, 
+    GraduationCap,
+    Layers,
+    HelpCircle,
+} from "lucide-react";
 import { Select } from '@/client/components/ui/select';
 import { TextInput } from '@/client/components/ui/input';
 import { GlassCard } from '@/client/components/ui/premium';
@@ -27,6 +37,10 @@ interface ExamStructureFormFieldsProps {
     classLevelOptions: Array<{ value: string; label: string }>;
     staticClassLevels: Array<{ value: string; label: string }>;
     hasClassLevelsList: boolean;
+    // Stats for display
+    totalMarks?: number;
+    totalQuestions?: number;
+    sectionsCount?: number;
     onNameEnChange: (value: string) => void;
     onNameMrChange: (value: string) => void;
     onSubjectIdChange: (value: string) => void;
@@ -52,6 +66,9 @@ export function ExamStructureFormFields({
     classLevelOptions,
     staticClassLevels,
     hasClassLevelsList,
+    totalMarks = 0,
+    totalQuestions = 0,
+    sectionsCount = 0,
     onNameEnChange,
     onNameMrChange,
     onSubjectIdChange,
@@ -63,38 +80,46 @@ export function ExamStructureFormFields({
     onIsActiveChange,
 }: ExamStructureFormFieldsProps) {
     return (
-        <GlassCard>
-            <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                    <BookOpen className="h-4 w-4" />
-                </div>
-                <div>
-                    <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
-                        Blueprint Identity & Config
+        <div className="space-y-5">
+            {/* Blueprint Name Card */}
+            <GlassCard className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                        <BookOpen className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Blueprint Name
                     </h3>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Configure exam structure details</p>
                 </div>
-            </div>
-
-            <div className="space-y-6">
-                {/* Names Row */}
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3">
                     <TextInput
-                        label="Blueprint Name (English)"
+                        label="English"
                         value={nameEn}
                         onChange={(e) => onNameEnChange(e.target.value)}
                         placeholder="e.g. Class 10 IT Final Exam"
+                        className="text-sm"
                     />
                     <TextInput
-                        label="ब्लूप्रिंटचे नाव (Marathi)"
+                        label="मराठी"
                         value={nameMr}
                         onChange={(e) => onNameMrChange(e.target.value)}
                         placeholder="उदा. दहावी IT अंतिम परीक्षा"
+                        className="text-sm"
                     />
                 </div>
+            </GlassCard>
 
-                {/* Settings Row */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Subject & Class Card */}
+            <GlassCard className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                        <GraduationCap className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Subject & Class
+                    </h3>
+                </div>
+                <div className="space-y-3">
                     <div className="space-y-1.5">
                         <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Subject</label>
                         <Select
@@ -107,7 +132,6 @@ export function ExamStructureFormFields({
                             }))}
                         />
                     </div>
-
                     <div className="space-y-1.5">
                         <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Class Level</label>
                         <Select
@@ -123,69 +147,180 @@ export function ExamStructureFormFields({
                             ] : staticClassLevels}
                         />
                     </div>
+                </div>
+            </GlassCard>
 
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Duration (Min)</label>
-                        <TextInput
-                            type="number"
-                            value={duration}
-                            onChange={(e) => onDurationChange(Number(e.target.value))}
-                            min={10}
-                        />
+            {/* Exam Settings Card */}
+            <GlassCard className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                        <Clock className="h-4 w-4" />
                     </div>
-
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Exam Settings
+                    </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Passing %</label>
-                        <TextInput
-                            type="number"
-                            value={passingPercentage}
-                            onChange={(e) => onPassingPercentageChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                        />
+                        <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Duration</label>
+                        <div className="relative">
+                            <TextInput
+                                type="number"
+                                value={duration}
+                                onChange={(e) => onDurationChange(Number(e.target.value))}
+                                min={10}
+                                className="pr-12"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">min</span>
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Passing</label>
+                        <div className="relative">
+                            <TextInput
+                                type="number"
+                                value={passingPercentage}
+                                onChange={(e) => onPassingPercentageChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                                className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">%</span>
+                        </div>
                     </div>
                 </div>
+            </GlassCard>
 
-                {/* Toggle Flags */}
-                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+            {/* Status Toggles Card */}
+            <GlassCard className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
+                        <Target className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Status
+                    </h3>
+                </div>
+                <div className="space-y-2">
                     <button
                         type="button"
                         onClick={() => onIsTemplateChange(!isTemplate)}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg border transition-all ${isTemplate
-                            ? "border-primary-200 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:border-primary-800 dark:text-primary-400"
-                            : "border-neutral-200 bg-neutral-50 text-neutral-500 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400"}`}
-                    >
-                        <div className={`flex h-6 w-6 items-center justify-center rounded-md transition-all ${isTemplate ? "bg-primary-500 text-white" : "bg-neutral-200 dark:bg-neutral-700"}`}>
-                            <ScrollText className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-sm font-medium">Template</span>
-                        {isTemplate && (
-                            <svg className="h-4 w-4 text-primary-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                        className={clsx(
+                            "w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
+                            isTemplate
+                                ? "border-primary-200 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-800"
+                                : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800/50"
                         )}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={clsx(
+                                "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
+                                isTemplate ? "bg-primary-500 text-white" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700"
+                            )}>
+                                <ScrollText className="h-4 w-4" />
+                            </div>
+                            <div className="text-left">
+                                <p className={clsx(
+                                    "text-sm font-medium",
+                                    isTemplate ? "text-primary-700 dark:text-primary-400" : "text-neutral-600 dark:text-neutral-400"
+                                )}>
+                                    Template
+                                </p>
+                                <p className="text-xs text-neutral-500">Reusable blueprint</p>
+                            </div>
+                        </div>
+                        <div className={clsx(
+                            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            isTemplate 
+                                ? "border-primary-500 bg-primary-500" 
+                                : "border-neutral-300 dark:border-neutral-600"
+                        )}>
+                            {isTemplate && (
+                                <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => onIsActiveChange(!isActive)}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg border transition-all ${isActive
-                            ? "border-success-200 bg-success-50 text-success-700 dark:bg-success-900/20 dark:border-success-800 dark:text-success-400"
-                            : "border-neutral-200 bg-neutral-50 text-neutral-500 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400"}`}
-                    >
-                        <div className={`flex h-6 w-6 items-center justify-center rounded-md transition-all ${isActive ? "bg-success-500 text-white" : "bg-neutral-200 dark:bg-neutral-700"}`}>
-                            <Target className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-sm font-medium">Active</span>
-                        {isActive && (
-                            <svg className="h-4 w-4 text-success-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                        className={clsx(
+                            "w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
+                            isActive
+                                ? "border-success-200 bg-success-50 dark:bg-success-900/20 dark:border-success-800"
+                                : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800/50"
                         )}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={clsx(
+                                "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
+                                isActive ? "bg-success-500 text-white" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700"
+                            )}>
+                                <Target className="h-4 w-4" />
+                            </div>
+                            <div className="text-left">
+                                <p className={clsx(
+                                    "text-sm font-medium",
+                                    isActive ? "text-success-700 dark:text-success-400" : "text-neutral-600 dark:text-neutral-400"
+                                )}>
+                                    Active
+                                </p>
+                                <p className="text-xs text-neutral-500">Available for exams</p>
+                            </div>
+                        </div>
+                        <div className={clsx(
+                            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            isActive 
+                                ? "border-success-500 bg-success-500" 
+                                : "border-neutral-300 dark:border-neutral-600"
+                        )}>
+                            {isActive && (
+                                <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
                     </button>
                 </div>
-            </div>
-        </GlassCard>
+            </GlassCard>
+
+            {/* Stats Summary Card */}
+            <GlassCard className="p-5 bg-linear-to-br from-neutral-50 to-neutral-100/50 dark:from-neutral-800/50 dark:to-neutral-900/50">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400">
+                        <Layers className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Summary
+                    </h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-3 rounded-xl bg-white dark:bg-neutral-800 shadow-sm">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <Award className="h-3.5 w-3.5 text-primary-500" />
+                        </div>
+                        <p className="text-lg font-bold text-neutral-900 dark:text-white">{totalMarks}</p>
+                        <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Marks</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-white dark:bg-neutral-800 shadow-sm">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <HelpCircle className="h-3.5 w-3.5 text-purple-500" />
+                        </div>
+                        <p className="text-lg font-bold text-neutral-900 dark:text-white">{totalQuestions}</p>
+                        <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Questions</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-white dark:bg-neutral-800 shadow-sm">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <Layers className="h-3.5 w-3.5 text-amber-500" />
+                        </div>
+                        <p className="text-lg font-bold text-neutral-900 dark:text-white">{sectionsCount}</p>
+                        <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Sections</p>
+                    </div>
+                </div>
+            </GlassCard>
+        </div>
     );
 }
 
