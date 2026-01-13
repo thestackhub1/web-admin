@@ -184,102 +184,85 @@ export function ChapterSelector({
     }
 
     return (
-        <div className={clsx("space-y-4", className)}>
-            {/* Info Banner */}
-            <div className="rounded-xl bg-blue-50 p-4 dark:bg-blue-900/20">
-                <p className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
-                    <BookOpen className="h-4 w-4" />
-                    {isNoneSelected
-                        ? "No chapters selected — questions will be pulled randomly from all chapters"
-                        : `${chapterConfigs.length} chapter${chapterConfigs.length > 1 ? "s" : ""} selected with ${totalConfiguredQuestions} questions configured`}
-                </p>
-            </div>
-
-            {/* Search and Actions */}
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search chapters..."
-                        className="w-full rounded-xl border-0 bg-neutral-100 py-2.5 pl-10 pr-4 text-sm text-neutral-900 outline-none ring-1 ring-neutral-200 transition-all focus:bg-white focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700"
-                    />
-                </div>
-                <button
-                    onClick={handleSelectAll}
-                    disabled={isAllSelected}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                >
-                    Select All
-                </button>
-                <button
-                    onClick={handleDeselectAll}
-                    disabled={isNoneSelected}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                >
-                    Clear
-                </button>
-            </div>
-
-            {/* Question Distribution Summary */}
-            {questionType && !isNoneSelected && (
-                <div className={clsx(
-                    "flex items-center justify-between rounded-xl p-3",
-                    configMatchesRequired
-                        ? "bg-green-50 dark:bg-green-900/20"
-                        : "bg-amber-50 dark:bg-amber-900/20"
-                )}>
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Configured {questionType.replace("_", " ")} questions:
-                    </span>
-                    <div className="flex items-center gap-3">
-                        <span className={clsx(
-                            "font-bold",
-                            configMatchesRequired
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-amber-600 dark:text-amber-400"
-                        )}>
-                            {totalConfiguredQuestions}
-                            <span className="ml-1 font-normal text-neutral-500">
-                                / {requiredQuestionCount} needed
-                            </span>
+        <div className={clsx("space-y-3", className)}>
+            {/* Compact Status Bar */}
+            <div className="flex items-center justify-between gap-3">
+                {/* Left: Status */}
+                <div className="flex items-center gap-2 text-sm">
+                    {isNoneSelected ? (
+                        <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                            <BookOpen className="h-3.5 w-3.5" />
+                            Random from all chapters
                         </span>
-                        {!configMatchesRequired && (
-                            <button
-                                onClick={handleAutoDistribute}
-                                className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400"
-                            >
-                                Auto-distribute
-                            </button>
-                        )}
-                    </div>
+                    ) : (
+                        <>
+                            <span className="flex items-center gap-1.5 font-medium text-neutral-700 dark:text-neutral-300">
+                                <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                                {chapterConfigs.length} chapter{chapterConfigs.length > 1 ? "s" : ""}
+                            </span>
+                            {questionType && (
+                                <>
+                                    <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                                    <span className={clsx(
+                                        "font-medium",
+                                        configMatchesRequired
+                                            ? "text-green-600 dark:text-green-400"
+                                            : totalConfiguredQuestions < requiredQuestionCount
+                                                ? "text-amber-600 dark:text-amber-400"
+                                                : "text-red-600 dark:text-red-400"
+                                    )}>
+                                        {totalConfiguredQuestions}/{requiredQuestionCount} questions
+                                        {!configMatchesRequired && (
+                                            <AlertCircle className="ml-1 inline h-3.5 w-3.5" />
+                                        )}
+                                    </span>
+                                </>
+                            )}
+                        </>
+                    )}
                 </div>
-            )}
 
-            {/* Validation Warning */}
-            {requiredQuestionCount > 0 && !isNoneSelected && totalConfiguredQuestions !== requiredQuestionCount && (
-                <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-4 dark:bg-amber-900/20">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                    <div>
-                        <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                            {totalConfiguredQuestions < requiredQuestionCount
-                                ? "Not enough questions configured"
-                                : "Too many questions configured"}
-                        </p>
-                        <p className="text-sm text-amber-700 dark:text-amber-400">
-                            You have configured {totalConfiguredQuestions} questions but {requiredQuestionCount} are required.
-                            {totalConfiguredQuestions < requiredQuestionCount
-                                ? " Add more questions from chapters or click 'Auto-distribute'."
-                                : " Remove some questions to match the required count."}
-                        </p>
-                    </div>
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1">
+                    {!configMatchesRequired && !isNoneSelected && (
+                        <button
+                            onClick={handleAutoDistribute}
+                            className="rounded-lg px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                        >
+                            Auto-fill
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSelectAll}
+                        disabled={isAllSelected}
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={handleDeselectAll}
+                        disabled={isNoneSelected}
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                    >
+                        Clear
+                    </button>
                 </div>
-            )}
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search chapters..."
+                    className="w-full rounded-xl border-0 bg-neutral-100 py-2 pl-10 pr-4 text-sm text-neutral-900 outline-none ring-1 ring-neutral-200 transition-all focus:bg-white focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700"
+                />
+            </div>
 
             {/* Chapter List */}
-            <div className="max-h-80 space-y-2 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 dark:border-neutral-700 dark:bg-neutral-800/50">
+            <div className="space-y-2 rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 dark:border-neutral-700 dark:bg-neutral-800/50">
                 {filteredChapters.length === 0 ? (
                     <div className="py-8 text-center text-neutral-500">
                         {searchQuery ? "No chapters match your search" : "No chapters available"}

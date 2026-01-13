@@ -3,6 +3,8 @@
  */
 
 export { ExamStructureEditor } from "./exam-structure-editor";
+export { SectionEditor } from "./section-editor";
+export { QuestionPicker } from "./question-picker";
 export { ExamAttemptsClient } from "./exam-attempts-client";
 export { AssignStructureModal } from "./assign-structure-modal";
 export { ScheduledExamsClient } from "./scheduled-exams-client";

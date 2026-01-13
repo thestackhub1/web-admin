@@ -57,6 +57,14 @@ export interface ExamSection {
      */
     chapter_configs?: ChapterQuestionConfig[];
     /**
+     * Manually selected question IDs for this section.
+     * When provided, these specific questions will be used instead of random selection.
+     * Takes precedence over chapter_configs for question selection.
+     * 
+     * Example: ["question-uuid-1", "question-uuid-2", "question-uuid-3"]
+     */
+    selected_question_ids?: string[];
+    /**
      * @deprecated Use chapter_configs instead for per-chapter control.
      * Legacy: Array of chapter IDs (pulls random questions from these chapters).
      */

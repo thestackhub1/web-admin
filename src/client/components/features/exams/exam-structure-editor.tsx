@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { clsx } from "clsx";
@@ -13,7 +13,12 @@ import {
     X,
     Check,
     BookOpen,
-    ClipboardList,
+    ChevronDown,
+    ChevronRight,
+    AlertCircle,
+    ArrowRight,
+    ArrowLeft,
+    Sparkles,
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { Button } from '@/client/components/ui/button';
@@ -38,6 +43,8 @@ interface Section {
     order_index: number;
     /** Per-chapter question allocation (empty = random from all chapters) */
     chapter_configs?: ChapterQuestionConfig[];
+    /** Manually selected question IDs for this section */
+    selected_question_ids?: string[];
 }
 
 interface Subject {
@@ -81,16 +88,16 @@ const staticClassLevels = [
     { value: "class_12", label: "Class 12" },
 ];
 
-const questionTypes: { value: QuestionType; label: string; icon: string }[] = [
-    { value: "fill_blank", label: "Fill in Blanks", icon: "✏" },
-    { value: "true_false", label: "True/False", icon: "✓✗" },
-    { value: "mcq_single", label: "MCQ (1)", icon: "①" },
-    { value: "mcq_two", label: "MCQ (2)", icon: "②" },
-    { value: "mcq_three", label: "MCQ (3)", icon: "③" },
-    { value: "match", label: "Match", icon: "⇄" },
-    { value: "short_answer", label: "Short Answer", icon: "✍" },
-    { value: "long_answer", label: "Long Answer", icon: "☰" },
-    { value: "programming", label: "Programming", icon: "</>" },
+const questionTypes: { value: QuestionType; label: string; shortLabel: string; description: string }[] = [
+    { value: "fill_blank", label: "Fill in the Blanks", shortLabel: "Fill Blanks", description: "Complete sentences with missing words" },
+    { value: "true_false", label: "True or False", shortLabel: "True/False", description: "Evaluate statements as true or false" },
+    { value: "mcq_single", label: "MCQ - Single Answer", shortLabel: "MCQ (1)", description: "Multiple choice with 1 correct answer" },
+    { value: "mcq_two", label: "MCQ - Two Answers", shortLabel: "MCQ (2)", description: "Multiple choice with 2 correct answers" },
+    { value: "mcq_three", label: "MCQ - Three Answers", shortLabel: "MCQ (3)", description: "Multiple choice with 3 correct answers" },
+    { value: "match", label: "Match the Pairs", shortLabel: "Match", description: "Connect related items from two columns" },
+    { value: "short_answer", label: "Short Answer", shortLabel: "Short", description: "Brief written response (1-2 sentences)" },
+    { value: "long_answer", label: "Long Answer", shortLabel: "Long", description: "Detailed written response (paragraph)" },
+    { value: "programming", label: "Programming", shortLabel: "Code", description: "Write code to solve a problem" },
 ];
 
 function generateId() {
@@ -241,7 +248,7 @@ export function ExamStructureEditor({
     };
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="min-h-screen bg-white dark:bg-neutral-950">
             {/* Premium Header */}
             <PageHeader
                 title={mode === "edit" ? (nameEn || "Edit Blueprint") : "Create New Blueprint"}
@@ -255,43 +262,48 @@ export function ExamStructureEditor({
                     { label: mode === "edit" ? "Edit" : "Create" },
                 ]}
                 action={
-                    <div className="flex items-center gap-3">
-                        <Badge variant={isActive ? "success" : "warning"} size="md" dot>
-                            {isActive ? "Active" : "Inactive"}
-                        </Badge>
-                        <Badge variant={isTemplate ? "info" : "purple"} size="md">
-                            {isTemplate ? "Template" : "Assigned"}
-                        </Badge>
+                    <div className="flex items-center gap-2">
+                        {/* Status Badges */}
+                        <div className="flex items-center gap-1.5 mr-2">
+                            <Badge variant={isActive ? "success" : "warning"} size="sm" dot>
+                                {isActive ? "Active" : "Inactive"}
+                            </Badge>
+                            <Badge variant={isTemplate ? "info" : "purple"} size="sm">
+                                {isTemplate ? "Template" : "Assigned"}
+                            </Badge>
+                        </div>
+                        {/* Action Buttons */}
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => router.back()}
-                            className="gap-1.5"
+                            className="gap-1.5 text-neutral-600 hover:text-neutral-900"
                         >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                             Cancel
                         </Button>
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}
                             size="sm"
-                            className="gap-1.5"
+                            className="gap-1.5 px-4"
                         >
                             {isSaving ? (
                                 <LoaderSpinner size="sm" />
                             ) : (
-                                <Save className="h-3.5 w-3.5" />
+                                <Save className="h-4 w-4" />
                             )}
-                            {mode === "create" ? "Create" : "Save Changes"}
+                            {mode === "create" ? "Create Blueprint" : "Save Changes"}
                         </Button>
                     </div>
                 }
             />
 
-            {/* Two-Column Layout */}
-            <div className="grid gap-6 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-                {/* Left Column - Config (Sticky on Desktop) */}
-                <div className="lg:sticky lg:top-6 lg:self-start space-y-0">
+            {/* Full Width Split Layout */}
+            <div className="flex">
+                {/* Left Panel - Config (Fixed Width) */}
+                <div className="w-[400px] shrink-0 border-r border-neutral-100 dark:border-neutral-800 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+                    <div className="p-6">
                     <ExamStructureFormFields
                         nameEn={nameEn}
                         nameMr={nameMr}
@@ -319,12 +331,14 @@ export function ExamStructureEditor({
                         onPassingPercentageChange={setPassingPercentage}
                         onIsActiveChange={setIsActive}
                     />
+                    </div>
                 </div>
 
-                {/* Right Column - Sections */}
-                <div>
+                {/* Right Panel - Sections (Flexible Width) */}
+                <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 120px)' }}>
                     <ExamStructureSectionsList
                         sections={sections}
+                        examStructureId={mode === "edit" ? initialData?.id : undefined}
                         onAddSection={addSection}
                         onEditSection={editSection}
                         onDeleteSection={deleteSection}
@@ -345,13 +359,152 @@ export function ExamStructureEditor({
                         setEditingSection(null);
                     }}
                     nextIndex={sections.length + 1}
+                    allChapters={chapters || []}
                 />
             )}
         </div>
     );
 }
 
-// Section Modal Component - Simplified Premium Design
+// Custom Question Type Dropdown Component
+function QuestionTypeDropdown({
+    value,
+    onChange,
+    chapters,
+}: {
+    value: QuestionType;
+    onChange: (type: QuestionType) => void;
+    chapters: ChapterWithCount[];
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Calculate available questions per type from all chapters
+    const getAvailableCount = (type: QuestionType): number => {
+        return chapters.reduce((sum, ch) => sum + (ch.question_counts?.[type] || 0), 0);
+    };
+
+    const selectedType = questionTypes.find(t => t.value === value);
+    const availableForSelected = getAvailableCount(value);
+
+    return (
+        <div ref={dropdownRef} className="relative">
+            {/* Trigger Button */}
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={clsx(
+                    "w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+                    isOpen
+                        ? "border-primary-500 ring-2 ring-primary-500/20"
+                        : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 dark:hover:border-neutral-600"
+                )}
+            >
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium text-neutral-900 dark:text-white">
+                            {selectedType?.label}
+                        </span>
+                        {availableForSelected > 0 ? (
+                            <span className="rounded-full bg-success-100 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                                {availableForSelected} available
+                            </span>
+                        ) : (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                0 available
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-0.5">{selectedType?.description}</p>
+                </div>
+                <ChevronDown className={clsx(
+                    "h-5 w-5 text-neutral-400 transition-transform",
+                    isOpen && "rotate-180"
+                )} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isOpen && (
+                <div className="absolute z-50 mt-2 w-full rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="p-2 max-h-[300px] overflow-y-auto">
+                        {questionTypes.map((type) => {
+                            const available = getAvailableCount(type.value);
+                            const isSelected = type.value === value;
+                            const hasQuestions = available > 0;
+
+                            return (
+                                <button
+                                    key={type.value}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(type.value);
+                                        setIsOpen(false);
+                                    }}
+                                    className={clsx(
+                                        "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all",
+                                        isSelected
+                                            ? "bg-primary-50 dark:bg-primary-900/20"
+                                            : "hover:bg-neutral-50 dark:hover:bg-neutral-700/50"
+                                    )}
+                                >
+                                    {/* Selection Indicator */}
+                                    <div className={clsx(
+                                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                                        isSelected
+                                            ? "border-primary-600 bg-primary-600"
+                                            : "border-neutral-300 dark:border-neutral-600"
+                                    )}>
+                                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className={clsx(
+                                                "font-medium",
+                                                isSelected
+                                                    ? "text-primary-700 dark:text-primary-400"
+                                                    : "text-neutral-900 dark:text-white"
+                                            )}>
+                                                {type.label}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                                            {type.description}
+                                        </p>
+                                    </div>
+
+                                    {/* Count Badge */}
+                                    <div className={clsx(
+                                        "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                                        hasQuestions
+                                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                                            : "bg-neutral-100 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"
+                                    )}>
+                                        {available}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Section Modal Component - Stepper Design
 function SectionModal({
     section,
     chapters,
@@ -359,6 +512,7 @@ function SectionModal({
     onSave,
     onClose,
     nextIndex,
+    allChapters,
 }: {
     section: Section | null;
     chapters: ChapterWithCount[];
@@ -366,7 +520,9 @@ function SectionModal({
     onSave: (section: Section) => void;
     onClose: () => void;
     nextIndex: number;
+    allChapters: ChapterWithCount[];
 }) {
+    const [currentStep, setCurrentStep] = useState(1);
     const [nameEn, setNameEn] = useState(section?.name_en || "");
     const [nameMr, setNameMr] = useState(section?.name_mr || "");
     const [questionType, setQuestionType] = useState<QuestionType>(
@@ -376,11 +532,17 @@ function SectionModal({
     const [marksPerQuestion, setMarksPerQuestion] = useState(section?.marks_per_question || 1);
     const [instructionsEn, setInstructionsEn] = useState(section?.instructions_en || "");
     const [chapterConfigs, setChapterConfigs] = useState<ChapterQuestionConfig[]>(section?.chapter_configs || []);
-    const [showAdvanced, setShowAdvanced] = useState(false);
+
+    // Calculate total available questions for selected type
+    const totalAvailable = allChapters.reduce(
+        (sum, ch) => sum + (ch.question_counts?.[questionType] || 0),
+        0
+    );
 
     const handleSave = () => {
         if (!nameEn.trim()) {
             toast.error("Please enter a section name");
+            setCurrentStep(1);
             return;
         }
 
@@ -402,11 +564,33 @@ function SectionModal({
 
     const totalMarks = questionCount * marksPerQuestion;
 
-    // All question types in a single grid
-    const allQuestionTypes = questionTypes;
+    // Step configuration
+    const steps = [
+        { number: 1, label: "Type & Marks", description: "Question type and scoring" },
+        { number: 2, label: "Details", description: "Name and instructions" },
+        { number: 3, label: "Chapters", description: "Source selection (optional)" },
+    ];
 
-    // Check if advanced options have any values set
-    const hasAdvancedConfig = chapterConfigs.length > 0 || instructionsEn.trim() || nameMr.trim();
+    const canProceed = currentStep === 1 ? true : currentStep === 2 ? nameEn.trim() !== "" : true;
+    const isLastStep = currentStep === 3;
+
+    const handleNext = () => {
+        if (currentStep === 2 && !nameEn.trim()) {
+            toast.error("Please enter a section name");
+            return;
+        }
+        if (!isLastStep) {
+            setCurrentStep(currentStep + 1);
+        } else {
+            handleSave();
+        }
+    };
+
+    const handleBack = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
 
     return (
         <div
@@ -415,23 +599,19 @@ function SectionModal({
         >
             <div className="w-full max-w-lg animate-in fade-in zoom-in-95 duration-200">
                 <div className="relative overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-900 max-h-[85vh] flex flex-col">
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 px-5 py-4 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                                <ClipboardList className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                                    {section ? "Edit Section" : "New Section"}
-                                </h3>
-                                <p className="text-xs text-neutral-500">Section {section?.order_index || nextIndex}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1.5 rounded-lg bg-success-100 px-3 py-1.5 dark:bg-success-900/30">
-                                <span className="text-lg font-bold text-success-700 dark:text-success-400">{totalMarks}</span>
-                                <span className="text-xs text-success-600 dark:text-success-400">marks</span>
+                    {/* Header with Stepper */}
+                    <div className="border-b border-neutral-200 dark:border-neutral-700 px-6 py-4 shrink-0">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                                    <Sparkles className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                                        {section ? "Edit Section" : "New Section"}
+                                    </h3>
+                                    <p className="text-xs text-neutral-500">Section {section?.order_index || nextIndex}</p>
+                                </div>
                             </div>
                             <button
                                 onClick={onClose}
@@ -440,43 +620,145 @@ function SectionModal({
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
+
+                        {/* Step Indicator */}
+                        <div className="flex items-center gap-2">
+                            {steps.map((step, idx) => (
+                                <div key={step.number} className="flex items-center flex-1">
+                                    <button
+                                        onClick={() => setCurrentStep(step.number)}
+                                        className={clsx(
+                                            "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all",
+                                            currentStep === step.number
+                                                ? "bg-primary-50 dark:bg-primary-900/20"
+                                                : currentStep > step.number
+                                                    ? "bg-success-50 dark:bg-success-900/10"
+                                                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                        )}
+                                    >
+                                        <div className={clsx(
+                                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors",
+                                            currentStep === step.number
+                                                ? "bg-primary-600 text-white"
+                                                : currentStep > step.number
+                                                    ? "bg-success-500 text-white"
+                                                    : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
+                                        )}>
+                                            {currentStep > step.number ? (
+                                                <Check className="h-3.5 w-3.5" />
+                                            ) : (
+                                                step.number
+                                            )}
+                                        </div>
+                                        <span className={clsx(
+                                            "text-xs font-medium hidden sm:block",
+                                            currentStep === step.number
+                                                ? "text-primary-700 dark:text-primary-400"
+                                                : "text-neutral-500"
+                                        )}>
+                                            {step.label}
+                                        </span>
+                                    </button>
+                                    {idx < steps.length - 1 && (
+                                        <ChevronRight className="h-4 w-4 text-neutral-300 mx-1 shrink-0" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Tab Navigation */}
-                    <div className="flex gap-1 border-b border-neutral-100 px-5 dark:border-neutral-800 shrink-0">
-                        <button
-                            onClick={() => setShowAdvanced(false)}
-                            className={clsx(
-                                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
-                                !showAdvanced
-                                    ? "border-primary-600 text-primary-600 dark:text-primary-400"
-                                    : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                            )}
-                        >
-                            Basic Info
-                        </button>
-                        <button
-                            onClick={() => setShowAdvanced(true)}
-                            className={clsx(
-                                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
-                                showAdvanced
-                                    ? "border-primary-600 text-primary-600 dark:text-primary-400"
-                                    : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                            )}
-                        >
-                            Advanced
-                            {hasAdvancedConfig && (
-                                <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                                    ✓
-                                </span>
-                            )}
-                        </button>
-                    </div>
+                    {/* Content */}
+                    <div className="p-6 overflow-y-auto flex-1">
+                        {/* Step 1: Type & Marks */}
+                        {currentStep === 1 && (
+                            <div className="space-y-6 animate-in fade-in duration-200">
+                                {/* Question Type - Custom Dropdown */}
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        Question Type
+                                    </label>
+                                    <QuestionTypeDropdown
+                                        value={questionType}
+                                        onChange={setQuestionType}
+                                        chapters={allChapters}
+                                    />
+                                    {totalAvailable === 0 && (
+                                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+                                            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-amber-700 dark:text-amber-400">
+                                                No questions of this type are available yet. You can still create the section and add questions later.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
 
-                    {/* Content - Tab Based */}
-                    <div className="p-5 space-y-5 overflow-y-auto flex-1">
-                        {!showAdvanced ? (
-                            /* Basic Info Tab */
+                                {/* Marks Configuration */}
+                                <div className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                                    <label className="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        Scoring Configuration
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="mb-1.5 block text-xs text-neutral-500">Questions</label>
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => setQuestionCount(Math.max(1, questionCount - 1))}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                >
+                                                    <Minus className="h-4 w-4" />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    value={questionCount}
+                                                    onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value)))}
+                                                    className="h-10 w-full border-y border-neutral-200 text-center font-bold text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                                />
+                                                <button
+                                                    onClick={() => setQuestionCount(questionCount + 1)}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1.5 block text-xs text-neutral-500">Marks Each</label>
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => setMarksPerQuestion(Math.max(1, marksPerQuestion - 1))}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                >
+                                                    <Minus className="h-4 w-4" />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    value={marksPerQuestion}
+                                                    onChange={(e) => setMarksPerQuestion(Math.max(1, Number(e.target.value)))}
+                                                    className="h-10 w-full border-y border-neutral-200 text-center font-bold text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                                />
+                                                <button
+                                                    onClick={() => setMarksPerQuestion(marksPerQuestion + 1)}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1.5 block text-xs text-neutral-500">Total</label>
+                                            <div className="flex h-10 items-center justify-center rounded-lg bg-success-100 font-bold text-lg text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                                                {totalMarks}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 2: Details */}
+                        {currentStep === 2 && (
                             <div className="space-y-5 animate-in fade-in duration-200">
                                 {/* Section Name */}
                                 <div>
@@ -488,188 +770,128 @@ function SectionModal({
                                         value={nameEn}
                                         onChange={(e) => setNameEn(e.target.value)}
                                         placeholder="e.g., Fill in the Blanks"
-                                        className="w-full h-10 rounded-lg border border-neutral-200 px-3 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        className="w-full h-11 rounded-xl border border-neutral-200 px-4 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                         autoFocus
                                     />
+                                    <p className="mt-1.5 text-xs text-neutral-500">
+                                        This name will be shown to students during the exam.
+                                    </p>
                                 </div>
 
-                                {/* Question Type - Compact Grid */}
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Question Type
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {allQuestionTypes.map((type) => (
-                                            <button
-                                                key={type.value}
-                                                onClick={() => setQuestionType(type.value)}
-                                                className={clsx(
-                                                    "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                                                    questionType === type.value
-                                                        ? "bg-primary-100 text-primary-700 ring-2 ring-primary-500 dark:bg-primary-900/30 dark:text-primary-400"
-                                                        : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                                                )}
-                                            >
-                                                <span className="text-base">{type.icon}</span>
-                                                <span className="truncate">{type.label.replace('MCQ ', '').replace('(', '').replace(')', '')}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Marks Configuration - Inline */}
-                                <div className="flex items-end gap-4">
-                                    <div className="flex-1">
-                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            Questions
-                                        </label>
-                                        <div className="flex items-center">
-                                            <button
-                                                onClick={() => setQuestionCount(Math.max(1, questionCount - 1))}
-                                                className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </button>
-                                            <input
-                                                type="number"
-                                                value={questionCount}
-                                                onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value)))}
-                                                className="h-10 w-14 border-y border-neutral-200 text-center font-medium text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                                            />
-                                            <button
-                                                onClick={() => setQuestionCount(questionCount + 1)}
-                                                className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex-1">
-                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            Marks Each
-                                        </label>
-                                        <div className="flex items-center">
-                                            <button
-                                                onClick={() => setMarksPerQuestion(Math.max(1, marksPerQuestion - 1))}
-                                                className="flex h-10 w-10 items-center justify-center rounded-l-lg border border-r-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </button>
-                                            <input
-                                                type="number"
-                                                value={marksPerQuestion}
-                                                onChange={(e) => setMarksPerQuestion(Math.max(1, Number(e.target.value)))}
-                                                className="h-10 w-14 border-y border-neutral-200 text-center font-medium text-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                                            />
-                                            <button
-                                                onClick={() => setMarksPerQuestion(marksPerQuestion + 1)}
-                                                className="flex h-10 w-10 items-center justify-center rounded-r-lg border border-l-0 border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                            Total
-                                        </label>
-                                        <div className="flex h-10 items-center justify-center rounded-lg bg-success-100 font-bold text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                                            {totalMarks} marks
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            /* Advanced Tab */
-                            <div className="space-y-5 animate-in fade-in duration-200">
-                                {/* Marathi Name */}
+                                {/* Marathi Name (Optional) */}
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Name (Marathi)
+                                        Name in Marathi <span className="text-neutral-400">(Optional)</span>
                                     </label>
                                     <input
                                         type="text"
                                         value={nameMr}
                                         onChange={(e) => setNameMr(e.target.value)}
                                         placeholder="e.g., रिकाम्या जागा भरा"
-                                        className="w-full h-10 rounded-lg border border-neutral-200 px-3 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        className="w-full h-11 rounded-xl border border-neutral-200 px-4 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                                     />
                                 </div>
 
-                                {/* Instructions */}
+                                {/* Instructions (Optional) */}
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Instructions (Optional)
+                                        Instructions <span className="text-neutral-400">(Optional)</span>
                                     </label>
-                                    <p className="mb-2 text-xs text-neutral-500">
-                                        Instructions shown to students before attempting this section.
-                                    </p>
                                     <textarea
                                         value={instructionsEn}
                                         onChange={(e) => setInstructionsEn(e.target.value)}
                                         rows={3}
-                                        placeholder="e.g., Fill in the blanks with the correct answer..."
-                                        className="w-full rounded-lg border border-neutral-200 p-3 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        placeholder="e.g., Fill in the blanks with the correct answer."
+                                        className="w-full rounded-xl border border-neutral-200 p-4 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white resize-none"
                                     />
                                 </div>
 
-                                {/* Chapter Selection */}
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                        Chapters ({chapterConfigs.length} selected)
-                                    </label>
-                                    {isLoadingChapters ? (
-                                        <div className="flex items-center justify-center py-8">
-                                            <LoaderSpinner />
-                                        </div>
-                                    ) : chapters.length === 0 ? (
-                                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-800 dark:bg-amber-900/20">
-                                            <BookOpen className="mx-auto h-8 w-8 text-amber-500/50" />
-                                            <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-300">
-                                                No chapters available
-                                            </p>
-                                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                                Select a subject first to see chapters.
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <ChapterSelector
-                                            chapters={chapters}
-                                            chapterConfigs={chapterConfigs}
-                                            onConfigChange={setChapterConfigs}
-                                            questionType={questionType}
-                                            requiredQuestionCount={questionCount}
-                                            isLoading={isLoadingChapters}
-                                        />
-                                    )}
+                                {/* Summary Card */}
+                                <div className="rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800/50">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-neutral-600 dark:text-neutral-400">Section Summary</span>
+                                        <span className="text-sm font-medium text-neutral-900 dark:text-white">
+                                            {questionCount} × {marksPerQuestion} = <span className="text-success-600 dark:text-success-400">{totalMarks} marks</span>
+                                        </span>
+                                    </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Step 3: Chapters */}
+                        {currentStep === 3 && (
+                            <div className="space-y-4 animate-in fade-in duration-200">
+                                {isLoadingChapters ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <LoaderSpinner />
+                                    </div>
+                                ) : chapters.length === 0 ? (
+                                    <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-center dark:border-neutral-700 dark:bg-neutral-800/50">
+                                        <BookOpen className="mx-auto h-10 w-10 text-neutral-400" />
+                                        <p className="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                            No chapters available
+                                        </p>
+                                        <p className="mt-1 text-xs text-neutral-500">
+                                            Select a subject first to see available chapters.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <ChapterSelector
+                                        chapters={chapters}
+                                        chapterConfigs={chapterConfigs}
+                                        onConfigChange={setChapterConfigs}
+                                        questionType={questionType}
+                                        requiredQuestionCount={questionCount}
+                                        isLoading={isLoadingChapters}
+                                    />
+                                )}
                             </div>
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-5 py-4 dark:border-neutral-700 dark:bg-neutral-800/50 shrink-0">
-                        <div className="flex items-center gap-2 text-sm text-neutral-500">
-                            <span>{allQuestionTypes.find(t => t.value === questionType)?.icon}</span>
-                            <span>{allQuestionTypes.find(t => t.value === questionType)?.label}</span>
+                    {/* Footer with Navigation */}
+                    <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-700 dark:bg-neutral-800/50 shrink-0">
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium text-neutral-900 dark:text-white">
+                                {questionTypes.find(t => t.value === questionType)?.shortLabel}
+                            </span>
                             <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                            <span className="font-medium text-neutral-700 dark:text-neutral-300">{totalMarks} marks</span>
+                            <span className="text-success-600 dark:text-success-400 font-medium">{totalMarks} marks</span>
                             {chapterConfigs.length > 0 && (
                                 <>
                                     <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                                    <span className="text-primary-600 dark:text-primary-400">{chapterConfigs.length} chapters</span>
+                                    <span className="text-primary-600 dark:text-primary-400">{chapterConfigs.length} ch</span>
                                 </>
                             )}
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={onClose}>
-                                Cancel
-                            </Button>
-                            <Button size="sm" onClick={handleSave} className="gap-1.5">
-                                <Check className="h-4 w-4" />
-                                {section ? "Save Changes" : "Add Section"}
+                            {currentStep > 1 ? (
+                                <Button variant="outline" size="sm" onClick={handleBack}>
+                                    <ArrowLeft className="h-4 w-4 mr-1" />
+                                    Back
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                            )}
+                            <Button 
+                                size="sm" 
+                                onClick={handleNext} 
+                                disabled={!canProceed}
+                                className="gap-1.5"
+                            >
+                                {isLastStep ? (
+                                    <>
+                                        <Check className="h-4 w-4" />
+                                        {section ? "Save" : "Add Section"}
+                                    </>
+                                ) : (
+                                    <>
+                                        Next
+                                        <ArrowRight className="h-4 w-4" />
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </div>
