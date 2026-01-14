@@ -1,20 +1,11 @@
 import { db, schema, client } from "./db";
 
-/**
- * Seed Chapters
- * Creates chapters for all subjects (IT and Scholarship sub-subjects)
- * Properly links chapters to subjects via foreign keys
- */
 export async function seedChapters() {
   console.log("📖 Seeding chapters...");
 
-  try {
-    // Clear existing chapters
-    await db.delete(schema.chapters);
-    console.log("   ✓ Cleared existing chapters");
-  } catch (error: any) {
-    console.warn(`   ⚠️  Could not clear chapters: ${error.message}, continuing...`);
-  }
+  // Clear existing chapters
+  await db.delete(schema.chapters);
+  console.log("   ✓ Cleared existing chapters");
 
   // Get subjects
   const allSubjects = await db.select().from(schema.subjects);

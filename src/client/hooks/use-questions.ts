@@ -7,23 +7,21 @@ export interface Question {
   id: string;
   question_text: string;
   question_text_en: string;
+  question_text_mr?: string | null;
   question_language: string;
   question_type: string;
   difficulty: 'easy' | 'medium' | 'hard';
   answer_data: any;
-  explanation?: string | null; // Single explanation field (language matches question_language)
+  explanation_en?: string | null;
+  explanation_mr?: string | null;
   tags?: string[] | null;
-  class_level: string; // Required
+  class_level?: string | null;
   marks: number;
   chapter_id?: string | null;
   is_active: boolean;
   created_by?: string | null;
   created_at?: string;
   updated_at?: string;
-  subject?: {
-    slug: string;
-    name: string;
-  };
 }
 
 export function useQuestions(
@@ -41,43 +39,12 @@ export function useQuestions(
     if (filters?.difficulty) params.append('difficulty', filters.difficulty);
     if (filters?.type) params.append('type', filters.type);
     if (filters?.limit) params.append('limit', filters.limit.toString());
-
+    
     const url = params.toString()
       ? `/api/v1/subjects/${subject}/questions?${params.toString()}`
       : `/api/v1/subjects/${subject}/questions`;
     return api.get<Question[]>(url);
   });
-}
-
-export function useAllQuestions(
-  filters?: {
-    subject?: string;
-    difficulty?: string;
-    type?: string;
-    status?: string;
-    search?: string;
-    limit?: number;
-    offset?: number;
-  }
-) {
-  // Build a dependency key from all filter values so hook re-fetches when filters change
-  const dependencyKey = JSON.stringify(filters);
-  
-  return useApi<Question[]>(async () => {
-    const params = new URLSearchParams();
-    if (filters?.subject) params.append('subject', filters.subject);
-    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
-    if (filters?.type) params.append('questionType', filters.type);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.search) params.append('search', filters.search);
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    if (filters?.offset) params.append('offset', filters.offset.toString());
-
-    const url = params.toString()
-      ? `/api/v1/questions?${params.toString()}`
-      : `/api/v1/questions`;
-    return await api.get<Question[]>(url);
-  }, { autoExecute: true, dependencyKey });
 }
 
 export function useQuestionCountsByChapter(subject: string, chapterId: string) {
@@ -96,6 +63,39 @@ export function useQuestionCountsByChapter(subject: string, chapterId: string) {
   }>(async () => {
     return api.get(`/api/v1/subjects/${subject}/chapters/${chapterId}/question-counts`);
   });
+}
+
+/**
+ * Hook to fetch all questions across subjects with optional filters
+ * Used by the main Questions dashboard
+ */
+export function useAllQuestions(filters?: {
+  search?: string;
+  subject?: string;
+  difficulty?: string;
+  type?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  // Build dependency key from filters to refetch when they change
+  const dependencyKey = JSON.stringify(filters || {});
+  
+  return useApi<Question[]>(async () => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.offset) params.append('offset', filters.offset.toString());
+    
+    const url = params.toString()
+      ? `/api/v1/questions?${params.toString()}`
+      : `/api/v1/questions`;
+    return api.get<Question[]>(url);
+  }, { autoExecute: true, dependencyKey });
 }
 
 export function useQuestionsByIds(subject: string, questionIds: string[]) {
@@ -119,13 +119,16 @@ export function useQuestion(subject: string, questionId: string) {
 export interface CreateQuestionInput {
   question_text: string;
   question_language: 'en' | 'mr';
+  question_text_secondary?: string | null;
+  secondary_language?: 'en' | 'mr' | null;
   question_type: string;
   difficulty: string;
   chapter_id?: string | null;
   answer_data: any;
-  explanation?: string | null; // Single explanation field (language matches question_language)
+  explanation_en?: string | null;
+  explanation_mr?: string | null;
   tags?: string[];
-  class_level: string; // Required
+  class_level?: string | null;
   marks?: number;
   is_active?: boolean;
 }

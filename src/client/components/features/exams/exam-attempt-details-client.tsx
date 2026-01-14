@@ -44,10 +44,13 @@ interface ExamAnswer {
     id: string;
     question_text: string;
     question_language: "en" | "mr";
+    question_text_secondary?: string | null;
+    secondary_language?: "en" | "mr" | null;
     question_type: string;
     answer_data: any;
     marks: number;
-    explanation?: string | null; // Single explanation field (language matches question_language)
+    explanation_en?: string;
+    explanation_mr?: string;
     chapter?: {
       name_en: string;
       name_mr: string;
@@ -403,19 +406,45 @@ function AnswerCard({
         )}
 
         {/* Explanation (if enabled) */}
-        {showExplanations && question.explanation && (
+        {showExplanations && question.explanation_en && (
           <div className="mt-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
             <div className="flex items-start gap-2">
               <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-                  Explanation ({question.question_language === "mr" ? "Marathi" : "English"})
+                  Explanation
                 </p>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  {question.explanation}
+                  {question.explanation_en}
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Expand/Collapse for Translation */}
+        {(question.question_text_secondary || question.explanation_mr) && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-3 flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
+          >
+            {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {isExpanded ? "Hide Translation" : "Show Translation"}
+          </button>
+        )}
+
+        {isExpanded && (
+          <div className="mt-3 space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-700">
+            {question.question_text_secondary && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                <span className="font-medium">प्रश्न:</span> {question.question_text_secondary}
+              </p>
+            )}
+            {question.explanation_mr && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                <span className="font-medium">स्पष्टीकरण:</span> {question.explanation_mr}
+              </p>
+            )}
           </div>
         )}
       </div>

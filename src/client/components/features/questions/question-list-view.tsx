@@ -13,6 +13,7 @@ interface Question {
   id: string;
   question_text: string;
   question_language: "en" | "mr";
+  question_text_secondary?: string | null;
   question_type: QuestionType;
   difficulty: Difficulty;
   chapter_id: string | null;
@@ -67,6 +68,9 @@ export function QuestionListView({ questions, selectedIds, subject, onToggleSele
                       {question.question_language.toUpperCase()}
                     </span>
                   </div>
+                  {question.question_text_secondary && (
+                    <p className="mt-1 text-sm text-neutral-500">{question.question_text_secondary}</p>
+                  )}
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">

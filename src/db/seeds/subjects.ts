@@ -1,13 +1,8 @@
 import { db, schema, client } from "./db";
 import { isNotNull } from "drizzle-orm";
 
-/**
- * Seed Subjects
- * Creates subject hierarchy with Scholarship category and IT subject
- * Properly handles parent-child relationships
- */
 export async function seedSubjects() {
-  console.log("📚 Seeding subjects...");
+  console.log("📚 Seeding subjects (fresh start)...");
 
   // Clear existing subjects in correct order (children first, then parents)
   try {
@@ -17,10 +12,11 @@ export async function seedSubjects() {
     );
     // Then delete parents/remaining
     await db.delete(schema.subjects);
-    console.log("   ✓ Cleared existing subjects");
-  } catch (error: any) {
-    console.warn(`   ⚠️  Could not clear subjects: ${error.message}, continuing...`);
+  } catch {
+    console.warn("   ⚠️  Could not clear subjects, continuing with fresh insert");
   }
+
+  console.log("   ✓ Cleared existing subjects");
 
   // ============================================
   // 1. Create Top-Level Subjects

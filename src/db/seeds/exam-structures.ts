@@ -1,34 +1,20 @@
 import { db, schema, client } from "./db";
 
-/**
- * Seed Exam Structures (Blueprints)
- * Creates exam structure templates linked to subjects and class levels
- * Properly handles relations and provides test data for admin/teacher testing
- */
 export async function seedExamStructures() {
   console.log("📋 Seeding exam structures...");
 
-  try {
-    // Clear existing exam structures
-    await db.delete(schema.examStructures);
-    console.log("   ✓ Cleared existing exam structures");
-  } catch (error: any) {
-    console.warn("   ⚠️  Could not clear exam structures, continuing...");
-  }
+  // Clear existing exam structures
+  await db.delete(schema.examStructures);
+  console.log("   ✓ Cleared existing exam structures");
 
   // Get subjects and class levels
   const allSubjects = await db.select().from(schema.subjects);
   const allClassLevels = await db.select().from(schema.classLevels);
 
-  // Find subjects using correct slugs
   const itSubject = allSubjects.find((s) => s.slug === "information_technology");
-  const scholarshipCategory = allSubjects.find((s) => s.slug === "scholarship" && s.isCategory);
-  const scholarshipMarathi = allSubjects.find((s) => s.slug === "scholarship-marathi");
-  const scholarshipMath = allSubjects.find((s) => s.slug === "scholarship-mathematics");
-  const scholarshipIntelligence = allSubjects.find((s) => s.slug === "scholarship-intelligence-test");
-  const scholarshipGK = allSubjects.find((s) => s.slug === "scholarship-general-knowledge");
+  const scholarshipPaper1 = allSubjects.find((s) => s.slug === "scholarship-paper-1");
+  const scholarshipPaper2 = allSubjects.find((s) => s.slug === "scholarship-paper-2");
 
-  // Find class levels
   const class8 = allClassLevels.find((c) => c.slug === "class-8");
   const class12 = allClassLevels.find((c) => c.slug === "class-12");
 
@@ -153,787 +139,100 @@ export async function seedExamStructures() {
     console.log("   ⚠ IT subject or Class 12 missing (skipping IT structures).");
   }
 
-  // Scholarship Exam Structures (Class 8)
-  // Use the scholarship category or individual subjects
-  if (scholarshipCategory && class8) {
-    // Paper I: Marathi + Mathematics
-    if (scholarshipMarathi && scholarshipMath) {
-      examStructuresData.push({
-        subjectId: scholarshipCategory.id, // Use category for overall structure
-        classLevelId: class8.id,
-        nameEn: "Scholarship Class 8: Paper I",
-        nameMr: "शिष्यवृत्ती इयत्ता ८: पेपर I",
-        descriptionEn: "First Language (Marathi) and Mathematics",
-        descriptionMr: "प्रथम भाषा (मराठी) आणि गणित",
-        classLevel: "class_8",
-        durationMinutes: 90,
-        totalQuestions: 75,
-        totalMarks: 150,
-        passingPercentage: 40,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "lang",
-            name_en: "First Language (Marathi)",
-            name_mr: "प्रथम भाषा (मराठी)",
-            question_type: "mcq_single",
-            question_count: 25,
-            marks_per_question: 2,
-            total_marks: 50,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "math",
-            name_en: "Mathematics",
-            name_mr: "गणित",
-            question_type: "mcq_single",
-            question_count: 50,
-            marks_per_question: 2,
-            total_marks: 100,
-            order_index: 2,
-          }
-        ],
-        isActive: true,
-      });
-    }
-
-    // Paper II: Intelligence Test + General Knowledge
-    if (scholarshipIntelligence && scholarshipGK) {
-      examStructuresData.push({
-        subjectId: scholarshipCategory.id, // Use category for overall structure
-        classLevelId: class8.id,
-        nameEn: "Scholarship Class 8: Paper II",
-        nameMr: "शिष्यवृत्ती इयत्ता ८: पेपर II",
-        descriptionEn: "Intelligence Test and General Knowledge",
-        descriptionMr: "बुद्धिमत्ता चाचणी आणि सामान्य ज्ञान",
-        classLevel: "class_8",
-        durationMinutes: 90,
-        totalQuestions: 75,
-        totalMarks: 150,
-        passingPercentage: 40,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "iq",
-            name_en: "Intelligence Test",
-            name_mr: "बुद्धिमत्ता चाचणी",
-            question_type: "mcq_single",
-            question_count: 50,
-            marks_per_question: 2,
-            total_marks: 100,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "gk",
-            name_en: "General Knowledge",
-            name_mr: "सामान्य ज्ञान",
-            question_type: "mcq_single",
-            question_count: 25,
-            marks_per_question: 2,
-            total_marks: 50,
-            order_index: 2,
-          }
-        ],
-        isActive: true,
-      });
-    }
-
-    // Quick Test Structure for Scholarship
+  // Scholarship Paper I (Class 8)
+  if (scholarshipPaper1 && class8) {
     examStructuresData.push({
-      subjectId: scholarshipCategory.id,
+      subjectId: scholarshipPaper1.id,
       classLevelId: class8.id,
-      nameEn: "Scholarship Quick Test",
-      nameMr: "शिष्यवृत्ती द्रुत चाचणी",
-      descriptionEn: "Quick assessment test for Scholarship preparation",
-      descriptionMr: "शिष्यवृत्ती तयारीसाठी द्रुत मूल्यांकन चाचणी",
+      nameEn: "Scholarship Class 8: Paper I",
+      nameMr: "शिष्यवृत्ती इयत्ता ८: पेपर I",
+      descriptionEn: "First Language and Mathematics",
+      descriptionMr: "प्रथम भाषा आणि गणित",
       classLevel: "class_8",
-      durationMinutes: 30,
-      totalQuestions: 25,
-      totalMarks: 50,
+      durationMinutes: 90,
+      totalQuestions: 75,
+      totalMarks: 150,
       passingPercentage: 40,
       isTemplate: true,
       sections: [
         {
           id: "s1",
-          code: "quick",
-          name_en: "Quick Assessment",
-          name_mr: "द्रुत मूल्यांकन",
+          code: "lang",
+          name_en: "First Language (Marathi)",
+          name_mr: "प्रथम भाषा (मराठी)",
           question_type: "mcq_single",
           question_count: 25,
           marks_per_question: 2,
           total_marks: 50,
           order_index: 1,
+        },
+        {
+          id: "s2",
+          code: "math",
+          name_en: "Mathematics",
+          name_mr: "गणित",
+          question_type: "mcq_single",
+          question_count: 50,
+          marks_per_question: 2,
+          total_marks: 100,
+          order_index: 2,
         }
       ],
       isActive: true,
     });
   }
 
-  // Find Class 11 for additional IT structures
-  const class11 = allClassLevels.find((c) => c.slug === "class-11");
-  
-  // IT Exam Structures for Class 11
-  if (itSubject && class11) {
-    examStructuresData.push(
-      // Class 11 Unit Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class11.id,
-        nameEn: "Class 11 IT Unit Test",
-        nameMr: "अकरावी IT घटक चाचणी",
-        descriptionEn: "Unit test for Class 11 IT - 25 marks",
-        descriptionMr: "अकरावी IT साठी घटक चाचणी - 25 गुण",
-        classLevel: "class_11",
-        durationMinutes: 45,
-        totalQuestions: 20,
-        totalMarks: 25,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "s1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 5,
-            marks_per_question: 1,
-            total_marks: 5,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "s2",
-            name_en: "True/False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 5,
-            marks_per_question: 1,
-            total_marks: 5,
-            order_index: 2,
-          },
-          {
-            id: "s3",
-            code: "s3",
-            name_en: "MCQ",
-            name_mr: "बहुपर्यायी",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1.5,
-            total_marks: 15,
-            order_index: 3,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 11 Semester Exam
-      {
-        subjectId: itSubject.id,
-        classLevelId: class11.id,
-        nameEn: "Class 11 IT Semester Exam",
-        nameMr: "अकरावी IT सत्र परीक्षा",
-        descriptionEn: "Semester examination for Class 11 IT - 50 marks",
-        descriptionMr: "अकरावी IT साठी सत्र परीक्षा - 50 गुण",
-        classLevel: "class_11",
-        durationMinutes: 90,
-        totalQuestions: 35,
-        totalMarks: 50,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 8,
-            marks_per_question: 1,
-            total_marks: 8,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "q2",
-            name_en: "True or False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 7,
-            marks_per_question: 1,
-            total_marks: 7,
-            order_index: 2,
-          },
-          {
-            id: "s3",
-            code: "q3",
-            name_en: "MCQ (Single Correct)",
-            name_mr: "बहुपर्यायी (एक योग्य)",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 3,
-          },
-          {
-            id: "s4",
-            code: "q4",
-            name_en: "MCQ (Two Correct)",
-            name_mr: "बहुपर्यायी (दोन योग्य)",
-            question_type: "mcq_two",
-            question_count: 10,
-            marks_per_question: 2.5,
-            total_marks: 25,
-            order_index: 4,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 11 Chapter Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class11.id,
-        nameEn: "Class 11 IT Chapter Test",
-        nameMr: "अकरावी IT अध्याय चाचणी",
-        descriptionEn: "Chapter-wise test for Class 11 IT - 15 marks",
-        descriptionMr: "अकरावी IT साठी अध्याय-निहाय चाचणी - 15 गुण",
-        classLevel: "class_11",
-        durationMinutes: 30,
-        totalQuestions: 15,
-        totalMarks: 15,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 5,
-            marks_per_question: 1,
-            total_marks: 5,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "q2",
-            name_en: "MCQ",
-            name_mr: "बहुपर्यायी",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 2,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 11 Practice Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class11.id,
-        nameEn: "Class 11 IT Practice Test",
-        nameMr: "अकरावी IT सराव चाचणी",
-        descriptionEn: "Practice test for Class 11 IT students - unlimited attempts",
-        descriptionMr: "अकरावी IT विद्यार्थ्यांसाठी सराव चाचणी - अमर्यादित प्रयत्न",
-        classLevel: "class_11",
-        durationMinutes: 30,
-        totalQuestions: 20,
-        totalMarks: 20,
-        passingPercentage: 0, // Practice - no passing required
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "mixed",
-            name_en: "Mixed Questions",
-            name_mr: "मिश्र प्रश्न",
-            question_type: "mcq_single",
-            question_count: 20,
-            marks_per_question: 1,
-            total_marks: 20,
-            order_index: 1,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 11 Annual Exam
-      {
-        subjectId: itSubject.id,
-        classLevelId: class11.id,
-        nameEn: "Class 11 IT Annual Exam",
-        nameMr: "अकरावी IT वार्षिक परीक्षा",
-        descriptionEn: "Annual examination for Class 11 IT - 80 marks",
-        descriptionMr: "अकरावी IT साठी वार्षिक परीक्षा - 80 गुण",
-        classLevel: "class_11",
-        durationMinutes: 180,
-        totalQuestions: 54,
-        totalMarks: 80,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "q1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 1,
-          },
-          {
-            id: "q2",
-            code: "q2",
-            name_en: "True or False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 2,
-          },
-          {
-            id: "q3",
-            code: "q3",
-            name_en: "MCQ (Single Correct)",
-            name_mr: "बहुपर्यायी (एक योग्य)",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 3,
-          },
-          {
-            id: "q4",
-            code: "q4",
-            name_en: "MCQ (Two Correct)",
-            name_mr: "बहुपर्यायी (दोन योग्य)",
-            question_type: "mcq_two",
-            question_count: 10,
-            marks_per_question: 2,
-            total_marks: 20,
-            order_index: 4,
-          },
-          {
-            id: "q5",
-            code: "q5",
-            name_en: "Match the Pairs",
-            name_mr: "जोड्या लावा",
-            question_type: "match_pairs",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 5,
-          },
-          {
-            id: "q6",
-            code: "q6",
-            name_en: "Short Answer",
-            name_mr: "लघु उत्तर",
-            question_type: "short_answer",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 6,
-          },
-          {
-            id: "q7",
-            code: "q7",
-            name_en: "Long Answer",
-            name_mr: "दीर्घ उत्तर",
-            question_type: "long_answer",
-            question_count: 4,
-            marks_per_question: 2.5,
-            total_marks: 10,
-            order_index: 7,
-          },
-        ],
-        isActive: true,
-      }
-    );
-  }
-
-  // Additional IT Exam Structures for Class 12
-  if (itSubject && class12) {
-    examStructuresData.push(
-      // Class 12 Semester Exam
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Semester Exam",
-        nameMr: "बारावी IT सत्र परीक्षा",
-        descriptionEn: "Semester examination for Class 12 IT - 50 marks",
-        descriptionMr: "बारावी IT साठी सत्र परीक्षा - 50 गुण",
-        classLevel: "class_12",
-        durationMinutes: 90,
-        totalQuestions: 35,
-        totalMarks: 50,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 8,
-            marks_per_question: 1,
-            total_marks: 8,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "q2",
-            name_en: "True or False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 7,
-            marks_per_question: 1,
-            total_marks: 7,
-            order_index: 2,
-          },
-          {
-            id: "s3",
-            code: "q3",
-            name_en: "MCQ (Single Correct)",
-            name_mr: "बहुपर्यायी (एक योग्य)",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 3,
-          },
-          {
-            id: "s4",
-            code: "q4",
-            name_en: "MCQ (Two Correct)",
-            name_mr: "बहुपर्यायी (दोन योग्य)",
-            question_type: "mcq_two",
-            question_count: 10,
-            marks_per_question: 2.5,
-            total_marks: 25,
-            order_index: 4,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 12 Chapter Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Chapter Test",
-        nameMr: "बारावी IT अध्याय चाचणी",
-        descriptionEn: "Chapter-wise test for Class 12 IT - 15 marks",
-        descriptionMr: "बारावी IT साठी अध्याय-निहाय चाचणी - 15 गुण",
-        classLevel: "class_12",
-        durationMinutes: 30,
-        totalQuestions: 15,
-        totalMarks: 15,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 5,
-            marks_per_question: 1,
-            total_marks: 5,
-            order_index: 1,
-          },
-          {
-            id: "s2",
-            code: "q2",
-            name_en: "MCQ",
-            name_mr: "बहुपर्यायी",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 2,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 12 Practice Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Practice Test",
-        nameMr: "बारावी IT सराव चाचणी",
-        descriptionEn: "Practice test for Class 12 IT students - unlimited attempts",
-        descriptionMr: "बारावी IT विद्यार्थ्यांसाठी सराव चाचणी - अमर्यादित प्रयत्न",
-        classLevel: "class_12",
-        durationMinutes: 30,
-        totalQuestions: 20,
-        totalMarks: 20,
-        passingPercentage: 0,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "mixed",
-            name_en: "Mixed Questions",
-            name_mr: "मिश्र प्रश्न",
-            question_type: "mcq_single",
-            question_count: 20,
-            marks_per_question: 1,
-            total_marks: 20,
-            order_index: 1,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 12 Model Paper
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Board Model Paper",
-        nameMr: "बारावी IT बोर्ड मॉडेल पेपर",
-        descriptionEn: "Model paper following exact HSC Board pattern - 80 marks",
-        descriptionMr: "HSC बोर्ड पॅटर्न नुसार मॉडेल पेपर - 80 गुण",
-        classLevel: "class_12",
-        durationMinutes: 180,
-        totalQuestions: 54,
-        totalMarks: 80,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "q1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 1,
-          },
-          {
-            id: "q2",
-            code: "q2",
-            name_en: "True or False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 2,
-          },
-          {
-            id: "q3",
-            code: "q3",
-            name_en: "MCQ (Single Correct)",
-            name_mr: "बहुपर्यायी (एक योग्य)",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 3,
-          },
-          {
-            id: "q4",
-            code: "q4",
-            name_en: "MCQ (Two Correct)",
-            name_mr: "बहुपर्यायी (दोन योग्य)",
-            question_type: "mcq_two",
-            question_count: 10,
-            marks_per_question: 2,
-            total_marks: 20,
-            order_index: 4,
-          },
-          {
-            id: "q5",
-            code: "q5",
-            name_en: "Match the Pairs",
-            name_mr: "जोड्या लावा",
-            question_type: "match_pairs",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 5,
-          },
-          {
-            id: "q6",
-            code: "q6",
-            name_en: "Short Answer",
-            name_mr: "लघु उत्तर",
-            question_type: "short_answer",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 6,
-          },
-          {
-            id: "q7",
-            code: "q7",
-            name_en: "Long Answer",
-            name_mr: "दीर्घ उत्तर",
-            question_type: "long_answer",
-            question_count: 4,
-            marks_per_question: 2.5,
-            total_marks: 10,
-            order_index: 7,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 12 Quick Revision Test
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Quick Revision",
-        nameMr: "बारावी IT द्रुत पुनरावलोकन",
-        descriptionEn: "Quick revision test before exams - 10 marks",
-        descriptionMr: "परीक्षेपूर्वी द्रुत पुनरावलोकन चाचणी - 10 गुण",
-        classLevel: "class_12",
-        durationMinutes: 15,
-        totalQuestions: 10,
-        totalMarks: 10,
-        passingPercentage: 0,
-        isTemplate: true,
-        sections: [
-          {
-            id: "s1",
-            code: "quick",
-            name_en: "Quick Questions",
-            name_mr: "द्रुत प्रश्न",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 1,
-          },
-        ],
-        isActive: true,
-      },
-      // Class 12 Prelim Exam Pattern
-      {
-        subjectId: itSubject.id,
-        classLevelId: class12.id,
-        nameEn: "Class 12 IT Preliminary Exam",
-        nameMr: "बारावी IT प्राथमिक परीक्षा",
-        descriptionEn: "Preliminary exam before board exam - 80 marks",
-        descriptionMr: "बोर्ड परीक्षेपूर्वी प्राथमिक परीक्षा - 80 गुण",
-        classLevel: "class_12",
-        durationMinutes: 180,
-        totalQuestions: 54,
-        totalMarks: 80,
-        passingPercentage: 35,
-        isTemplate: true,
-        sections: [
-          {
-            id: "q1",
-            code: "q1",
-            name_en: "Fill in the Blanks",
-            name_mr: "रिकाम्या जागा भरा",
-            question_type: "fill_blank",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 1,
-          },
-          {
-            id: "q2",
-            code: "q2",
-            name_en: "True or False",
-            name_mr: "खरे की खोटे",
-            question_type: "true_false",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 2,
-          },
-          {
-            id: "q3",
-            code: "q3",
-            name_en: "MCQ (Single Correct)",
-            name_mr: "बहुपर्यायी (एक योग्य)",
-            question_type: "mcq_single",
-            question_count: 10,
-            marks_per_question: 1,
-            total_marks: 10,
-            order_index: 3,
-          },
-          {
-            id: "q4",
-            code: "q4",
-            name_en: "MCQ (Two Correct)",
-            name_mr: "बहुपर्यायी (दोन योग्य)",
-            question_type: "mcq_two",
-            question_count: 10,
-            marks_per_question: 2,
-            total_marks: 20,
-            order_index: 4,
-          },
-          {
-            id: "q5",
-            code: "q5",
-            name_en: "Match the Pairs",
-            name_mr: "जोड्या लावा",
-            question_type: "match_pairs",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 5,
-          },
-          {
-            id: "q6",
-            code: "q6",
-            name_en: "Short Answer",
-            name_mr: "लघु उत्तर",
-            question_type: "short_answer",
-            question_count: 5,
-            marks_per_question: 2,
-            total_marks: 10,
-            order_index: 6,
-          },
-          {
-            id: "q7",
-            code: "q7",
-            name_en: "Long Answer",
-            name_mr: "दीर्घ उत्तर",
-            question_type: "long_answer",
-            question_count: 4,
-            marks_per_question: 2.5,
-            total_marks: 10,
-            order_index: 7,
-          },
-        ],
-        isActive: true,
-      }
-    );
+  // Scholarship Paper II (Class 8)
+  if (scholarshipPaper2 && class8) {
+    examStructuresData.push({
+      subjectId: scholarshipPaper2.id,
+      classLevelId: class8.id,
+      nameEn: "Scholarship Class 8: Paper II",
+      nameMr: "शिष्यवृत्ती इयत्ता ८: पेपर II",
+      descriptionEn: "Third Language and Intelligence Test",
+      descriptionMr: "तृतीय भाषा आणि बुद्धिमत्ता चाचणी",
+      classLevel: "class_8",
+      durationMinutes: 90,
+      totalQuestions: 75,
+      totalMarks: 150,
+      passingPercentage: 40,
+      isTemplate: true,
+      sections: [
+        {
+          id: "s1",
+          code: "lang3",
+          name_en: "Third Language (English)",
+          name_mr: "तृतीय भाषा (इंग्रजी)",
+          question_type: "mcq_single",
+          question_count: 25,
+          marks_per_question: 2,
+          total_marks: 50,
+          order_index: 1,
+        },
+        {
+          id: "s2",
+          code: "iq",
+          name_en: "Intelligence Test",
+          name_mr: "बुद्धिमत्ता चाचणी",
+          question_type: "mcq_single",
+          question_count: 50,
+          marks_per_question: 2,
+          total_marks: 100,
+          order_index: 2,
+        }
+      ],
+      isActive: true,
+    });
   }
 
   if (examStructuresData.length > 0) {
-    try {
-      const examStructures = await db
-        .insert(schema.examStructures)
-        .values(examStructuresData)
-        .returning();
+    const examStructures = await db
+      .insert(schema.examStructures)
+      .values(examStructuresData)
+      .returning();
 
-      console.log(`   ✓ Created ${examStructures.length} exam structures:`);
-      examStructures.forEach((structure) => {
-        console.log(`      - ${structure.nameEn} (${structure.totalMarks} marks)`);
-      });
-      console.log();
-      return examStructures;
-    } catch (error: any) {
-      console.error(`   ❌ Error inserting exam structures: ${error.message}`);
-      throw error;
-    }
-  } else {
-    console.log("   ⚠️  No exam structures created (missing dependencies)\n");
+    console.log(`   ✓ Created ${examStructures.length} exam structures\n`);
+    return examStructures;
   }
 
   return [];

@@ -4,7 +4,6 @@
 
 import { X, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from '@/client/components/ui/button';
 import { TextInput } from '@/client/components/ui/input';
 import { Select } from '@/client/components/ui/select';
@@ -46,7 +45,7 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
   const { data: chaptersData } = useChaptersBySubject(subjectSlug);
   const { mutate: createQuestion, loading: isCreating } = useCreateQuestion(subjectSlug);
   const { mutate: updateQuestion, loading: isUpdating } = useUpdateQuestion(subjectSlug);
-
+  
   const chapters = chaptersData || [];
   const isLoading = isCreating || isUpdating;
 
@@ -61,14 +60,24 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
   const [questionLanguage, setQuestionLanguage] = useState<"en" | "mr">(
     initialData?.question_language || defaultLanguage
   );
+  const [showTranslation, setShowTranslation] = useState(
+    !!(initialData?.question_text_secondary || initialData?.secondary_language)
+  );
+  const [questionContentSecondary, setQuestionContentSecondary] = useState(
+    stringToJson(initialData?.question_text_secondary || "")
+  );
+  const [secondaryLanguage, setSecondaryLanguage] = useState<"en" | "mr" | undefined>(
+    initialData?.secondary_language || undefined
+  );
   const [questionType, setQuestionType] = useState<QuestionType>(
     initialData?.question_type || "mcq_single"
   );
   const [difficulty, setDifficulty] = useState<Difficulty>(initialData?.difficulty || "medium");
   const [chapterId, setChapterId] = useState<string>(initialData?.chapter_id || "");
-  const [explanationContent, setExplanationContent] = useState(
-    stringToJson(initialData?.explanation || "")
+  const [explanationContentEn, setExplanationContentEn] = useState(
+    stringToJson(initialData?.explanation_en || "")
   );
+  const [explanationMr, _setExplanationMr] = useState(initialData?.explanation_mr || "");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [classLevel, setClassLevel] = useState(initialData?.class_level || "");
@@ -105,21 +114,25 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
     // Auto-set language based on subject if not explicitly set
     const finalLanguage = questionLanguage || defaultLanguage;
 
-    // Validate required fields
-    if (!classLevel) {
-      toast.error("Class level is required");
-      return;
-    }
+    // Set secondary language to opposite of primary if translation exists
+    const finalSecondaryLanguage = showTranslation && questionContentSecondary
+      ? (finalLanguage === "en" ? "mr" : "en")
+      : undefined;
 
     const values: QuestionFormValues = {
       questionText: jsonToString(questionContent), // Convert TipTap JSON to JSON string for database
       questionLanguage: finalLanguage,
+      questionTextSecondary: showTranslation && questionContentSecondary
+        ? jsonToString(questionContentSecondary)
+        : undefined,
+      secondaryLanguage: finalSecondaryLanguage,
       questionType,
       difficulty,
       chapterId: chapterId || null,
-      explanation: jsonToString(explanationContent), // Single explanation field
+      explanationEn: jsonToString(explanationContentEn),
+      explanationMr,
       tags,
-      classLevel, // Required
+      classLevel,
       isActive,
       answerData,
       marks,
@@ -128,11 +141,14 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
     const apiData = {
       question_text: values.questionText,
       question_language: values.questionLanguage,
+      question_text_secondary: values.questionTextSecondary,
+      secondary_language: values.secondaryLanguage,
       question_type: values.questionType,
       difficulty: values.difficulty,
       chapter_id: values.chapterId,
       answer_data: values.answerData,
-      explanation: values.explanation,
+      explanation_en: values.explanationEn,
+      explanation_mr: values.explanationMr,
       tags: values.tags,
       class_level: values.classLevel,
       marks: values.marks,
@@ -196,6 +212,46 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
         </p>
       </div>
 
+      {/* Optional Translation Toggle */}
+      <div>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={showTranslation}
+            onChange={(e) => {
+              setShowTranslation(e.target.checked);
+              if (!e.target.checked) {
+                setQuestionContentSecondary(stringToJson(""));
+                setSecondaryLanguage(undefined);
+              } else {
+                setSecondaryLanguage(questionLanguage === "en" ? "mr" : "en");
+              }
+            }}
+            className="h-4 w-4 rounded text-blue-600"
+          />
+          <span className="text-sm text-neutral-700 dark:text-neutral-300">
+            Add translation (optional)
+          </span>
+        </label>
+        {showTranslation && (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-neutral-950 dark:text-white">
+              Translation ({secondaryLanguage === "en" ? "English" : "Marathi"})
+            </label>
+            <PremiumQuestionEditor
+              content={questionContentSecondary}
+              onChange={setQuestionContentSecondary}
+              placeholder={
+                secondaryLanguage === "en"
+                  ? "Enter English translation..."
+                  : "मराठी भाषांतर प्रविष्ट करा..."
+              }
+              language={secondaryLanguage || questionLanguage}
+              minHeight="200px"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Question Type & Difficulty Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -240,9 +296,7 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
       {/* Chapter, Class Level & Marks */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className="block text-sm font-medium text-neutral-950 dark:text-white">
-            Chapter <span className="text-red-500">*</span>
-          </label>
+          <label className="block text-sm font-medium text-neutral-950 dark:text-white">Chapter</label>
           <Select
             value={chapterId}
             onChange={setChapterId}
@@ -256,18 +310,14 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
 
         <div>
           <label className="block text-sm font-medium text-neutral-950 dark:text-white">
-            Class Level <span className="text-red-500">*</span>
+            Class Level
           </label>
           <TextInput
             value={classLevel}
             onChange={(e) => setClassLevel(e.target.value)}
-            placeholder="e.g., 5, 8, 12"
+            placeholder="e.g., 5th, 8th"
             className="mt-2"
-            required
           />
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Required for better readability and filtering
-          </p>
         </div>
 
         <div>
@@ -296,25 +346,18 @@ export function QuestionForm({ subjectSlug, initialData, onClose, onSuccess }: Q
         <AnswerDataEditor type={questionType} data={answerData} onChange={setAnswerData} />
       </div>
 
-      {/* Explanation */}
+      {/* Explanation EN */}
       <div>
         <label className="block text-sm font-medium text-neutral-950 dark:text-white">
-          Explanation ({questionLanguage === "mr" ? "Marathi" : "English"})
+          Explanation (English)
         </label>
         <PremiumQuestionEditor
-          content={explanationContent}
-          onChange={setExplanationContent}
-          placeholder={
-            questionLanguage === "mr"
-              ? "योग्य उत्तराचे स्पष्टीकरण द्या..."
-              : "Explain the correct answer..."
-          }
-          language={questionLanguage}
+          content={explanationContentEn}
+          onChange={setExplanationContentEn}
+          placeholder="Explain the correct answer..."
+          language="en"
           minHeight="150px"
         />
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Explanation language matches the question language
-        </p>
       </div>
 
       {/* Tags */}

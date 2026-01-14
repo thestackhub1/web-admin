@@ -7,7 +7,7 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, or, inArray, asc, desc, sql, count, ilike } from 'drizzle-orm';
+import { eq, and, or, inArray, asc, desc, sql, count } from 'drizzle-orm';
 import {
   questionsScholarship,
   questionsEnglish,
@@ -80,16 +80,6 @@ export class QuestionsService {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
 
-    // Get subject name from slug
-    const subjectNames: Record<string, string> = {
-      'scholarship': 'Scholarship',
-      'english': 'English',
-      'information-technology': 'Information Technology',
-      'information_technology': 'Information Technology',
-    };
-    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
-    const normalizedSlug = subjectSlug.replace(/_/g, '-');
-
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const conditions = [];
@@ -108,6 +98,8 @@ export class QuestionsService {
 
     if (options.isActive !== undefined) {
       conditions.push(eq(table.isActive, options.isActive));
+    } else {
+      conditions.push(eq(table.isActive, true));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -129,15 +121,18 @@ export class QuestionsService {
 
     const results = await baseQuery;
 
-    // Transform to API format (including subject info)
+    // Transform to API format
     return results.map((q) => ({
       id: q.id,
       question_text: q.questionText,
+      question_text_en: q.questionText,
+      question_text_mr: q.questionTextSecondary || q.questionText,
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation: q.explanation || null,
+      explanation_en: q.explanationEn,
+      explanation_mr: q.explanationMr,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
@@ -146,8 +141,102 @@ export class QuestionsService {
       created_by: q.createdBy,
       created_at: q.createdAt?.toISOString(),
       updated_at: q.updatedAt?.toISOString(),
-      subject: { slug: normalizedSlug, name: subjectName },
     }));
+  }
+
+  /**
+   * Get all questions from all subject tables (for dashboard view)
+   */
+  static async getAll(
+    options: {
+      difficulty?: string;
+      questionType?: string;
+      isActive?: boolean;
+      search?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+    rlsContext?: RLSContext
+  ) {
+    const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
+    const allQuestions: any[] = [];
+    const tables = [
+      { table: questionsScholarship, subject: 'scholarship' },
+      { table: questionsEnglish, subject: 'english' },
+      { table: questionsInformationTechnology, subject: 'information_technology' },
+    ];
+
+    for (const { table, subject } of tables) {
+      const conditions = [];
+
+      if (options.difficulty) {
+        conditions.push(eq(table.difficulty, options.difficulty));
+      }
+
+      if (options.questionType) {
+        conditions.push(eq(table.questionType, options.questionType));
+      }
+
+      if (options.isActive !== undefined) {
+        conditions.push(eq(table.isActive, options.isActive));
+      } else {
+        conditions.push(eq(table.isActive, true));
+      }
+
+      if (options.search) {
+        conditions.push(
+          or(
+            sql`${table.questionText} ILIKE ${'%' + options.search + '%'}`,
+            sql`${table.questionTextSecondary} ILIKE ${'%' + options.search + '%'}`
+          )
+        );
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const results = await db
+        .select()
+        .from(table)
+        .where(whereClause)
+        .orderBy(desc(table.createdAt));
+
+      // Transform and add subject info
+      const transformed = results.map((q) => ({
+        id: q.id,
+        subject: subject,
+        question_text: q.questionText,
+        question_text_en: q.questionText,
+        question_text_mr: q.questionTextSecondary || q.questionText,
+        question_language: q.questionLanguage,
+        question_type: q.questionType,
+        difficulty: q.difficulty,
+        answer_data: q.answerData,
+        explanation_en: q.explanationEn,
+        explanation_mr: q.explanationMr,
+        tags: q.tags,
+        class_level: q.classLevel,
+        marks: q.marks,
+        chapter_id: q.chapterId,
+        is_active: q.isActive,
+        created_by: q.createdBy,
+        created_at: q.createdAt?.toISOString(),
+        updated_at: q.updatedAt?.toISOString(),
+      }));
+
+      allQuestions.push(...transformed);
+    }
+
+    // Sort all questions by created_at descending
+    allQuestions.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    // Apply pagination
+    const start = options.offset || 0;
+    const end = options.limit ? start + options.limit : undefined;
+    return allQuestions.slice(start, end);
   }
 
   /**
@@ -167,31 +256,24 @@ export class QuestionsService {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
 
-    // Get subject name from slug
-    const subjectNames: Record<string, string> = {
-      'scholarship': 'Scholarship',
-      'english': 'English',
-      'information-technology': 'Information Technology',
-      'information_technology': 'Information Technology',
-    };
-    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
-    const normalizedSlug = subjectSlug.replace(/_/g, '-');
-
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const results = await db
       .select()
       .from(table)
-      .where(inArray(table.id, questionIds));
+      .where(and(inArray(table.id, questionIds), eq(table.isActive, true)));
 
     return results.map((q) => ({
       id: q.id,
       question_text: q.questionText,
+      question_text_en: q.questionText,
+      question_text_mr: q.questionTextSecondary || q.questionText,
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation: q.explanation || null,
+      explanation_en: q.explanationEn,
+      explanation_mr: q.explanationMr,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
@@ -200,7 +282,6 @@ export class QuestionsService {
       created_by: q.createdBy,
       created_at: q.createdAt?.toISOString(),
       updated_at: q.updatedAt?.toISOString(),
-      subject: { slug: normalizedSlug, name: subjectName },
     }));
   }
 
@@ -217,22 +298,12 @@ export class QuestionsService {
       throw new Error(`Invalid subject slug: ${subjectSlug}`);
     }
 
-    // Get subject name from slug
-    const subjectNames: Record<string, string> = {
-      'scholarship': 'Scholarship',
-      'english': 'English',
-      'information-technology': 'Information Technology',
-      'information_technology': 'Information Technology',
-    };
-    const subjectName = subjectNames[subjectSlug.toLowerCase()] || subjectSlug;
-    const normalizedSlug = subjectSlug.replace(/_/g, '-');
-
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const [question] = await db
       .select()
       .from(table)
-      .where(eq(table.id, questionId))
+      .where(and(eq(table.id, questionId), eq(table.isActive, true)))
       .limit(1);
 
     if (!question) {
@@ -242,11 +313,14 @@ export class QuestionsService {
     return {
       id: question.id,
       question_text: question.questionText,
+      question_text_en: question.questionText,
+      question_text_mr: question.questionTextSecondary || question.questionText,
       question_language: question.questionLanguage,
       question_type: question.questionType,
       difficulty: question.difficulty,
       answer_data: question.answerData,
-      explanation: question.explanation || null,
+      explanation_en: question.explanationEn,
+      explanation_mr: question.explanationMr,
       tags: question.tags,
       class_level: question.classLevel,
       marks: question.marks,
@@ -255,7 +329,6 @@ export class QuestionsService {
       created_by: question.createdBy,
       created_at: question.createdAt?.toISOString(),
       updated_at: question.updatedAt?.toISOString(),
-      subject: { slug: normalizedSlug, name: subjectName },
     };
   }
 
@@ -328,11 +401,14 @@ export class QuestionsService {
     return results.map((q) => ({
       id: q.id,
       question_text: q.questionText,
+      question_text_en: q.questionText,
+      question_text_mr: q.questionTextSecondary || q.questionText,
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation: q.explanation || null,
+      explanation_en: q.explanationEn,
+      explanation_mr: q.explanationMr,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
@@ -358,6 +434,8 @@ export class QuestionsService {
     const conditions = [];
     if (options?.isActive !== undefined) {
       conditions.push(eq(table.isActive, options.isActive));
+    } else {
+      conditions.push(eq(table.isActive, true));
     }
 
     const [result] = await db
@@ -376,12 +454,15 @@ export class QuestionsService {
     questions: Array<{
       questionText: string;
       questionLanguage: "en" | "mr";
+      questionTextSecondary?: string | null;
+      secondaryLanguage?: "en" | "mr" | null;
       questionType: string;
       difficulty: string;
       answerData: any;
-      explanation?: string | null;
+      explanationEn?: string | null;
+      explanationMr?: string | null;
       chapterId?: string | null;
-      classLevel: string; // Required
+      classLevel?: string | null;
       marks: number;
       isActive: boolean;
       createdBy: string;
@@ -411,13 +492,16 @@ export class QuestionsService {
     data: {
       questionText: string;
       questionLanguage: 'en' | 'mr';
+      questionTextSecondary?: string | null;
+      secondaryLanguage?: 'en' | 'mr' | null;
       questionType: string;
       difficulty: string;
       chapterId?: string | null;
       answerData: any;
-      explanation?: string | null;
+      explanationEn?: string | null;
+      explanationMr?: string | null;
       tags?: string[];
-      classLevel: string; // Required
+      classLevel?: string | null;
       marks?: number;
       isActive?: boolean;
       createdBy?: string;
@@ -436,13 +520,16 @@ export class QuestionsService {
       .values({
         questionText: data.questionText,
         questionLanguage: data.questionLanguage,
+        questionTextSecondary: data.questionTextSecondary || null,
+        secondaryLanguage: data.secondaryLanguage || null,
         questionType: data.questionType,
         difficulty: data.difficulty,
         chapterId: data.chapterId || null,
         answerData: data.answerData,
-        explanation: data.explanation || null,
+        explanationEn: data.explanationEn || null,
+        explanationMr: data.explanationMr || null,
         tags: data.tags || [],
-        classLevel: data.classLevel, // Required
+        classLevel: data.classLevel || null,
         marks: data.marks || 1,
         isActive: data.isActive ?? true,
         createdBy: data.createdBy || rlsContext?.userId,
@@ -461,13 +548,16 @@ export class QuestionsService {
     data: Partial<{
       questionText: string;
       questionLanguage: 'en' | 'mr';
+      questionTextSecondary?: string | null;
+      secondaryLanguage?: 'en' | 'mr' | null;
       questionType: string;
       difficulty: string;
       chapterId?: string | null;
       answerData: any;
-      explanation?: string | null;
+      explanationEn?: string | null;
+      explanationMr?: string | null;
       tags?: string[];
-      classLevel?: string; // Optional for updates, but should be provided if updating
+      classLevel?: string | null;
       marks?: number;
       isActive?: boolean;
     }>,
@@ -483,11 +573,14 @@ export class QuestionsService {
     const updateValues: any = {};
     if (data.questionText !== undefined) updateValues.questionText = data.questionText;
     if (data.questionLanguage !== undefined) updateValues.questionLanguage = data.questionLanguage;
+    if (data.questionTextSecondary !== undefined) updateValues.questionTextSecondary = data.questionTextSecondary;
+    if (data.secondaryLanguage !== undefined) updateValues.secondaryLanguage = data.secondaryLanguage;
     if (data.questionType !== undefined) updateValues.questionType = data.questionType;
     if (data.difficulty !== undefined) updateValues.difficulty = data.difficulty;
     if (data.chapterId !== undefined) updateValues.chapterId = data.chapterId;
     if (data.answerData !== undefined) updateValues.answerData = data.answerData;
-    if (data.explanation !== undefined) updateValues.explanation = data.explanation;
+    if (data.explanationEn !== undefined) updateValues.explanationEn = data.explanationEn;
+    if (data.explanationMr !== undefined) updateValues.explanationMr = data.explanationMr;
     if (data.tags !== undefined) updateValues.tags = data.tags;
     if (data.classLevel !== undefined) updateValues.classLevel = data.classLevel;
     if (data.marks !== undefined) updateValues.marks = data.marks;
@@ -529,90 +622,6 @@ export class QuestionsService {
     }
 
     return { success: true };
-  }
-  /**
-   * Get questions from ALL tables (merged)
-   * This is a utility for the "All Questions" view.
-   * Note: Pagination is approximate when fetching across multiple tables without a unified view.
-   */
-  static async getAll(
-    options: QuestionListOptions & { search?: string, limit?: number, offset?: number } = {},
-    rlsContext?: RLSContext
-  ) {
-    const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
-
-    const subjects = [
-      { slug: 'scholarship', name: 'Scholarship', table: questionsScholarship },
-      { slug: 'english', name: 'English', table: questionsEnglish },
-      { slug: 'information-technology', name: 'Information Technology', table: questionsInformationTechnology }
-    ];
-
-    const allQueries = subjects.map(async ({ slug, name, table }) => {
-      const conditions = [];
-
-      if (options.chapterId) conditions.push(eq(table.chapterId, options.chapterId));
-      if (options.difficulty) conditions.push(eq(table.difficulty, options.difficulty));
-      if (options.questionType) conditions.push(eq(table.questionType, options.questionType));
-
-      if (options.isActive !== undefined) {
-        conditions.push(eq(table.isActive, options.isActive));
-      }
-
-      if (options.search) {
-        conditions.push(ilike(table.questionText, `%${options.search}%`));
-      }
-
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-      // We fetch slightly more than limit per table to ensure we have enough after merging
-      // For proper global pagination, we'd need a different architecture, but this suffices for admin dashboard "scan"
-      const limit = options.limit || 20;
-
-      const results = await db
-        .select()
-        .from(table)
-        .where(whereClause)
-        .orderBy(desc(table.createdAt))
-        .limit(limit);
-
-      return results.map(q => ({
-        ...q,
-        subject: { slug, name }
-      }));
-    });
-
-    const nestedResults = await Promise.all(allQueries);
-    const flatResults = nestedResults.flat();
-
-    // Sort combined results by createdAt desc
-    flatResults.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    // Apply global pagination after merge (inefficient for deep pages, but functional for first few pages)
-    const effectiveOffset = 0; // The individual queries limited usage, so we just slice the top blended results
-    const results = flatResults.slice(0, options.limit || 20);
-
-    return results.map((q) => ({
-      id: q.id,
-      question_text: q.questionText,
-      question_language: q.questionLanguage,
-      question_type: q.questionType,
-      difficulty: q.difficulty,
-      answer_data: q.answerData,
-      explanation: q.explanation || null,
-      tags: q.tags,
-      class_level: q.classLevel,
-      marks: q.marks,
-      chapter_id: q.chapterId,
-      is_active: q.isActive,
-      created_by: q.createdBy,
-      created_at: q.createdAt?.toISOString(),
-      updated_at: q.updatedAt?.toISOString(),
-      subject: q.subject
-    }));
   }
 }
 

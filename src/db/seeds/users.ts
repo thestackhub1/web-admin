@@ -16,13 +16,6 @@ export async function seedUsers() {
   const schools = await db.select().from(schema.schools).limit(1);
   const defaultSchoolId = schools.length > 0 ? schools[0].id : null;
 
-  // Get multiple schools for better distribution
-  const allSchools = await db.select().from(schema.schools).limit(5);
-  const schoolIds = allSchools.map(s => s.id);
-  const school1 = schoolIds[0] || defaultSchoolId;
-  const school2 = schoolIds[1] || defaultSchoolId;
-  const school3 = schoolIds[2] || defaultSchoolId;
-
   // Test users configuration with proper relations
   const testUsers = [
     {
@@ -46,20 +39,7 @@ export async function seedUsers() {
       name: "Teacher User",
       role: "teacher" as const,
       preferredLanguage: "en" as const,
-      schoolId: school1, // Teacher linked to a school
-      permissions: {
-        manageQuestions: true,
-        viewAnalytics: true,
-        manageExams: true,
-      },
-    },
-    {
-      email: "teacher2@abhedya.com",
-      password: "Teacher@123",
-      name: "Teacher 2",
-      role: "teacher" as const,
-      preferredLanguage: "mr" as const,
-      schoolId: school2, // Second teacher at different school
+      schoolId: defaultSchoolId, // Teacher linked to a school
       permissions: {
         manageQuestions: true,
         viewAnalytics: true,
@@ -73,37 +53,7 @@ export async function seedUsers() {
       role: "student" as const,
       preferredLanguage: "mr" as const,
       classLevel: "12",
-      schoolId: school1, // Student linked to a school
-      permissions: {},
-    },
-    {
-      email: "student2@abhedya.com",
-      password: "Student@123",
-      name: "Student 2",
-      role: "student" as const,
-      preferredLanguage: "en" as const,
-      classLevel: "8",
-      schoolId: school1, // Student in Class 8
-      permissions: {},
-    },
-    {
-      email: "student3@abhedya.com",
-      password: "Student@123",
-      name: "Student 3",
-      role: "student" as const,
-      preferredLanguage: "mr" as const,
-      classLevel: "11",
-      schoolId: school2, // Student at different school
-      permissions: {},
-    },
-    {
-      email: "student4@abhedya.com",
-      password: "Student@123",
-      name: "Student 4",
-      role: "student" as const,
-      preferredLanguage: "mr" as const,
-      classLevel: "12",
-      schoolId: school3, // Another student
+      schoolId: defaultSchoolId, // Student linked to a school
       permissions: {},
     },
   ];
@@ -229,11 +179,7 @@ export async function seedUsers() {
   console.log("📋 Test Users Summary:");
   console.log("   Admin:   admin@abhedya.com / Admin@123456");
   console.log("   Teacher: teacher@abhedya.com / Teacher@123");
-  console.log("   Teacher: teacher2@abhedya.com / Teacher@123");
-  console.log("   Student: student@abhedya.com / Student@123 (Class 12)");
-  console.log("   Student: student2@abhedya.com / Student@123 (Class 8)");
-  console.log("   Student: student3@abhedya.com / Student@123 (Class 11)");
-  console.log("   Student: student4@abhedya.com / Student@123 (Class 12)\n");
+  console.log("   Student: student@abhedya.com / Student@123\n");
 
   return createdProfiles;
 }

@@ -110,13 +110,14 @@ export async function PUT(request: NextRequest, context: Params) {
         const updateData: any = {};
         if (parsed.data.question_text !== undefined) updateData.questionText = parsed.data.question_text;
         if (parsed.data.question_language !== undefined) updateData.questionLanguage = parsed.data.question_language;
+        if (parsed.data.question_text_secondary !== undefined) updateData.questionTextSecondary = parsed.data.question_text_secondary;
+        if (parsed.data.secondary_language !== undefined) updateData.secondaryLanguage = parsed.data.secondary_language;
         if (parsed.data.question_type !== undefined) updateData.questionType = parsed.data.question_type;
         if (parsed.data.difficulty !== undefined) updateData.difficulty = parsed.data.difficulty;
         if (parsed.data.chapter_id !== undefined) updateData.chapterId = parsed.data.chapter_id;
         if (parsed.data.answer_data !== undefined) updateData.answerData = parsed.data.answer_data;
-        if (parsed.data.explanation_en !== undefined || parsed.data.explanation_mr !== undefined) {
-            updateData.explanation = parsed.data.explanation_en || parsed.data.explanation_mr || null;
-        }
+        if (parsed.data.explanation_en !== undefined) updateData.explanationEn = parsed.data.explanation_en;
+        if (parsed.data.explanation_mr !== undefined) updateData.explanationMr = parsed.data.explanation_mr;
         if (parsed.data.tags !== undefined) updateData.tags = parsed.data.tags;
         if (parsed.data.class_level !== undefined) updateData.classLevel = parsed.data.class_level;
         if (parsed.data.marks !== undefined) updateData.marks = parsed.data.marks;

@@ -1,20 +1,11 @@
 import { db, schema, client } from "./db";
 
-/**
- * Seed Subject-Class Mappings
- * Maps subjects to class levels for proper access control
- * Creates mappings for Scholarship (Class 4, 5, 7, 8) and IT (Class 11, 12)
- */
 export async function seedSubjectClassMappings() {
   console.log("🔗 Seeding subject-class mappings...");
 
-  try {
-    // Clear existing mappings
-    await db.delete(schema.subjectClassMappings);
-    console.log("   ✓ Cleared existing mappings");
-  } catch (error: any) {
-    console.warn(`   ⚠️  Could not clear mappings: ${error.message}, continuing...`);
-  }
+  // Clear existing mappings
+  await db.delete(schema.subjectClassMappings);
+  console.log("   ✓ Cleared existing mappings");
 
   // Get subjects and class levels
   const allSubjects = await db.select().from(schema.subjects);

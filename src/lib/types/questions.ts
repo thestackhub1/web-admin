@@ -129,12 +129,15 @@ export interface QuestionFormValues {
   id?: string;
   questionText: string;
   questionLanguage: "en" | "mr";
+  questionTextSecondary?: string;
+  secondaryLanguage?: "en" | "mr";
   questionType: QuestionType;
   difficulty: Difficulty;
   chapterId: string | null;
-  explanation: string; // Single explanation field (language matches questionLanguage)
+  explanationEn: string;
+  explanationMr: string;
   tags: string[];
-  classLevel: string; // Required for better readability
+  classLevel: string;
   isActive: boolean;
   answerData: AnswerData;
   marks: number; // Added for weighted scoring
@@ -145,12 +148,15 @@ export interface Question {
   id: string;
   question_text: string;
   question_language: "en" | "mr";
+  question_text_secondary?: string | null;
+  secondary_language?: "en" | "mr" | null;
   question_type: QuestionType;
   difficulty: Difficulty;
   answer_data: AnswerData;
-  explanation?: string | null; // Single explanation field (language matches question_language)
+  explanation_en?: string | null;
+  explanation_mr?: string | null;
   tags: string[];
-  class_level: string; // Required
+  class_level?: string | null;
   chapter_id?: string | null;
   marks: number;
   is_active: boolean;

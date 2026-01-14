@@ -315,7 +315,8 @@ export function convertToParsedQuestions(
       questionType: q.type,
       marks: q.marks || 2, // Default to 2 if not provided
       difficulty: 'medium', // Default
-      explanation: q.explanation_en || q.explanation_mr || undefined, // Single explanation field (language matches question_language)
+      explanationMr: q.explanation_mr || undefined, // Convert null/empty to undefined
+      explanationEn: q.explanation_en || undefined, // Convert null/empty to undefined
       // Note: For mcq_two and mcq_multiple, the correct_answers array is stored
       // in the extraction metadata and can be accessed during review/editing
     };

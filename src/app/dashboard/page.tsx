@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DashboardClient } from '@/client/components/features/dashboard';
+import { DashboardClient } from '@/client/components/features/dashboard/dashboard-client';
 
 export const metadata: Metadata = {
   title: "Dashboard - The Stack Hub Admin",

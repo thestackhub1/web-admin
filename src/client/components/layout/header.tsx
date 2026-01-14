@@ -196,7 +196,7 @@ export function DashboardHeader({ user, onMenuClick, className }: DashboardHeade
                   className="h-8 w-8 rounded-lg object-cover ring-2 ring-white/80 dark:ring-neutral-800/80"
                 />
               ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-insight-600 text-sm font-semibold text-white shadow-sm">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary-500 to-insight-600 text-sm font-semibold text-white shadow-sm">
                   {user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || "A"}
                 </div>
               )}

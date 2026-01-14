@@ -3,7 +3,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, Trash2, BookOpen, Pencil, ExternalLink, CheckSquare } from "lucide-react";
+import { ArrowUp, ArrowDown, Trash2, BookOpen, ExternalLink } from "lucide-react";
 import { Badge } from '@/client/components/ui/premium';
 import { questionTypeLabels } from "@/client/types/questions";
 import type { QuestionType } from "@/client/types/questions";
@@ -57,88 +57,66 @@ export function ExamStructureSectionCard({
     };
 
     return (
-        <div className="group relative flex items-center gap-3 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 p-4 shadow-sm hover:shadow-md hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200">
-            {/* Index Badge with gradient */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white text-sm font-bold shadow-sm">
-                {String(index + 1).padStart(2, '0')}
+        <div className="group flex items-center gap-2 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-100 dark:border-neutral-700/50 px-3 py-2.5 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-sm transition-all">
+            {/* Compact Index */}
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-500 text-white text-xs font-bold">
+                {index + 1}
             </div>
 
-            {/* Move Buttons - Vertical pill */}
-            <div className="flex flex-col shrink-0 bg-neutral-50 dark:bg-neutral-900 rounded-lg p-0.5">
+            {/* Inline Move Buttons */}
+            <div className="flex shrink-0 gap-0.5">
                 <button
                     onClick={() => onMove(index, "up")}
                     disabled={index === 0}
-                    className="p-1.5 rounded-md text-neutral-400 hover:bg-white hover:text-primary-600 hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none transition-all dark:hover:bg-neutral-700"
-                    title="Move up"
+                    className="p-1 rounded text-neutral-300 hover:text-primary-500 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 >
-                    <ArrowUp className="h-3.5 w-3.5" />
+                    <ArrowUp className="h-3 w-3" />
                 </button>
                 <button
                     onClick={() => onMove(index, "down")}
                     disabled={index === totalSections - 1}
-                    className="p-1.5 rounded-md text-neutral-400 hover:bg-white hover:text-primary-600 hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none transition-all dark:hover:bg-neutral-700"
-                    title="Move down"
+                    className="p-1 rounded text-neutral-300 hover:text-primary-500 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 >
-                    <ArrowDown className="h-3.5 w-3.5" />
+                    <ArrowDown className="h-3 w-3" />
                 </button>
             </div>
 
-            {/* Section Info */}
-            <div className="min-w-0 flex-1 pl-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        {section.name_en}
-                    </h4>
-                    <Badge variant="info" size="sm">
-                        {questionTypeLabels[section.question_type]}
-                    </Badge>
-                    {section.chapter_configs && section.chapter_configs.length > 0 ? (
-                        <Badge variant="success" size="sm">
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            {section.chapter_configs.length} Chapters
-                        </Badge>
-                    ) : (
-                        <Badge variant="default" size="sm">
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            Global Scope
-                        </Badge>
-                    )}
-                    {section.selected_question_ids && section.selected_question_ids.length > 0 && (
-                        <Badge variant="warning" size="sm">
-                            <CheckSquare className="h-3 w-3 mr-1" />
-                            {section.selected_question_ids.length} Picked
-                        </Badge>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-neutral-400">Yield:</span>
-                        <span className="font-semibold text-neutral-700 dark:text-neutral-300">{section.total_marks} Marks</span>
-                    </div>
-                    <div className="h-3 w-px bg-neutral-200 dark:bg-neutral-700" />
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-neutral-400">Questions:</span>
-                        <span className="font-semibold text-neutral-700 dark:text-neutral-300">{section.question_count} × {section.marks_per_question}</span>
-                    </div>
-                </div>
+            {/* Section Info - Single Line */}
+            <div className="min-w-0 flex-1 flex items-center gap-2 overflow-hidden">
+                <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                    {section.name_en}
+                </span>
+                <Badge variant="info" size="sm" className="shrink-0">
+                    {questionTypeLabels[section.question_type]}
+                </Badge>
+                {section.chapter_configs && section.chapter_configs.length > 0 && (
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-success-600 dark:text-success-400">
+                        <BookOpen className="h-3 w-3" />
+                        {section.chapter_configs.length}
+                    </span>
+                )}
             </div>
 
-            {/* Actions - Always visible with better styling */}
-            <div className="flex items-center gap-1 pl-2 border-l border-neutral-100 dark:border-neutral-700">
+            {/* Stats - Compact */}
+            <div className="hidden md:flex items-center gap-3 text-xs text-neutral-500 shrink-0">
+                <span><strong className="text-neutral-700 dark:text-neutral-300">{section.total_marks}</strong> pts</span>
+                <span className="text-neutral-300">·</span>
+                <span><strong className="text-neutral-700 dark:text-neutral-300">{section.question_count}</strong> Q</span>
+            </div>
+
+            {/* Actions - Minimal */}
+            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={handleEditClick}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-primary-50 hover:text-primary-600 transition-all dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
-                    title={examStructureId ? "Edit Section" : "Edit Section"}
+                    className="p-1.5 rounded-md text-neutral-400 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-900/20 transition-colors"
                 >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-3.5 w-3.5" />
                 </button>
                 <button
                     onClick={() => onDelete(section.id)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-rose-50 hover:text-rose-500 transition-all dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
-                    title="Delete Section"
+                    className="p-1.5 rounded-md text-neutral-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20 transition-colors"
                 >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                 </button>
             </div>
         </div>

@@ -84,18 +84,25 @@ export async function POST(request: NextRequest) {
       // For IT/English: prefer English, fallback to Marathi
       let questionText: string;
       let questionLanguage: "en" | "mr";
-      let explanation: string | null = null;
+      let questionTextSecondary: string | null = null;
+      let secondaryLanguage: "en" | "mr" | null = null;
 
       if (batch.subject_slug === "scholarship") {
         // Scholarship: Marathi is primary
         questionText = q.questionTextMr || q.questionTextEn || '';
         questionLanguage = q.questionTextMr ? "mr" : "en";
-        explanation = q.explanationMr || q.explanationEn || null;
+        if (q.questionTextEn && q.questionTextMr) {
+          questionTextSecondary = q.questionTextEn;
+          secondaryLanguage = "en";
+        }
       } else {
         // IT/English: English is primary
         questionText = q.questionTextEn || q.questionTextMr || '';
         questionLanguage = q.questionTextEn ? "en" : "mr";
-        explanation = q.explanationEn || q.explanationMr || null;
+        if (q.questionTextMr && q.questionTextEn) {
+          questionTextSecondary = q.questionTextMr;
+          secondaryLanguage = "mr";
+        }
       }
 
       // Build answer_data for MCQ - matching the expected format from types
@@ -108,12 +115,15 @@ export async function POST(request: NextRequest) {
       return {
         questionText,
         questionLanguage,
+        questionTextSecondary,
+        secondaryLanguage,
         questionType: q.questionType || 'mcq_single',
         difficulty: q.difficulty || defaultDifficulty || 'medium',
         answerData,
-        explanation, // Single explanation field (language matches questionLanguage)
+        explanationEn: q.explanationEn || null,
+        explanationMr: q.explanationMr || null,
         chapterId: q.chapterId || defaultChapterId || null,
-        classLevel: q.classLevel || defaultClassLevel || null, // Required
+        classLevel: q.classLevel || defaultClassLevel || null,
         marks: q.marks || defaultMarks || 1,
         isActive: true,
         createdBy: authResult.user.id,

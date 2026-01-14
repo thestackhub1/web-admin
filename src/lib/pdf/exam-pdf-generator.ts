@@ -426,8 +426,12 @@ export class ExamPdfGenerator {
         const textStartX = this.margins.left + 8;
         const maxTextWidth = this.contentWidth - 20;
 
-        // Use question text based on language
-        const questionText = question.question_text;
+        // Use new language-aware fields
+        const questionText = this.language === "mr" && question.question_language === "mr"
+            ? question.question_text
+            : question.question_text_secondary && question.secondary_language === "mr"
+                ? question.question_text_secondary
+                : question.question_text;
         
         // For Devanagari text, we render as image; for Latin, use regular text
         let linesCount = 1;

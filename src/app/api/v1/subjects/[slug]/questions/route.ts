@@ -122,13 +122,16 @@ export async function POST(request: NextRequest, context: Params) {
         const result = await QuestionsService.create(slug, {
             questionText: parsed.data.question_text,
             questionLanguage: parsed.data.question_language,
+            questionTextSecondary: parsed.data.question_text_secondary || null,
+            secondaryLanguage: parsed.data.secondary_language || null,
             questionType: parsed.data.question_type,
             difficulty: parsed.data.difficulty,
             chapterId: parsed.data.chapter_id || null,
             answerData: parsed.data.answer_data,
-            explanation: parsed.data.explanation_en || parsed.data.explanation_mr || null,
+            explanationEn: parsed.data.explanation_en || null,
+            explanationMr: parsed.data.explanation_mr || null,
             tags: parsed.data.tags || [],
-            classLevel: parsed.data.class_level || "General", // Required
+            classLevel: parsed.data.class_level || null,
             marks: parsed.data.marks || 1,
             isActive: parsed.data.is_active ?? true,
             createdBy: authResult.user.id,

@@ -53,7 +53,6 @@ interface Question {
   answer_data?: any;
   explanation_en?: string | null;
   explanation_mr?: string | null;
-  explanation?: string | null; // Keep for compatibility if needed
 }
 
 interface QuestionsClientPageProps {
@@ -84,13 +83,13 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
   // Inline editing state
   const [editingCell, setEditingCell] = useState<{ questionId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-
+  
   // Use hooks for mutations
   const updateMutation = useUpdateQuestion(subject);
   const bulkActivateMutation = useBulkUpdateQuestionStatus(subject);
   const bulkDeactivateMutation = useBulkUpdateQuestionStatus(subject);
   const bulkDeleteMutation = useBulkDeleteQuestions(subject);
-
+  
   const isSaving = updateMutation.isLoading;
 
   // Filter state - initialize from URL
@@ -233,21 +232,27 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         const jsonContent = plainTextToJson(editValue);
         updateData.questionText = jsonToString(jsonContent);
         updateData.questionLanguage = question.question_language;
+        updateData.questionTextSecondary = question.question_text_secondary;
+        updateData.secondaryLanguage = question.secondary_language;
         updateData.questionType = question.question_type;
         updateData.difficulty = question.difficulty;
         updateData.chapterId = question.chapter_id;
         updateData.answerData = question.answer_data || {};
-        updateData.explanation = question.explanation || "";
+        updateData.explanationEn = question.explanation_en || "";
+        updateData.explanationMr = question.explanation_mr || "";
         updateData.tags = question.tags || [];
         updateData.isActive = question.is_active;
       } else if (editingCell.field === "difficulty") {
         updateData.questionText = jsonToString(stringToJson(question.question_text));
         updateData.questionLanguage = question.question_language;
+        updateData.questionTextSecondary = question.question_text_secondary;
+        updateData.secondaryLanguage = question.secondary_language;
         updateData.questionType = question.question_type;
         updateData.difficulty = editValue as Difficulty;
         updateData.chapterId = question.chapter_id;
         updateData.answerData = question.answer_data || {};
-        updateData.explanation = question.explanation || "";
+        updateData.explanationEn = question.explanation_en || "";
+        updateData.explanationMr = question.explanation_mr || "";
         updateData.tags = question.tags || [];
         updateData.isActive = question.is_active;
       }
@@ -258,9 +263,9 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         id: editingCell.questionId,
         ...updateData,
       };
-
+      
       const result = await updateMutation.mutateAsync(mutationData);
-
+      
       if (result) {
         // Update local state
         setQuestions((prev) =>
@@ -362,7 +367,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         return true;
       });
 
-      const exportData = format === "json"
+      const exportData = format === "json" 
         ? JSON.stringify(filteredQuestions, null, 2)
         : convertToCSV(filteredQuestions);
 
@@ -370,11 +375,11 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         [exportData],
         { type: format === "json" ? "application/json" : "text/csv" }
       );
-
+      
       const filename = format === "json"
         ? `${subject}-questions-${filteredQuestions.length}.json`
         : `${subject}-questions-${filteredQuestions.length}.csv`;
-
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -560,44 +565,9 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
 
       {/* Stats */}
       {questions.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <GlassCard className="flex items-center gap-3 p-3">
-            <div className="rounded-lg bg-neutral-100 p-2 dark:bg-neutral-800">
-              <FileQuestion className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white">{stats.total}</p>
-              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Total</p>
-            </div>
-          </GlassCard>
-          <GlassCard className="flex items-center gap-3 p-3">
-            <div className="rounded-lg bg-success-50 p-2 dark:bg-success-900/20">
-              <CheckSquare className="h-5 w-5 text-success-600 dark:text-success-400" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => q.is_active).length}</p>
-              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Active</p>
-            </div>
-          </GlassCard>
-          <GlassCard className="flex items-center gap-3 p-3">
-            <div className="rounded-lg bg-primary-50 p-2 dark:bg-primary-900/20">
-              <Square className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => q.question_type.startsWith('mcq')).length}</p>
-              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">MCQ</p>
-            </div>
-          </GlassCard>
-          <GlassCard className="flex items-center gap-3 p-3">
-            <div className="rounded-lg bg-warning-50 p-2 dark:bg-warning-900/20">
-              <Pencil className="h-5 w-5 text-warning-600 dark:text-warning-400" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white">{questions.filter(q => ['short_answer', 'long_answer'].includes(q.question_type)).length}</p>
-              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Descriptive</p>
-            </div>
-          </GlassCard>
-        </div>
+        <GlassCard className="p-4" bento>
+          <QuestionStats stats={stats} />
+        </GlassCard>
       )}
 
       {/* Chapter Chips */}
@@ -606,7 +576,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
       )}
 
       {/* Search and Filters */}
-      <div className="flex flex-col gap-4">
+      <GlassCard className="relative p-5" bento>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <QuestionSearchBar
             searchQuery={searchQuery}
@@ -629,7 +599,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
             />
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Questions List/Table */}
       <GlassCard bento padding="none" className="overflow-hidden">
@@ -659,48 +629,48 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
         </div>
 
         <div className="p-5">
-          {filteredQuestions.length === 0 ? (
-            <EmptyState
-              icon={FileQuestion}
-              title="No questions found"
-              description={questions.length === 0 ? "Add your first question" : "Adjust your filters"}
-              action={
-                questions.length === 0 ? (
-                  <Link href={`/dashboard/questions/${subject}/new`}>
-                    <Button variant="primary">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Question
-                    </Button>
-                  </Link>
-                ) : undefined
-              }
-            />
-          ) : viewMode === "list" ? (
-            <QuestionListView
-              questions={paginatedQuestions}
-              selectedIds={selectedIds}
-              subject={subject}
-              onToggleSelect={toggleSelect}
-            />
-          ) : (
-            <QuestionTableView
-              questions={paginatedQuestions}
-              selectedIds={selectedIds}
-              subject={subject}
-              editingCell={editingCell}
-              editValue={editValue}
-              isSaving={isSaving}
-              onToggleSelect={toggleSelect}
-              onSelectAll={selectAll}
-              onClearSelection={clearSelection}
-              onStartEditing={startEditing}
-              onSaveEdit={saveEdit}
-              onCancelEditing={cancelEditing}
-              onEditValueChange={setEditValue}
-              getMcqOptions={getMcqOptions}
-              allSelected={selectedIds.size === filteredQuestions.length}
-            />
-          )}
+        {filteredQuestions.length === 0 ? (
+          <EmptyState
+            icon={FileQuestion}
+            title="No questions found"
+            description={questions.length === 0 ? "Add your first question" : "Adjust your filters"}
+            action={
+              questions.length === 0 ? (
+                <Link href={`/dashboard/questions/${subject}/new`}>
+                  <Button variant="primary">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Question
+                  </Button>
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : viewMode === "list" ? (
+          <QuestionListView
+            questions={paginatedQuestions}
+            selectedIds={selectedIds}
+            subject={subject}
+            onToggleSelect={toggleSelect}
+          />
+        ) : (
+          <QuestionTableView
+            questions={paginatedQuestions}
+            selectedIds={selectedIds}
+            subject={subject}
+            editingCell={editingCell}
+            editValue={editValue}
+            isSaving={isSaving}
+            onToggleSelect={toggleSelect}
+            onSelectAll={selectAll}
+            onClearSelection={clearSelection}
+            onStartEditing={startEditing}
+            onSaveEdit={saveEdit}
+            onCancelEditing={cancelEditing}
+            onEditValueChange={setEditValue}
+            getMcqOptions={getMcqOptions}
+            allSelected={selectedIds.size === filteredQuestions.length}
+          />
+        )}
         </div>
 
         {/* Pagination */}

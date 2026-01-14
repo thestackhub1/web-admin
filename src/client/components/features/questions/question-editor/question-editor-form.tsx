@@ -83,7 +83,10 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, _setShowPreview] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showExplanation, setShowExplanation] = useState(!!initialData?.explanation);
+  const [showTranslation, setShowTranslation] = useState(
+    !!(initialData?.question_text_secondary || initialData?.secondary_language)
+  );
+  const [showExplanation, setShowExplanation] = useState(!!initialData?.explanation_en);
 
   // Get default language for subject
   const defaultLanguage = getDefaultLanguageForSubject(subjectSlug);
@@ -103,9 +106,16 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
   const [questionLanguage, setQuestionLanguage] = useState<"en" | "mr">(
     initialData?.question_language || defaultLanguage
   );
-  const [explanationContent, setExplanationContent] = useState(
-    stringToJson(initialData?.explanation || "")
+  const [questionContentSecondary, setQuestionContentSecondary] = useState(
+    stringToJson(initialData?.question_text_secondary || "")
   );
+  const [secondaryLanguage, setSecondaryLanguage] = useState<"en" | "mr" | undefined>(
+    initialData?.secondary_language || undefined
+  );
+  const [explanationContentEn, setExplanationContentEn] = useState(
+    stringToJson(initialData?.explanation_en || "")
+  );
+  const [explanationMr, _setExplanationMr] = useState(initialData?.explanation_mr || "");
   const [tags, _setTags] = useState<string[]>(initialData?.tags || []);
 
   function getDefaultAnswerData(type: QuestionType) {
@@ -223,6 +233,12 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
     const isSaving = createMutation.isLoading || updateMutation.isLoading;
 
     const finalLanguage = questionLanguage || defaultLanguage;
+    const finalSecondaryLanguage =
+      showTranslation && questionContentSecondary
+        ? finalLanguage === "en"
+          ? "mr"
+          : "en"
+        : undefined;
 
     // Convert MCQ options from TipTap JSON to strings if needed
     let processedAnswerData = answerData;
@@ -237,14 +253,19 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
     const formData = {
       questionText: jsonToString(questionContent),
       questionLanguage: finalLanguage,
+      questionTextSecondary: showTranslation && questionContentSecondary
+        ? jsonToString(questionContentSecondary)
+        : undefined,
+      secondaryLanguage: finalSecondaryLanguage as "en" | "mr" | undefined,
       questionType: questionType,
       difficulty,
       chapterId: chapterId,
       answerData: processedAnswerData,
-      explanation: jsonToString(explanationContent), // Single explanation field
+      explanationEn: jsonToString(explanationContentEn),
+      explanationMr: explanationMr,
       tags,
       isActive: publish ? true : isActive,
-      classLevel: "class_10", // TODO: Get from form input
+      classLevel: "class_10",
       marks: 1,
     };
 
@@ -252,11 +273,14 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
       const apiData = {
         question_text: formData.questionText,
         question_language: formData.questionLanguage,
+        question_text_secondary: formData.questionTextSecondary,
+        secondary_language: formData.secondaryLanguage,
         question_type: formData.questionType,
         difficulty: formData.difficulty,
         chapter_id: formData.chapterId,
         answer_data: formData.answerData,
-        explanation: formData.explanation,
+        explanation_en: formData.explanationEn,
+        explanation_mr: formData.explanationMr,
         tags: formData.tags,
         class_level: formData.classLevel,
         marks: formData.marks,
@@ -474,6 +498,46 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
                   minHeight="300px"
                 />
 
+                {/* Translation Toggle */}
+                <button
+                  onClick={() => {
+                    setShowTranslation(!showTranslation);
+                    if (!showTranslation) {
+                      setSecondaryLanguage(questionLanguage === "en" ? "mr" : "en");
+                    } else {
+                      setQuestionContentSecondary({
+                        type: "doc",
+                        content: [],
+                      });
+                    }
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-neutral-200"
+                >
+                  <span>Add Translation (Optional)</span>
+                  {showTranslation ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {showTranslation && (
+                  <div className="space-y-3 pt-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Translation ({secondaryLanguage === "en" ? "English" : "Marathi"})
+                    </label>
+                    <PremiumQuestionEditor
+                      content={questionContentSecondary}
+                      onChange={setQuestionContentSecondary}
+                      placeholder={
+                        secondaryLanguage === "en"
+                          ? "Enter English translation..."
+                          : "मराठी भाषांतर प्रविष्ट करा..."
+                      }
+                      language={secondaryLanguage || questionLanguage}
+                      minHeight="200px"
+                    />
+                  </div>
+                )}
               </div>
             </SectionCard>
 
@@ -505,19 +569,12 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
               {showExplanation && (
                 <div className="mt-4">
                   <PremiumQuestionEditor
-                    content={explanationContent}
-                    onChange={setExplanationContent}
-                    placeholder={
-                      questionLanguage === "mr"
-                        ? "योग्य उत्तराचे स्पष्टीकरण द्या..."
-                        : "Explain why this is the correct answer..."
-                    }
-                    language={questionLanguage}
+                    content={explanationContentEn}
+                    onChange={setExplanationContentEn}
+                    placeholder="Explain why this is the correct answer..."
+                    language="en"
                     minHeight="180px"
                   />
-                  <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-                    Explanation language matches the question language ({questionLanguage === "mr" ? "Marathi" : "English"})
-                  </p>
                 </div>
               )}
             </SectionCard>
@@ -532,7 +589,7 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
               questionLanguage={questionLanguage}
               questionType={questionType}
               answerData={answerData}
-              explanationContent={explanationContent}
+              explanationContent={explanationContentEn}
             />
           </div>
         )}
@@ -546,7 +603,7 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
         questionLanguage={questionLanguage}
         questionType={questionType}
         answerData={answerData}
-        explanationContent={explanationContent}
+        explanationContent={explanationContentEn}
       />
     </div>
   );

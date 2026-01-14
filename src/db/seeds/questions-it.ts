@@ -7,21 +7,22 @@ import { db, schema, client } from "./db";
 
 interface QuestionData {
   questionText: string;
-  questionLanguage: "en"; // Always English for IT questions
+  questionLanguage: "en" | "mr";
+  questionTextSecondary?: string;
+  secondaryLanguage?: "en" | "mr";
   questionType: string;
   difficulty: "easy" | "medium" | "hard";
   answerData: any;
   chapterId?: string;
   marks: number;
-  explanation?: string; // Single explanation field (in English for IT questions)
+  explanationEn?: string;
+  explanationMr?: string;
   tags?: string[];
-  classLevel: string; // Required for better readability
+  classLevel?: string;
 }
 
 /**
- * Get chapters for IT subject with robust mapping
- * Creates multiple mapping keys for flexible chapter lookup
- * Validates all chapters exist and reports any missing mappings
+ * Get chapters for IT subject
  */
 async function getITChapters() {
   const allSubjects = await db.select().from(schema.subjects);
@@ -34,80 +35,33 @@ async function getITChapters() {
   const allChapters = await db.select().from(schema.chapters);
   const chapters = allChapters.filter((c) => c.subjectId === itSubject.id);
 
-  if (chapters.length === 0) {
-    throw new Error("No chapters found for IT subject. Please seed chapters first.");
-  }
-
-  console.log(`   📚 Found ${chapters.length} IT chapters:`);
-  chapters.forEach(ch => console.log(`      - ${ch.nameEn}`));
-
   const chapterMap: Record<string, string> = {};
-  
   for (const chapter of chapters) {
-    const chapterNameLower = chapter.nameEn.toLowerCase();
-    
-    // Create normalized keys from chapter name
-    const normalizedKey = chapterNameLower.replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const simpleKey = chapterNameLower.replace(/[^a-z0-9]/g, "_");
-    const spacedKey = chapterNameLower.replace(/\s+/g, "_");
-    
-    // Add all variations
-    chapterMap[normalizedKey] = chapter.id;
-    chapterMap[simpleKey] = chapter.id;
-    chapterMap[spacedKey] = chapter.id;
-    
-    // Map by exact chapter name matches (case-insensitive)
-    chapterMap[chapter.nameEn.toLowerCase()] = chapter.id;
-    
-    // Create semantic aliases based on chapter content
-    if (chapterNameLower.includes("web publishing") || chapterNameLower.includes("web publishing")) {
+    // Create multiple keys for flexibility
+    const key1 = chapter.nameEn.toLowerCase().replace(/\s+/g, "_");
+    const key2 = chapter.nameEn.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    chapterMap[key1] = chapter.id;
+    chapterMap[key2] = chapter.id;
+
+    // Also map by partial name match
+    if (chapter.nameEn.toLowerCase().includes("web publishing")) {
       chapterMap["web_publishing"] = chapter.id;
-      chapterMap["webpublishing"] = chapter.id;
-      chapterMap["html_css"] = chapter.id;
     }
-    if (chapterNameLower.includes("seo") || chapterNameLower.includes("search engine")) {
+    if (chapter.nameEn.toLowerCase().includes("seo")) {
       chapterMap["introduction_to_seo"] = chapter.id;
-      chapterMap["seo"] = chapter.id;
-      chapterMap["search_engine_optimization"] = chapter.id;
     }
-    if (chapterNameLower.includes("javascript") || chapterNameLower.includes("js")) {
+    if (chapter.nameEn.toLowerCase().includes("javascript")) {
       chapterMap["advanced_javascript"] = chapter.id;
-      chapterMap["javascript"] = chapter.id;
-      chapterMap["js"] = chapter.id;
     }
-    if (chapterNameLower.includes("php") || chapterNameLower.includes("server side")) {
+    if (chapter.nameEn.toLowerCase().includes("php")) {
       chapterMap["server_side_scripting_php"] = chapter.id;
-      chapterMap["php"] = chapter.id;
-      chapterMap["server_side"] = chapter.id;
     }
-    if (chapterNameLower.includes("computer basics") || chapterNameLower.includes("basics")) {
-      chapterMap["computer_basics"] = chapter.id;
-      chapterMap["basics"] = chapter.id;
-    }
-    if (chapterNameLower.includes("hardware")) {
-      chapterMap["hardware_components"] = chapter.id;
-      chapterMap["hardware"] = chapter.id;
-    }
-    if (chapterNameLower.includes("software")) {
-      chapterMap["software_applications"] = chapter.id;
-      chapterMap["software"] = chapter.id;
-    }
-    if (chapterNameLower.includes("web technologies") || chapterNameLower.includes("web tech")) {
-      chapterMap["web_technologies"] = chapter.id;
-      chapterMap["webtech"] = chapter.id;
+    if (chapter.nameEn.toLowerCase().includes("e-commerce") || chapter.nameEn.toLowerCase().includes("e-governance")) {
+      chapterMap["e_commerce_and_e_governance"] = chapter.id;
     }
   }
 
-  // Validate critical mappings exist
-  const requiredMappings = ["web_publishing", "introduction_to_seo", "advanced_javascript", "server_side_scripting_php"];
-  const missingMappings = requiredMappings.filter(key => !chapterMap[key]);
-  
-  if (missingMappings.length > 0) {
-    console.warn(`   ⚠️  Missing chapter mappings: ${missingMappings.join(", ")}`);
-    console.warn(`   Available chapters: ${chapters.map(c => c.nameEn).join(", ")}`);
-  }
-
-  return { subjectId: itSubject.id, chapters: chapterMap, chapterList: chapters };
+  return { subjectId: itSubject.id, chapters: chapterMap };
 }
 
 /**
@@ -123,7 +77,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["HyperText Markup Language"] },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "HTML is the standard markup language for creating web pages.",
+      explanationEn: "HTML is the standard markup language for creating web pages.",
       tags: ["html", "web"],
       classLevel: "12",
     },
@@ -135,7 +89,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["Cascading Style Sheets"] },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "CSS is used to style and layout web pages.",
+      explanationEn: "CSS is used to style and layout web pages.",
       tags: ["css", "styling"],
       classLevel: "12",
     },
@@ -147,7 +101,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["Search Engine Optimization"] },
       chapterId: chapters.introduction_to_seo,
       marks: 1,
-      explanation: "SEO helps websites rank higher in search engine results.",
+      explanationEn: "SEO helps websites rank higher in search engine results.",
       tags: ["seo", "marketing"],
       classLevel: "12",
     },
@@ -159,7 +113,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["const"] },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "The const keyword creates a read-only reference to a value.",
+      explanationEn: "The const keyword creates a read-only reference to a value.",
       tags: ["javascript", "variables"],
       classLevel: "12",
     },
@@ -171,7 +125,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["Personal Home Page", "PHP: Hypertext Preprocessor"] },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "PHP is a server-side scripting language.",
+      explanationEn: "PHP is a server-side scripting language.",
       tags: ["php", "server"],
       classLevel: "12",
     },
@@ -183,7 +137,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["<a>", "a", "anchor"] },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "The anchor tag <a> creates clickable links.",
+      explanationEn: "The anchor tag <a> creates clickable links.",
       tags: ["html", "links"],
       classLevel: "12",
     },
@@ -195,7 +149,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["color"] },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "The color property sets the text color.",
+      explanationEn: "The color property sets the text color.",
       tags: ["css", "styling"],
       classLevel: "12",
     },
@@ -207,7 +161,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["$", "dollar"] },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "All PHP variables start with the $ symbol.",
+      explanationEn: "All PHP variables start with the $ symbol.",
       tags: ["php", "variables"],
       classLevel: "12",
     },
@@ -219,7 +173,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["push", "push()"] },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "The push() method adds elements to the end of an array.",
+      explanationEn: "The push() method adds elements to the end of an array.",
       tags: ["javascript", "arrays"],
       classLevel: "12",
     },
@@ -231,7 +185,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["do-while", "do while"] },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "The do-while loop checks the condition after execution.",
+      explanationEn: "The do-while loop checks the condition after execution.",
       tags: ["javascript", "loops"],
       classLevel: "12",
     },
@@ -251,7 +205,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "HTML is a markup language, not a programming language.",
+      explanationEn: "HTML is a markup language, not a programming language.",
       tags: ["html"],
       classLevel: "12",
     },
@@ -263,7 +217,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "JavaScript distinguishes between uppercase and lowercase letters.",
+      explanationEn: "JavaScript distinguishes between uppercase and lowercase letters.",
       tags: ["javascript"],
       classLevel: "12",
     },
@@ -275,7 +229,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "PHP is a server-side scripting language.",
+      explanationEn: "PHP is a server-side scripting language.",
       tags: ["php"],
       classLevel: "12",
     },
@@ -287,7 +241,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "CSS animations allow creating motion effects.",
+      explanationEn: "CSS animations allow creating motion effects.",
       tags: ["css", "animations"],
       classLevel: "12",
     },
@@ -299,7 +253,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.introduction_to_seo,
       marks: 1,
-      explanation: "Relevant keywords improve search engine visibility.",
+      explanationEn: "Relevant keywords improve search engine visibility.",
       tags: ["seo"],
       classLevel: "12",
     },
@@ -311,7 +265,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "let creates variables with block scope.",
+      explanationEn: "let creates variables with block scope.",
       tags: ["javascript", "variables"],
       classLevel: "12",
     },
@@ -323,7 +277,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "MySQL is a relational (SQL) database.",
+      explanationEn: "MySQL is a relational (SQL) database.",
       tags: ["database", "mysql"],
       classLevel: "12",
     },
@@ -335,7 +289,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.introduction_to_seo,
       marks: 1,
-      explanation: "Meta tags are not visible on the page but are used by search engines.",
+      explanationEn: "Meta tags are not visible on the page but are used by search engines.",
       tags: ["seo", "html"],
       classLevel: "12",
     },
@@ -347,7 +301,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "parseInt() parses a string and returns an integer.",
+      explanationEn: "parseInt() parses a string and returns an integer.",
       tags: ["javascript", "functions"],
       classLevel: "12",
     },
@@ -359,7 +313,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.e_commerce_and_e_governance,
       marks: 1,
-      explanation: "E-commerce sites need server-side processing for transactions.",
+      explanationEn: "E-commerce sites need server-side processing for transactions.",
       tags: ["e-commerce"],
       classLevel: "12",
     },
@@ -382,7 +336,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "The <p> tag is used for paragraphs in HTML.",
+      explanationEn: "The <p> tag is used for paragraphs in HTML.",
       tags: ["html"],
       classLevel: "12",
     },
@@ -397,7 +351,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "var, let, and const are used to declare variables in JavaScript.",
+      explanationEn: "var, let, and const are used to declare variables in JavaScript.",
       tags: ["javascript", "variables"],
       classLevel: "12",
     },
@@ -412,7 +366,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "echo is the most common way to output in PHP.",
+      explanationEn: "echo is the most common way to output in PHP.",
       tags: ["php"],
       classLevel: "12",
     },
@@ -427,7 +381,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "background-color sets the background color of an element.",
+      explanationEn: "background-color sets the background color of an element.",
       tags: ["css"],
       classLevel: "12",
     },
@@ -442,7 +396,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.introduction_to_seo,
       marks: 1,
-      explanation: "SEO stands for Search Engine Optimization.",
+      explanationEn: "SEO stands for Search Engine Optimization.",
       tags: ["seo"],
       classLevel: "12",
     },
@@ -457,7 +411,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.advanced_javascript,
       marks: 1,
-      explanation: "The length property returns the length of a string.",
+      explanationEn: "The length property returns the length of a string.",
       tags: ["javascript", "strings"],
       classLevel: "12",
     },
@@ -472,7 +426,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.server_side_scripting_php,
       marks: 1,
-      explanation: "PHP variables must start with a dollar sign $.",
+      explanationEn: "PHP variables must start with a dollar sign $.",
       tags: ["php", "variables"],
       classLevel: "12",
     },
@@ -487,7 +441,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "Port 80 is the default port for HTTP.",
+      explanationEn: "Port 80 is the default port for HTTP.",
       tags: ["networking"],
       classLevel: "12",
     },
@@ -502,7 +456,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.introduction_to_seo,
       marks: 1,
-      explanation: "Google is a search engine, while others are web browsers.",
+      explanationEn: "Google is a search engine, while others are web browsers.",
       tags: ["seo"],
       classLevel: "12",
     },
@@ -517,7 +471,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.web_publishing,
       marks: 1,
-      explanation: "The alt attribute provides alternative text for images.",
+      explanationEn: "The alt attribute provides alternative text for images.",
       tags: ["html", "accessibility"],
       classLevel: "12",
     },
@@ -540,7 +494,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.server_side_scripting_php,
       marks: 2,
-      explanation: "PHP and Python are server-side scripting languages, while JavaScript (client-side) and HTML (markup) are not.",
+      explanationEn: "PHP and Python are server-side scripting languages, while JavaScript (client-side) and HTML (markup) are not.",
       tags: ["server-side", "scripting"],
       classLevel: "12",
     },
@@ -555,7 +509,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "<section> and <article> are HTML5 semantic elements, while <div> and <span> are generic containers.",
+      explanationEn: "<section> and <article> are HTML5 semantic elements, while <div> and <span> are generic containers.",
       tags: ["html5", "semantic"],
       classLevel: "12",
     },
@@ -570,7 +524,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.advanced_javascript,
       marks: 2,
-      explanation: "JavaScript has String and Boolean as primitive types. Integer and Float are not separate types in JavaScript.",
+      explanationEn: "JavaScript has String and Boolean as primitive types. Integer and Float are not separate types in JavaScript.",
       tags: ["javascript", "data-types"],
       classLevel: "12",
     },
@@ -585,7 +539,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.introduction_to_seo,
       marks: 2,
-      explanation: "Meta tags and image alt text are crucial for SEO, helping search engines understand content.",
+      explanationEn: "Meta tags and image alt text are crucial for SEO, helping search engines understand content.",
       tags: ["seo", "optimization"],
       classLevel: "12",
     },
@@ -600,7 +554,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "relative and absolute are CSS positioning values, while static is default and color is not a positioning property.",
+      explanationEn: "relative and absolute are CSS positioning values, while static is default and color is not a positioning property.",
       tags: ["css", "positioning"],
       classLevel: "12",
     },
@@ -623,7 +577,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "HTTPS adds encryption layer to HTTP protocol for secure communication.",
+      explanationEn: "HTTPS adds encryption layer to HTTP protocol for secure communication.",
       tags: ["http", "security"],
       classLevel: "12",
     },
@@ -638,7 +592,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "Alt text improves accessibility and provides fallback content for images.",
+      explanationEn: "Alt text improves accessibility and provides fallback content for images.",
       tags: ["html", "accessibility"],
       classLevel: "12",
     },
@@ -653,7 +607,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.advanced_javascript,
       marks: 2,
-      explanation: "let provides block-level scoping, preventing common bugs associated with var.",
+      explanationEn: "let provides block-level scoping, preventing common bugs associated with var.",
       tags: ["javascript", "variables"],
       classLevel: "12",
     },
@@ -668,7 +622,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.introduction_to_seo,
       marks: 2,
-      explanation: "Meta tags help search engines understand page content and improve visibility.",
+      explanationEn: "Meta tags help search engines understand page content and improve visibility.",
       tags: ["seo", "meta-tags"],
       classLevel: "12",
     },
@@ -683,7 +637,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.server_side_scripting_php,
       marks: 2,
-      explanation: "Database connections enable PHP scripts to interact with databases for data operations.",
+      explanationEn: "Database connections enable PHP scripts to interact with databases for data operations.",
       tags: ["php", "database"],
       classLevel: "12",
     },
@@ -710,7 +664,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "Each HTML tag has a specific semantic purpose in web development.",
+      explanationEn: "Each HTML tag has a specific semantic purpose in web development.",
       tags: ["html", "tags"],
       classLevel: "12",
     },
@@ -729,7 +683,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.advanced_javascript,
       marks: 2,
-      explanation: "JavaScript provides various methods for type conversion and string/array manipulation.",
+      explanationEn: "JavaScript provides various methods for type conversion and string/array manipulation.",
       tags: ["javascript", "methods"],
       classLevel: "12",
     },
@@ -748,7 +702,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.web_publishing,
       marks: 2,
-      explanation: "CSS properties control various visual aspects of HTML elements.",
+      explanationEn: "CSS properties control various visual aspects of HTML elements.",
       tags: ["css", "styling"],
       classLevel: "12",
     },
@@ -767,7 +721,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.server_side_scripting_php,
       marks: 2,
-      explanation: "PHP provides built-in functions for common operations like output, database connections, and array manipulation.",
+      explanationEn: "PHP provides built-in functions for common operations like output, database connections, and array manipulation.",
       tags: ["php", "functions"],
       classLevel: "12",
     },
@@ -786,7 +740,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.introduction_to_seo,
       marks: 2,
-      explanation: "SEO involves various techniques and terms for improving search engine visibility.",
+      explanationEn: "SEO involves various techniques and terms for improving search engine visibility.",
       tags: ["seo", "terminology"],
       classLevel: "12",
     },
@@ -796,42 +750,24 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
 /**
  * Main seed function
  */
-/**
- * Seed IT Questions
- * Creates Information Technology questions for Class 12
- * Links questions to chapters and users (admin/teacher)
- */
 export async function seedITQuestions() {
   console.log("💻 Seeding Information Technology questions (English)...");
 
   try {
     // Get IT subject and chapters
-    const { chapters, chapterList } = await getITChapters();
+    const { chapters } = await getITChapters();
 
     if (Object.keys(chapters).length === 0) {
       console.log("   ⚠ No chapters found for IT. Please seed chapters first.");
       return [];
     }
 
-    // Get admin or teacher user for createdBy
-    const users = await db.select().from(schema.profiles);
-    const adminOrTeacher = users.find(u => u.role === "admin" || u.role === "teacher");
-    const createdBy = adminOrTeacher?.id || null;
-
-    if (!createdBy) {
-      console.log("   ⚠ No admin/teacher user found. Questions will be created without creator.");
-    }
-
     // Clear existing IT questions
-    try {
-      await db.delete(schema.questionsInformationTechnology);
-      console.log("   ✓ Cleared existing IT questions");
-    } catch (error: any) {
-      console.warn(`   ⚠️  Could not clear IT questions: ${error.message}, continuing...`);
-    }
+    await db.delete(schema.questionsInformationTechnology);
+    console.log("   ✓ Cleared existing IT questions");
 
-    // Get all questions and add createdBy
-    const allQuestionsRaw = [
+    // Get all questions
+    const allQuestions = [
       ...getFillBlankQuestions(chapters),
       ...getTrueFalseQuestions(chapters),
       ...getMCQSingleQuestions(chapters),
@@ -840,64 +776,11 @@ export async function seedITQuestions() {
       ...getMatchQuestions(chapters),
     ];
 
-    // Validate and report chapter mappings
-    const unmappedQuestions: string[] = [];
-    const allQuestions = allQuestionsRaw.map((q, idx) => {
-      // If chapterId is undefined, try to find a fallback chapter
-      if (!q.chapterId) {
-        unmappedQuestions.push(`Question ${idx + 1}: "${q.questionText.substring(0, 50)}..."`);
-        // Use first available chapter as fallback
-        const fallbackChapterId = Object.values(chapters)[0];
-        if (fallbackChapterId) {
-          console.warn(`   ⚠️  Question "${q.questionText.substring(0, 50)}..." has no chapter mapping, using fallback`);
-          return { ...q, chapterId: fallbackChapterId, createdBy };
-        }
-      }
-      return { ...q, createdBy };
-    });
-
-    if (unmappedQuestions.length > 0) {
-      console.warn(`   ⚠️  ${unmappedQuestions.length} questions have unmapped chapters:`);
-      unmappedQuestions.slice(0, 5).forEach(msg => console.warn(`      ${msg}`));
-      if (unmappedQuestions.length > 5) {
-        console.warn(`      ... and ${unmappedQuestions.length - 5} more`);
-      }
-    }
-
-    // Validate all questions have required fields before inserting
-    const questionsWithoutChapters = allQuestions.filter(q => !q.chapterId);
-    const questionsWithoutClassLevel = allQuestions.filter(q => !q.classLevel);
-    
-    if (questionsWithoutChapters.length > 0) {
-      console.error(`   ❌ ${questionsWithoutChapters.length} questions still have no chapter mapping!`);
-      throw new Error(`Cannot insert questions without chapter mappings. Please fix chapter mapping logic.`);
-    }
-    
-    if (questionsWithoutClassLevel.length > 0) {
-      console.error(`   ❌ ${questionsWithoutClassLevel.length} questions still have no classLevel!`);
-      throw new Error(`Cannot insert questions without classLevel. All questions must have a class level.`);
-    }
-    
-    // Ensure all questions have questionLanguage set to "en" (English only)
-    const allQuestionsValidated = allQuestions.map(q => ({
-      ...q,
-      questionLanguage: "en" as const, // Force English for IT questions
-    }));
-
     // Insert questions
     const questions = await db
       .insert(schema.questionsInformationTechnology)
-      .values(allQuestionsValidated)
+      .values(allQuestions)
       .returning();
-
-    // Report chapter distribution
-    const chapterDistribution: Record<string, number> = {};
-    questions.forEach(q => {
-      if (q.chapterId) {
-        const chapterName = chapterList?.find(c => c.id === q.chapterId)?.nameEn || "Unknown";
-        chapterDistribution[chapterName] = (chapterDistribution[chapterName] || 0) + 1;
-      }
-    });
 
     console.log(`   ✓ Created ${questions.length} IT questions`);
     console.log(`     - Fill in the Blanks: ${getFillBlankQuestions(chapters).length}`);
@@ -905,17 +788,7 @@ export async function seedITQuestions() {
     console.log(`     - MCQ Single: ${getMCQSingleQuestions(chapters).length}`);
     console.log(`     - MCQ Two: ${getMCQTwoQuestions(chapters).length}`);
     console.log(`     - Short Answer: ${getShortAnswerQuestions(chapters).length}`);
-    console.log(`     - Match: ${getMatchQuestions(chapters).length}`);
-    
-    if (Object.keys(chapterDistribution).length > 0) {
-      console.log(`\n   📊 Chapter Distribution:`);
-      Object.entries(chapterDistribution)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([chapter, count]) => {
-          console.log(`      - ${chapter}: ${count} questions`);
-        });
-    }
-    console.log();
+    console.log(`     - Match: ${getMatchQuestions(chapters).length}\n`);
 
     return questions;
   } catch (error) {

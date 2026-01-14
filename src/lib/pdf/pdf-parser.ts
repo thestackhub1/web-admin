@@ -17,7 +17,8 @@ export interface ParsedQuestion {
   chapterId?: string;
   marks?: number;
   difficulty?: string;
-  explanation?: string; // Single explanation field (language matches question text)
+  explanationMr?: string;
+  explanationEn?: string;
   parsingErrors?: string[];
 }
 

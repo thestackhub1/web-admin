@@ -90,9 +90,10 @@ export const RichContent = {
  * Question with rich content support
  */
 export interface QuestionWithRichContent {
-  question_text?: string | RichContent; // Question text (language matches question_language)
-  question_language?: "en" | "mr";
-  explanation?: string | RichContent; // Single explanation field (language matches question_language)
+  question_text_en?: string | RichContent; // Support both legacy string and new RichContent
+  question_text_mr?: string | RichContent;
+  explanation_en?: string | RichContent;
+  explanation_mr?: string | RichContent;
   // For options in MCQ
   options?: Array<string | RichContent>;
 }

@@ -7,21 +7,22 @@ import { db, schema, client } from "./db";
 
 interface QuestionData {
   questionText: string;
-  questionLanguage: "en" | "mr"; // Default is Marathi, but supports multiple languages
+  questionLanguage: "en" | "mr";
+  questionTextSecondary?: string;
+  secondaryLanguage?: "en" | "mr";
   questionType: string;
   difficulty: "easy" | "medium" | "hard";
   answerData: any;
   chapterId?: string;
   marks: number;
-  explanation?: string; // Single explanation field (language matches questionLanguage, default Marathi)
+  explanationEn?: string;
+  explanationMr?: string;
   tags?: string[];
-  classLevel: string; // Required for better readability
+  classLevel?: string;
 }
 
 /**
- * Get chapters for Scholarship subject (all sub-subjects) with robust mapping
- * Creates comprehensive mapping for Marathi and English chapter names
- * Handles all Scholarship sub-subjects: Marathi, Math, Intelligence Test, GK
+ * Get chapters for Scholarship subject (all sub-subjects)
  */
 async function getScholarshipChapters() {
   const allSubjects = await db.select().from(schema.subjects);
@@ -49,110 +50,33 @@ async function getScholarshipChapters() {
   const allChapters = await db.select().from(schema.chapters);
   const chapters = allChapters.filter((c) => subjectIds.includes(c.subjectId));
 
-  if (chapters.length === 0) {
-    throw new Error("No chapters found for Scholarship subjects. Please seed chapters first.");
-  }
-
-  console.log(`   📚 Found ${chapters.length} Scholarship chapters:`);
-  chapters.forEach(ch => console.log(`      - ${ch.nameEn} (${ch.nameMr})`));
-
-  // Map chapter names (both Marathi and English) to IDs
+  // Map chapter names (Marathi) to IDs for question seeding
   const chapterMap: Record<string, string> = {};
-  
-  for (const chapter of chapters) {
-    const nameEnLower = chapter.nameEn.toLowerCase();
-    const nameMrLower = chapter.nameMr.toLowerCase();
-    
-    // English name variations
-    const keyEnNormalized = nameEnLower.replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const keyEnSimple = nameEnLower.replace(/[^a-z0-9]/g, "_");
-    const keyEnSpaced = nameEnLower.replace(/\s+/g, "_");
-    
-    chapterMap[keyEnNormalized] = chapter.id;
-    chapterMap[keyEnSimple] = chapter.id;
-    chapterMap[keyEnSpaced] = chapter.id;
-    chapterMap[nameEnLower] = chapter.id;
-    
-    // Marathi name variations
-    const keyMrNormalized = nameMrLower.replace(/\s+/g, "_").replace(/[^\u0900-\u097F0-9_]/g, "");
-    const keyMrSimple = nameMrLower.replace(/\s+/g, "_");
-    
-    chapterMap[keyMrNormalized] = chapter.id;
-    chapterMap[keyMrSimple] = chapter.id;
-    chapterMap[nameMrLower] = chapter.id;
-    
-    // Create semantic aliases based on chapter content
+  if (chapters.length > 0) {
+    for (const chapter of chapters) {
+      const key = chapter.nameMr.toLowerCase().replace(/\s+/g, "_");
+      chapterMap[key] = chapter.id;
+      // Also add English-based keys for flexibility
+      const keyEn = chapter.nameEn.toLowerCase().replace(/\s+/g, "_");
+      chapterMap[keyEn] = chapter.id;
+    }
+    // Create aliases for legacy chapter references in question data
     // Geography
-    if (nameEnLower.includes("geography") || nameMrLower.includes("भूगोल")) {
-      chapterMap["geography"] = chapter.id;
-      chapterMap["भूगोल"] = chapter.id;
-      chapterMap["भूगोल_"] = chapter.id;
-    }
+    if (chapterMap["geography"]) chapterMap["भूगोल"] = chapterMap["geography"];
     // History
-    if (nameEnLower.includes("history") || nameMrLower.includes("इतिहास")) {
-      chapterMap["history"] = chapter.id;
-      chapterMap["इतिहास"] = chapter.id;
-      chapterMap["इतिहास_"] = chapter.id;
-    }
-    // Science & Nature
-    if (nameEnLower.includes("science") || nameEnLower.includes("nature") || nameMrLower.includes("विज्ञान")) {
-      chapterMap["science_&_nature"] = chapter.id;
-      chapterMap["science_and_nature"] = chapter.id;
-      chapterMap["विज्ञान"] = chapter.id;
-      chapterMap["विज्ञान_"] = chapter.id;
-    }
-    // Language/Marathi - Vocabulary, Grammar, etc.
-    if (nameEnLower.includes("vocabulary") || nameEnLower.includes("grammar") || nameEnLower.includes("language") || 
-        nameMrLower.includes("शब्दसंग्रह") || nameMrLower.includes("व्याकरण") || nameMrLower.includes("भाषा")) {
-      chapterMap["vocabulary_&_word_meanings"] = chapter.id;
-      chapterMap["vocabulary"] = chapter.id;
-      chapterMap["grammar"] = chapter.id;
-      chapterMap["भाषा"] = chapter.id;
-      chapterMap["शब्दसंग्रह"] = chapter.id;
-    }
-    // Mathematics
-    if (nameEnLower.includes("mathematics") || nameEnLower.includes("math") || nameEnLower.includes("arithmetic") ||
-        nameMrLower.includes("गणित")) {
-      chapterMap["mathematics"] = chapter.id;
-      chapterMap["math"] = chapter.id;
-      chapterMap["गणित"] = chapter.id;
-    }
-    // Intelligence Test
-    if (nameEnLower.includes("intelligence") || nameEnLower.includes("pattern") || nameEnLower.includes("reasoning") ||
-        nameMrLower.includes("बुद्धिमत्ता") || nameMrLower.includes("नमुना")) {
-      chapterMap["intelligence_test"] = chapter.id;
-      chapterMap["intelligence"] = chapter.id;
-      chapterMap["बुद्धिमत्ता"] = chapter.id;
-    }
-    // General Knowledge / Current Affairs
-    if (nameEnLower.includes("general knowledge") || nameEnLower.includes("current affairs") || 
-        nameEnLower.includes("civics") || nameMrLower.includes("सामान्य ज्ञान") || nameMrLower.includes("चालू घडामोडी")) {
-      chapterMap["general_knowledge"] = chapter.id;
-      chapterMap["current_affairs"] = chapter.id;
-      chapterMap["सामान्य_ज्ञान"] = chapter.id;
-      chapterMap["सामान्यज्ञान"] = chapter.id;
-      chapterMap["चालू_घडामोडी"] = chapter.id;
-    }
-    // Computer/IT (if any questions reference it)
-    if (nameEnLower.includes("computer") || nameMrLower.includes("संगणक")) {
-      chapterMap["computer"] = chapter.id;
-      chapterMap["संगणक"] = chapter.id;
-    }
+    if (chapterMap["history"]) chapterMap["इतिहास"] = chapterMap["history"];
+    // Science
+    if (chapterMap["science_&_nature"]) chapterMap["विज्ञान"] = chapterMap["science_&_nature"];
+    // Language/Marathi
+    if (chapterMap["vocabulary_&_word_meanings"]) chapterMap["भाषा"] = chapterMap["vocabulary_&_word_meanings"];
+    // General Knowledge
+    if (chapterMap["current_affairs"]) chapterMap["सामान्य_ज्ञान"] = chapterMap["current_affairs"];
   }
 
-  // Validate critical mappings exist
-  const requiredMappings = ["भूगोल", "इतिहास", "विज्ञान", "गणित", "सामान्य_ज्ञान"];
-  const missingMappings = requiredMappings.filter(key => !chapterMap[key]);
-  
-  if (missingMappings.length > 0) {
-    console.warn(`   ⚠️  Missing chapter mappings: ${missingMappings.join(", ")}`);
-    console.warn(`   Available chapters: ${chapters.map(c => `${c.nameEn} (${c.nameMr})`).join(", ")}`);
-  }
-
+  // Return the first sub-subject ID for legacy compatibility
   return {
     subjectId: marathiSubject?.id || mathSubject?.id || scholarshipCategory?.id,
-    chapters: chapterMap,
-    chapterList: chapters
+    chapters: chapterMap
   };
 }
 
@@ -169,7 +93,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["मुंबई", "Mumbai"] },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "मुंबई ही महाराष्ट्राची राजधानी आणि आर्थिक राजधानी आहे.",
+      explanationMr: "मुंबई ही महाराष्ट्राची राजधानी आणि आर्थिक राजधानी आहे.",
       tags: ["भूगोल", "महाराष्ट्र"],
       classLevel: "8",
     },
@@ -181,7 +105,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["CPU", "सेंट्रल प्रोसेसिंग युनिट"] },
       chapterId: chapters.संगणक || undefined,
       marks: 1,
-      explanation: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
+      explanationMr: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
       tags: ["संगणक", "CPU"],
       classLevel: "8",
     },
@@ -193,7 +117,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["रवींद्रनाथ टागोर", "Rabindranath Tagore"] },
       chapterId: chapters.इतिहास || undefined,
       marks: 1,
-      explanation: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
+      explanationMr: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
       tags: ["इतिहास", "राष्ट्रगीत"],
       classLevel: "9",
     },
@@ -205,7 +129,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["बुध", "Mercury"] },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
+      explanationMr: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
       tags: ["विज्ञान", "ग्रह"],
       classLevel: "8",
     },
@@ -217,7 +141,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["पॅसिफिक", "Pacific", "प्रशांत महासागर"] },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
+      explanationMr: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
       tags: ["भूगोल", "महासागर"],
       classLevel: "9",
     },
@@ -229,7 +153,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["कीटक", "insects", "Insecta"] },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
+      explanationMr: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
       tags: ["विज्ञान", "जीवशास्त्र"],
       classLevel: "9",
     },
@@ -241,7 +165,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["मोर", "Peacock", "पावसा"] },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
+      explanationMr: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
       tags: ["विज्ञान", "राष्ट्रीय चिन्हे"],
       classLevel: "8",
     },
@@ -253,7 +177,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["आर्क्टिक", "Arctic", "उत्तर ध्रुवीय महासागर"] },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
+      explanationMr: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
       tags: ["भूगोल"],
       classLevel: "9",
     },
@@ -265,7 +189,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["365", "365.25", "एक वर्ष"] },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
+      explanationMr: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
       tags: ["विज्ञान", "पृथ्वी"],
       classLevel: "9",
     },
@@ -277,7 +201,7 @@ function getFillBlankQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { blanks: ["हिंदी", "Hindi"] },
       chapterId: chapters.भाषा || undefined,
       marks: 1,
-      explanation: "हिंदी ही भारताची राष्ट्रीय भाषा आहे.",
+      explanationMr: "हिंदी ही भारताची राष्ट्रीय भाषा आहे.",
       tags: ["भाषा", "भारत"],
       classLevel: "8",
     },
@@ -297,7 +221,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
+      explanationMr: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
       tags: ["भूगोल", "महाराष्ट्र"],
       classLevel: "8",
     },
@@ -309,7 +233,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
+      explanationMr: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
       tags: ["विज्ञान", "ग्रह"],
       classLevel: "8",
     },
@@ -321,7 +245,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
+      explanationMr: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
       tags: ["विज्ञान", "राष्ट्रीय चिन्हे"],
       classLevel: "8",
     },
@@ -333,7 +257,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
+      explanationMr: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
       tags: ["विज्ञान", "पृथ्वी"],
       classLevel: "9",
     },
@@ -345,7 +269,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
+      explanationMr: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
       tags: ["भूगोल"],
       classLevel: "9",
     },
@@ -357,7 +281,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: false },
       chapterId: chapters.भाषा || undefined,
       marks: 1,
-      explanation: "हिंदी ही भारताची राष्ट्रीय भाषा आहे, परंतु भारतात 22 अधिकृत भाषा आहेत.",
+      explanationMr: "हिंदी ही भारताची राष्ट्रीय भाषा आहे, परंतु भारतात 22 अधिकृत भाषा आहेत.",
       tags: ["भाषा", "भारत"],
       classLevel: "9",
     },
@@ -369,7 +293,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
+      explanationMr: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
       tags: ["विज्ञान", "जीवशास्त्र"],
       classLevel: "9",
     },
@@ -381,7 +305,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
+      explanationMr: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
       tags: ["भूगोल"],
       classLevel: "9",
     },
@@ -393,7 +317,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.इतिहास || undefined,
       marks: 1,
-      explanation: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
+      explanationMr: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
       tags: ["इतिहास", "राष्ट्रगीत"],
       classLevel: "9",
     },
@@ -405,7 +329,7 @@ function getTrueFalseQuestions(chapters: Record<string, string>): QuestionData[]
       answerData: { correct: true },
       chapterId: chapters.संगणक || undefined,
       marks: 1,
-      explanation: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
+      explanationMr: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
       tags: ["संगणक", "CPU"],
       classLevel: "8",
     },
@@ -428,7 +352,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
+      explanationMr: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
       tags: ["भूगोल", "महाराष्ट्र"],
       classLevel: "8",
     },
@@ -443,7 +367,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
+      explanationMr: "बुध हा सूर्याच्या सर्वात जवळ असलेला ग्रह आहे.",
       tags: ["विज्ञान", "ग्रह"],
       classLevel: "8",
     },
@@ -458,7 +382,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
+      explanationMr: "मोर हा भारताचा राष्ट्रीय पक्षी आहे.",
       tags: ["विज्ञान", "राष्ट्रीय चिन्हे"],
       classLevel: "8",
     },
@@ -473,7 +397,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
+      explanationMr: "प्रशांत महासागर हा जगातील सर्वात मोठा महासागर आहे.",
       tags: ["भूगोल"],
       classLevel: "9",
     },
@@ -488,7 +412,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.इतिहास || undefined,
       marks: 1,
-      explanation: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
+      explanationMr: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
       tags: ["इतिहास", "राष्ट्रगीत"],
       classLevel: "9",
     },
@@ -503,7 +427,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
+      explanationMr: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात.",
       tags: ["विज्ञान", "पृथ्वी"],
       classLevel: "9",
     },
@@ -518,7 +442,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.संगणक || undefined,
       marks: 1,
-      explanation: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
+      explanationMr: "CPU (सेंट्रल प्रोसेसिंग युनिट) हा संगणकाचा मेंदू मानला जातो.",
       tags: ["संगणक", "CPU"],
       classLevel: "8",
     },
@@ -533,7 +457,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.भाषा || undefined,
       marks: 1,
-      explanation: "हिंदी ही भारताची राष्ट्रीय भाषा आहे.",
+      explanationMr: "हिंदी ही भारताची राष्ट्रीय भाषा आहे.",
       tags: ["भाषा", "भारत"],
       classLevel: "8",
     },
@@ -548,7 +472,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 1,
-      explanation: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
+      explanationMr: "आर्क्टिक महासागर हा सर्वात लहान महासागर आहे.",
       tags: ["भूगोल"],
       classLevel: "9",
     },
@@ -563,7 +487,7 @@ function getMCQSingleQuestions(chapters: Record<string, string>): QuestionData[]
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 1,
-      explanation: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
+      explanationMr: "कीटक हा सर्वात मोठा प्राणी वर्ग आहे.",
       tags: ["विज्ञान", "जीवशास्त्र"],
       classLevel: "9",
     },
@@ -578,6 +502,8 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
     {
       questionText: "खालीलपैकी कोणते दोन भारताचे राष्ट्रीय चिन्ह आहेत? (दोन निवडा)",
       questionLanguage: "mr",
+      questionTextSecondary: "Which of the following are two national symbols of India? (Select two)",
+      secondaryLanguage: "en",
       questionType: "mcq_two",
       difficulty: "medium",
       answerData: {
@@ -586,13 +512,15 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.सामान्य_ज्ञान || undefined,
       marks: 2,
-      explanation: "मोर हा भारताचा राष्ट्रीय पक्षी आहे आणि बाघ हा राष्ट्रीय प्राणी आहे.",
+      explanationMr: "मोर हा भारताचा राष्ट्रीय पक्षी आहे आणि बाघ हा राष्ट्रीय प्राणी आहे.",
       tags: ["राष्ट्रीय चिन्हे", "भारत"],
       classLevel: "8",
     },
     {
       questionText: "खालीलपैकी कोणते दोन महाराष्ट्रातील प्रसिद्ध पर्यटनस्थळे आहेत? (दोन निवडा)",
       questionLanguage: "mr",
+      questionTextSecondary: "Which of the following are two famous tourist places in Maharashtra? (Select two)",
+      secondaryLanguage: "en",
       questionType: "mcq_two",
       difficulty: "easy",
       answerData: {
@@ -601,13 +529,15 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 2,
-      explanation: "अजिंठा आणि एलोरा ही महाराष्ट्रातील प्रसिद्ध गुहा आहेत.",
+      explanationMr: "अजिंठा आणि एलोरा ही महाराष्ट्रातील प्रसिद्ध गुहा आहेत.",
       tags: ["भूगोल", "महाराष्ट्र"],
       classLevel: "9",
     },
     {
       questionText: "खालीलपैकी कोणते दोन ग्रह आहेत? (दोन निवडा)",
       questionLanguage: "mr",
+      questionTextSecondary: "Which of the following are two planets? (Select two)",
+      secondaryLanguage: "en",
       questionType: "mcq_two",
       difficulty: "easy",
       answerData: {
@@ -616,13 +546,15 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 2,
-      explanation: "मंगळ आणि शुक्र हे ग्रह आहेत, तर सूर्य हा तारा आहे आणि चंद्र हा उपग्रह आहे.",
+      explanationMr: "मंगळ आणि शुक्र हे ग्रह आहेत, तर सूर्य हा तारा आहे आणि चंद्र हा उपग्रह आहे.",
       tags: ["विज्ञान", "ग्रह"],
       classLevel: "8",
     },
     {
       questionText: "खालीलपैकी कोणते दोन महासागर आहेत? (दोन निवडा)",
       questionLanguage: "mr",
+      questionTextSecondary: "Which of the following are two oceans? (Select two)",
+      secondaryLanguage: "en",
       questionType: "mcq_two",
       difficulty: "easy",
       answerData: {
@@ -631,13 +563,15 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 2,
-      explanation: "प्रशांत आणि अटलांटिक हे महासागर आहेत, तर गंगा आणि हिंदी हे नद्या आहेत.",
+      explanationMr: "प्रशांत आणि अटलांटिक हे महासागर आहेत, तर गंगा आणि हिंदी हे नद्या आहेत.",
       tags: ["भूगोल", "महासागर"],
       classLevel: "9",
     },
     {
       questionText: "खालीलपैकी कोणते दोन भारतीय स्वतंत्रता सेनानी होते? (दोन निवडा)",
       questionLanguage: "mr",
+      questionTextSecondary: "Which of the following are two Indian freedom fighters? (Select two)",
+      secondaryLanguage: "en",
       questionType: "mcq_two",
       difficulty: "medium",
       answerData: {
@@ -646,7 +580,7 @@ function getMCQTwoQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.इतिहास || undefined,
       marks: 2,
-      explanation: "महात्मा गांधी आणि भगत सिंग हे भारतीय स्वतंत्रता सेनानी होते.",
+      explanationMr: "महात्मा गांधी आणि भगत सिंग हे भारतीय स्वतंत्रता सेनानी होते.",
       tags: ["इतिहास", "स्वतंत्रता"],
       classLevel: "9",
     },
@@ -661,6 +595,8 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
     {
       questionText: "भारताची राजधानी कोणती आहे? एका वाक्यात सांगा.",
       questionLanguage: "mr",
+      questionTextSecondary: "What is the capital of India? Answer in one sentence.",
+      secondaryLanguage: "en",
       questionType: "short_answer",
       difficulty: "easy",
       answerData: {
@@ -669,13 +605,15 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.सामान्य_ज्ञान || undefined,
       marks: 2,
-      explanation: "नवी दिल्ली ही भारताची राजधानी आहे.",
+      explanationMr: "नवी दिल्ली ही भारताची राजधानी आहे.",
       tags: ["भूगोल", "भारत"],
       classLevel: "8",
     },
     {
       questionText: "सूर्यग्रहण कसे होते? थोडक्यात सांगा.",
       questionLanguage: "mr",
+      questionTextSecondary: "How does a solar eclipse occur? Explain briefly.",
+      secondaryLanguage: "en",
       questionType: "short_answer",
       difficulty: "medium",
       answerData: {
@@ -684,13 +622,15 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 2,
-      explanation: "सूर्यग्रहण तेव्हा होते जेव्हा चंद्र सूर्य आणि पृथ्वीच्या मध्ये येतो.",
+      explanationMr: "सूर्यग्रहण तेव्हा होते जेव्हा चंद्र सूर्य आणि पृथ्वीच्या मध्ये येतो.",
       tags: ["विज्ञान", "खगोलशास्त्र"],
       classLevel: "9",
     },
     {
       questionText: "महाराष्ट्राची राजधानी कोणती आहे?",
       questionLanguage: "mr",
+      questionTextSecondary: "What is the capital of Maharashtra?",
+      secondaryLanguage: "en",
       questionType: "short_answer",
       difficulty: "easy",
       answerData: {
@@ -699,13 +639,15 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 2,
-      explanation: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
+      explanationMr: "मुंबई ही महाराष्ट्राची राजधानी आहे.",
       tags: ["भूगोल", "महाराष्ट्र"],
       classLevel: "8",
     },
     {
       questionText: "भारताचे राष्ट्रगीत कोणी लिहिले?",
       questionLanguage: "mr",
+      questionTextSecondary: "Who wrote India's national anthem?",
+      secondaryLanguage: "en",
       questionType: "short_answer",
       difficulty: "medium",
       answerData: {
@@ -714,13 +656,15 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.इतिहास || undefined,
       marks: 2,
-      explanation: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
+      explanationMr: "रवींद्रनाथ टागोर यांनी 'जन गण मन' हे राष्ट्रगीत लिहिले.",
       tags: ["इतिहास", "राष्ट्रगीत"],
       classLevel: "9",
     },
     {
       questionText: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी किती दिवस लागतात?",
       questionLanguage: "mr",
+      questionTextSecondary: "How many days does it take for Earth to complete one revolution around the Sun?",
+      secondaryLanguage: "en",
       questionType: "short_answer",
       difficulty: "medium",
       answerData: {
@@ -729,7 +673,7 @@ function getShortAnswerQuestions(chapters: Record<string, string>): QuestionData
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 2,
-      explanation: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात, ज्याला एक वर्ष म्हणतात.",
+      explanationMr: "पृथ्वीला सूर्याभोवती एक प्रदक्षिणा पूर्ण करण्यासाठी 365.25 दिवस लागतात, ज्याला एक वर्ष म्हणतात.",
       tags: ["विज्ञान", "पृथ्वी"],
       classLevel: "9",
     },
@@ -744,6 +688,8 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
     {
       questionText: "खालील जुळवा:",
       questionLanguage: "mr",
+      questionTextSecondary: "Match the following:",
+      secondaryLanguage: "en",
       questionType: "match",
       difficulty: "easy",
       answerData: {
@@ -756,13 +702,15 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 2,
-      explanation: "प्रत्येक राज्याची एक राजधानी असते.",
+      explanationMr: "प्रत्येक राज्याची एक राजधानी असते.",
       tags: ["भूगोल", "राजधानी"],
       classLevel: "8",
     },
     {
       questionText: "खालील राष्ट्रीय चिन्हे जुळवा:",
       questionLanguage: "mr",
+      questionTextSecondary: "Match the following national symbols:",
+      secondaryLanguage: "en",
       questionType: "match",
       difficulty: "easy",
       answerData: {
@@ -775,13 +723,15 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.सामान्य_ज्ञान || undefined,
       marks: 2,
-      explanation: "भारताची विविध राष्ट्रीय चिन्हे आहेत.",
+      explanationMr: "भारताची विविध राष्ट्रीय चिन्हे आहेत.",
       tags: ["राष्ट्रीय चिन्हे", "भारत"],
       classLevel: "8",
     },
     {
       questionText: "खालील ग्रह आणि त्यांचे वैशिष्ट्ये जुळवा:",
       questionLanguage: "mr",
+      questionTextSecondary: "Match the following planets with their characteristics:",
+      secondaryLanguage: "en",
       questionType: "match",
       difficulty: "medium",
       answerData: {
@@ -794,13 +744,15 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.विज्ञान || undefined,
       marks: 2,
-      explanation: "प्रत्येक ग्रहाची वेगळी वैशिष्ट्ये आहेत.",
+      explanationMr: "प्रत्येक ग्रहाची वेगळी वैशिष्ट्ये आहेत.",
       tags: ["विज्ञान", "ग्रह"],
       classLevel: "9",
     },
     {
       questionText: "खालील महासागर आणि त्यांचे वैशिष्ट्ये जुळवा:",
       questionLanguage: "mr",
+      questionTextSecondary: "Match the following oceans with their characteristics:",
+      secondaryLanguage: "en",
       questionType: "match",
       difficulty: "medium",
       answerData: {
@@ -813,13 +765,15 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.भूगोल || undefined,
       marks: 2,
-      explanation: "जगात चार महासागर आहेत, प्रत्येकाचे वेगळे वैशिष्ट्य आहे.",
+      explanationMr: "जगात चार महासागर आहेत, प्रत्येकाचे वेगळे वैशिष्ट्य आहे.",
       tags: ["भूगोल", "महासागर"],
       classLevel: "9",
     },
     {
       questionText: "खालील स्वतंत्रता सेनानी आणि त्यांचे योगदान जुळवा:",
       questionLanguage: "mr",
+      questionTextSecondary: "Match the following freedom fighters with their contributions:",
+      secondaryLanguage: "en",
       questionType: "match",
       difficulty: "medium",
       answerData: {
@@ -832,7 +786,7 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
       },
       chapterId: chapters.इतिहास || undefined,
       marks: 2,
-      explanation: "प्रत्येक स्वतंत्रता सेनानीचे वेगळे योगदान होते.",
+      explanationMr: "प्रत्येक स्वतंत्रता सेनानीचे वेगळे योगदान होते.",
       tags: ["इतिहास", "स्वतंत्रता"],
       classLevel: "9",
     },
@@ -840,36 +794,21 @@ function getMatchQuestions(chapters: Record<string, string>): QuestionData[] {
 }
 
 /**
- * Seed Scholarship Questions
- * Creates Scholarship exam questions for Class 4, 5, 7, 8
- * Links questions to chapters and users (admin/teacher)
+ * Main seed function
  */
 export async function seedScholarshipQuestions() {
   console.log("🏆 Seeding Scholarship questions (Marathi)...");
 
   try {
     // Get Scholarship subject and chapters
-    const { chapters, chapterList } = await getScholarshipChapters();
-
-    // Get admin or teacher user for createdBy
-    const users = await db.select().from(schema.profiles);
-    const adminOrTeacher = users.find(u => u.role === "admin" || u.role === "teacher");
-    const createdBy = adminOrTeacher?.id || null;
-
-    if (!createdBy) {
-      console.log("   ⚠ No admin/teacher user found. Questions will be created without creator.");
-    }
+    const { chapters } = await getScholarshipChapters();
 
     // Clear existing scholarship questions
-    try {
-      await db.delete(schema.questionsScholarship);
-      console.log("   ✓ Cleared existing Scholarship questions");
-    } catch (error: any) {
-      console.warn(`   ⚠️  Could not clear Scholarship questions: ${error.message}, continuing...`);
-    }
+    await db.delete(schema.questionsScholarship);
+    console.log("   ✓ Cleared existing Scholarship questions");
 
-    // Get all questions and add createdBy
-    const allQuestionsRaw = [
+    // Get all questions
+    const allQuestions = [
       ...getFillBlankQuestions(chapters),
       ...getTrueFalseQuestions(chapters),
       ...getMCQSingleQuestions(chapters),
@@ -878,84 +817,11 @@ export async function seedScholarshipQuestions() {
       ...getMatchQuestions(chapters),
     ];
 
-    // Validate and report chapter mappings
-    const unmappedQuestions: string[] = [];
-    const allQuestions = allQuestionsRaw.map((q, idx) => {
-      // If chapterId is undefined, try to find a fallback chapter
-      if (!q.chapterId) {
-        unmappedQuestions.push(`Question ${idx + 1}: "${q.questionText.substring(0, 50)}..."`);
-        
-        // Try to infer chapter from question tags or content
-        let fallbackChapterId: string | undefined;
-        
-        // Check tags for hints
-        if (q.tags && q.tags.length > 0) {
-          for (const tag of q.tags) {
-            const tagLower = tag.toLowerCase();
-            // Try to find chapter by tag
-            if (chapters[tagLower] || chapters[tag]) {
-              fallbackChapterId = chapters[tagLower] || chapters[tag];
-              break;
-            }
-          }
-        }
-        
-        // Use first available chapter as final fallback
-        if (!fallbackChapterId) {
-          fallbackChapterId = Object.values(chapters)[0];
-        }
-        
-        if (fallbackChapterId) {
-          console.warn(`   ⚠️  Question "${q.questionText.substring(0, 50)}..." has no chapter mapping, using fallback`);
-          return { ...q, chapterId: fallbackChapterId, createdBy };
-        }
-      }
-      return { ...q, createdBy };
-    });
-
-    if (unmappedQuestions.length > 0) {
-      console.warn(`   ⚠️  ${unmappedQuestions.length} questions have unmapped chapters:`);
-      unmappedQuestions.slice(0, 5).forEach(msg => console.warn(`      ${msg}`));
-      if (unmappedQuestions.length > 5) {
-        console.warn(`      ... and ${unmappedQuestions.length - 5} more`);
-      }
-    }
-
-    // Validate all questions have required fields before inserting
-    const questionsWithoutChapters = allQuestions.filter(q => !q.chapterId);
-    const questionsWithoutClassLevel = allQuestions.filter(q => !q.classLevel);
-    
-    if (questionsWithoutChapters.length > 0) {
-      console.error(`   ❌ ${questionsWithoutChapters.length} questions still have no chapter mapping!`);
-      throw new Error(`Cannot insert questions without chapter mappings. Please fix chapter mapping logic.`);
-    }
-    
-    if (questionsWithoutClassLevel.length > 0) {
-      console.error(`   ❌ ${questionsWithoutClassLevel.length} questions still have no classLevel!`);
-      throw new Error(`Cannot insert questions without classLevel. All questions must have a class level.`);
-    }
-    
-    // Ensure all questions have questionLanguage set (default to "mr" if not specified)
-    const allQuestionsValidated = allQuestions.map(q => ({
-      ...q,
-      questionLanguage: q.questionLanguage || "mr" as const, // Default to Marathi for Scholarship
-    }));
-
     // Insert questions
     const questions = await db
       .insert(schema.questionsScholarship)
-      .values(allQuestionsValidated)
+      .values(allQuestions)
       .returning();
-
-    // Report chapter distribution
-    const chapterDistribution: Record<string, number> = {};
-    questions.forEach(q => {
-      if (q.chapterId) {
-        const chapter = chapterList?.find(c => c.id === q.chapterId);
-        const chapterName = chapter ? `${chapter.nameEn} (${chapter.nameMr})` : "Unknown";
-        chapterDistribution[chapterName] = (chapterDistribution[chapterName] || 0) + 1;
-      }
-    });
 
     console.log(`   ✓ Created ${questions.length} Scholarship questions`);
     console.log(`     - Fill in the Blanks: ${getFillBlankQuestions(chapters).length}`);
@@ -963,17 +829,7 @@ export async function seedScholarshipQuestions() {
     console.log(`     - MCQ Single: ${getMCQSingleQuestions(chapters).length}`);
     console.log(`     - MCQ Two: ${getMCQTwoQuestions(chapters).length}`);
     console.log(`     - Short Answer: ${getShortAnswerQuestions(chapters).length}`);
-    console.log(`     - Match: ${getMatchQuestions(chapters).length}`);
-    
-    if (Object.keys(chapterDistribution).length > 0) {
-      console.log(`\n   📊 Chapter Distribution:`);
-      Object.entries(chapterDistribution)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([chapter, count]) => {
-          console.log(`      - ${chapter}: ${count} questions`);
-        });
-    }
-    console.log();
+    console.log(`     - Match: ${getMatchQuestions(chapters).length}\n`);
 
     return questions;
   } catch (error) {

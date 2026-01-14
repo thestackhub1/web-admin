@@ -208,34 +208,42 @@ export function QuestionsFilterDialog({
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+                        transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
                         className={clsx(
-                            "relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-neutral-900",
+                            "relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-neutral-900",
                             className
                         )}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="relative px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
+                        <div className="relative px-6 py-5 border-b border-neutral-100 dark:border-neutral-800 bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-900">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/25">
-                                        <SlidersHorizontal className="h-4.5 w-4.5 text-white" />
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30">
+                                        <SlidersHorizontal className="h-5 w-5 text-white" />
                                     </div>
                                     <div>
-                                        <h2 className="text-base font-semibold text-neutral-900 dark:text-white">Filters</h2>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                            Refine your question list
+                                        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Filter Questions</h2>
+                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                            Narrow down your search results
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 transition-colors"
+                                    className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 transition-colors"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
+                            {activeCount > 0 && (
+                                <div className="mt-3 flex items-center gap-2">
+                                    <span className="text-xs text-neutral-500">Active filters:</span>
+                                    <span className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold dark:bg-primary-900/30 dark:text-primary-400">
+                                        {activeCount}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Content */}
@@ -243,11 +251,11 @@ export function QuestionsFilterDialog({
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
-                            className="p-5 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar"
+                            className="p-6 space-y-5 max-h-[55vh] overflow-y-auto"
                         >
                             {/* Subject Selection */}
-                            <FilterSection title="Subject" icon={<BookOpen className="w-3.5 h-3.5 text-neutral-500" />}>
-                                <div className="grid grid-cols-2 gap-2">
+                            <FilterSection title="Subject" icon={<BookOpen className="w-3.5 h-3.5 text-primary-500" />}>
+                                <div className="flex flex-wrap gap-2">
                                     {subjects.map((sub) => {
                                         const isSelected = localFilters.subjectId === sub.value;
                                         return (
@@ -260,20 +268,19 @@ export function QuestionsFilterDialog({
                                                     subjectId: prev.subjectId === sub.value ? undefined : sub.value
                                                 }))}
                                                 className={clsx(
-                                                    "flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all border-2",
+                                                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all border",
                                                     isSelected
-                                                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500"
-                                                        : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-600"
+                                                        ? "border-primary-500 bg-primary-50 text-primary-700 shadow-sm dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500"
+                                                        : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 text-neutral-600 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-600"
                                                 )}
                                             >
-                                                <span className="truncate">{sub.label}</span>
+                                                <span>{sub.label}</span>
                                                 {isSelected && (
                                                     <motion.div
-                                                        initial={{ scale: 0, rotate: -90 }}
-                                                        animate={{ scale: 1, rotate: 0 }}
-                                                        className="shrink-0 ml-2"
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
                                                     >
-                                                        <Check className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                                        <Check className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
                                                     </motion.div>
                                                 )}
                                             </motion.button>
@@ -281,9 +288,6 @@ export function QuestionsFilterDialog({
                                     })}
                                 </div>
                             </FilterSection>
-
-                            {/* Divider */}
-                            <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
                             {/* Difficulty */}
                             <FilterSection title="Difficulty" icon={<Target className="w-3.5 h-3.5 text-neutral-500" />}>
@@ -353,23 +357,23 @@ export function QuestionsFilterDialog({
                         </motion.div>
 
                         {/* Footer */}
-                        <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
+                        <div className="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/80 flex items-center justify-between gap-3">
                             <button
                                 onClick={handleClear}
                                 disabled={activeCount === 0}
                                 className={clsx(
-                                    "text-sm font-medium transition-colors px-3 py-2 rounded-lg",
+                                    "text-sm font-medium transition-colors px-4 py-2.5 rounded-lg",
                                     activeCount > 0
-                                        ? "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
+                                        ? "text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
                                         : "text-neutral-300 cursor-not-allowed dark:text-neutral-600"
                                 )}
                             >
-                                Clear all
+                                Reset All
                             </button>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={onClose}
-                                    className="px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
+                                    className="px-5 py-2.5 rounded-lg text-sm font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-800 transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -377,21 +381,9 @@ export function QuestionsFilterDialog({
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleApply}
-                                    className={clsx(
-                                        "px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg",
-                                        hasChanges
-                                            ? "text-white bg-primary-600 hover:bg-primary-700 shadow-primary-500/25"
-                                            : "text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 shadow-neutral-900/20"
-                                    )}
+                                    className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/25 transition-all"
                                 >
-                                    <span className="flex items-center gap-2">
-                                        Apply Filters
-                                        {activeCount > 0 && (
-                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
-                                                {activeCount}
-                                            </span>
-                                        )}
-                                    </span>
+                                    Apply Filters
                                 </motion.button>
                             </div>
                         </div>

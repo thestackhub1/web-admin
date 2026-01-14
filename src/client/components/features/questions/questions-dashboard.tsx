@@ -202,17 +202,45 @@ export default function QuestionsDashboard() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
+                        {/* Filter Button - First */}
+                        <button
+                            onClick={() => setIsFilterDialogOpen(true)}
+                            className={clsx(
+                                "flex items-center gap-2 h-10 px-4 rounded-lg border text-sm font-medium transition-all",
+                                activeFilterCount > 0
+                                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500"
+                                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                            )}
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            <span className="hidden sm:inline">Filters</span>
+                            {activeFilterCount > 0 && (
+                                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-semibold">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Separator */}
+                        <div className="hidden sm:block h-6 w-px bg-neutral-200 dark:bg-neutral-700" />
+
                         {/* Create Question Button */}
                         <Link
                             href="/dashboard/questions/create"
-                            className={clsx(buttonVariants({ variant: "primary" }), "hidden sm:flex")}
+                            className={clsx(
+                                buttonVariants({ variant: "primary", size: "sm" }),
+                                "h-10 px-4 gap-2 hidden sm:flex"
+                            )}
                         >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Create Question
+                            <Plus className="h-4 w-4" />
+                            Create
                         </Link>
                         <Link
                             href="/dashboard/questions/create"
-                            className={clsx(buttonVariants({ variant: "primary", size: "sm" }), "sm:hidden p-2.5")}
+                            className={clsx(
+                                buttonVariants({ variant: "primary", size: "sm" }),
+                                "h-10 w-10 p-0 flex items-center justify-center sm:hidden"
+                            )}
                             title="Create Question"
                         >
                             <Plus className="h-4 w-4" />
@@ -221,37 +249,24 @@ export default function QuestionsDashboard() {
                         {/* Import Questions Button */}
                         <Link
                             href="/dashboard/questions/import"
-                            className={clsx(buttonVariants({ variant: "outline" }), "hidden sm:flex")}
+                            className={clsx(
+                                buttonVariants({ variant: "outline", size: "sm" }),
+                                "h-10 px-4 gap-2 hidden sm:flex"
+                            )}
                         >
-                            <Upload className="mr-2 h-4 w-4" />
+                            <Upload className="h-4 w-4" />
                             Import
                         </Link>
                         <Link
                             href="/dashboard/questions/import"
-                            className={clsx(buttonVariants({ variant: "outline", size: "sm" }), "sm:hidden p-2.5")}
+                            className={clsx(
+                                buttonVariants({ variant: "outline", size: "sm" }),
+                                "h-10 w-10 p-0 flex items-center justify-center sm:hidden"
+                            )}
                             title="Import Questions"
                         >
                             <Upload className="h-4 w-4" />
                         </Link>
-
-                        {/* Filter Button */}
-                        <button
-                            onClick={() => setIsFilterDialogOpen(true)}
-                            className={clsx(
-                                "flex items-center gap-2 h-11 px-4 rounded-xl border transition-all",
-                                activeFilterCount > 0
-                                    ? "border-neutral-900 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300"
-                            )}
-                        >
-                            <SlidersHorizontal className="w-4 h-4" />
-                            <span className="text-sm font-medium hidden sm:inline">Filters</span>
-                            {activeFilterCount > 0 && (
-                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-xs font-bold">
-                                    {activeFilterCount}
-                                </span>
-                            )}
-                        </button>
                     </div>
                 </div>
 
