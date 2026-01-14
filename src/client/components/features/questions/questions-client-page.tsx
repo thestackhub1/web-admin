@@ -7,19 +7,22 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { clsx } from "clsx";
 import {
   Plus,
-  Pencil,
   Square,
   CheckSquare,
   FileQuestion,
-  Pin,
   Save,
   X,
+  Layers,
+  BookOpen,
+  ArrowLeft,
+  BarChart3,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GlassCard, PageHeader, Badge, EmptyState, SectionHeader } from '@/client/components/ui/premium';
@@ -37,6 +40,213 @@ import { QuestionFilters } from './question-filters';
 import { QuestionListView } from './question-list-view';
 import { QuestionTableView } from './question-table-view';
 import { QuestionPagination } from './question-pagination';
+
+// Stats Dialog Component - Premium Design consistent with SchoolSearchModal
+interface StatsDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  stats: {
+    total: number;
+    byType: Record<string, number>;
+    byDifficulty: Record<string, number>;
+    byChapter: Record<string, number>;
+  };
+}
+
+function StatsDialog({ isOpen, onClose, stats }: StatsDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const difficultyConfig: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+    easy: { bg: 'bg-success-50 dark:bg-success-900/20', text: 'text-success-700 dark:text-success-400', dot: 'bg-success-500', label: 'Easy' },
+    medium: { bg: 'bg-warning-50 dark:bg-warning-900/20', text: 'text-warning-700 dark:text-warning-400', dot: 'bg-warning-500', label: 'Medium' },
+    hard: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500', label: 'Hard' },
+  };
+
+  const typeColors = [
+    { bg: 'bg-primary-50 dark:bg-primary-900/20', text: 'text-primary-700 dark:text-primary-400', dot: 'bg-primary-500' },
+    { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
+    { bg: 'bg-pink-50 dark:bg-pink-900/20', text: 'text-pink-700 dark:text-pink-400', dot: 'bg-pink-500' },
+    { bg: 'bg-cyan-50 dark:bg-cyan-900/20', text: 'text-cyan-700 dark:text-cyan-400', dot: 'bg-cyan-500' },
+    { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' },
+    { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-700 dark:text-teal-400', dot: 'bg-teal-500' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+      {/* Dialog */}
+      <div
+        ref={dialogRef}
+        className="w-full max-w-lg max-h-[90vh] bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Premium Gradient Header */}
+        <div className="relative overflow-hidden shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-warning-500 via-warning-600 to-orange-600" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+          
+          <div className="relative px-6 pt-6 pb-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/20">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">Question Statistics</h2>
+                  <p className="text-sm text-white/70 mt-0.5">Detailed breakdown of your questions</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Total Questions Hero */}
+            <div className="mt-5 flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                <FileQuestion className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-white">{stats.total}</div>
+                <p className="text-sm text-white/70">Total Questions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* By Difficulty */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="h-4 w-4 text-neutral-400" />
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">By Difficulty</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['easy', 'medium', 'hard'].map((difficulty) => {
+                const count = stats.byDifficulty[difficulty] || 0;
+                const config = difficultyConfig[difficulty];
+                const percentage = stats.total > 0 ? ((count / stats.total) * 100).toFixed(0) : 0;
+                return (
+                  <div 
+                    key={difficulty} 
+                    className={clsx('flex items-center gap-2 px-3 py-2 rounded-xl', config.bg)}
+                  >
+                    <div className={clsx('h-2 w-2 rounded-full', config.dot)} />
+                    <span className={clsx('text-sm font-medium', config.text)}>{config.label}</span>
+                    <span className={clsx('text-sm font-bold', config.text)}>{count}</span>
+                    <span className={clsx('text-xs opacity-70', config.text)}>({percentage}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* By Type */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="h-4 w-4 text-neutral-400" />
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">By Question Type</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(stats.byType).map(([type, count], index) => {
+                const colors = typeColors[index % typeColors.length];
+                const percentage = stats.total > 0 ? ((count / stats.total) * 100).toFixed(0) : 0;
+                return (
+                  <div 
+                    key={type} 
+                    className={clsx('flex items-center justify-between px-3 py-2.5 rounded-xl', colors.bg)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={clsx('h-2 w-2 rounded-full shrink-0', colors.dot)} />
+                      <span className={clsx('text-sm font-medium truncate', colors.text)}>
+                        {questionTypeLabels[type as QuestionType] || type}
+                      </span>
+                    </div>
+                    <div className={clsx('flex items-center gap-1 shrink-0 ml-2', colors.text)}>
+                      <span className="text-sm font-bold">{count}</span>
+                      <span className="text-xs opacity-70">({percentage}%)</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {Object.keys(stats.byType).length === 0 && (
+                <p className="text-sm text-neutral-500 text-center py-4 col-span-2">No questions yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* By Chapter */}
+          {Object.keys(stats.byChapter).length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <BookOpen className="h-4 w-4 text-neutral-400" />
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">By Chapter</h3>
+              </div>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {Object.entries(stats.byChapter)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 6)
+                  .map(([chapter, count]) => (
+                    <div 
+                      key={chapter} 
+                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50"
+                    >
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate flex-1">{chapter}</span>
+                      <span className="text-sm font-semibold text-neutral-900 dark:text-white ml-2">{count}</span>
+                    </div>
+                  ))}
+                {Object.keys(stats.byChapter).length > 6 && (
+                  <p className="text-xs text-neutral-500 text-center pt-2">
+                    +{Object.keys(stats.byChapter).length - 6} more chapters
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/30">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Question {
   id: string;
@@ -70,6 +280,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
   const [questions, setQuestions] = useState(initialQuestions);
   const [filteredQuestions, setFilteredQuestions] = useState(initialQuestions);
   const [showFilters, setShowFilters] = useState(false);
+  const [showStatsDialog, setShowStatsDialog] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
@@ -544,69 +755,127 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Stats Dialog */}
+      <StatsDialog 
+        isOpen={showStatsDialog} 
+        onClose={() => setShowStatsDialog(false)} 
+        stats={stats} 
+      />
+
       <PageHeader
         title={title}
         description={description}
         breadcrumbs={breadcrumbs}
-        icon={FileQuestion}
-        iconColor="warning"
-        action={
-          <div className="flex items-center gap-3">
-            <ExportDropdown onExport={handleExport} isLoading={isExporting} disabled={filteredQuestions.length === 0} />
-            <Link href={`/dashboard/questions/${subject}/new`}>
-              <Button variant="primary" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add Question
-              </Button>
-            </Link>
-          </div>
-        }
+        icon={currentChapter ? Layers : FileQuestion}
+        iconColor={currentChapter ? "success" : "warning"}
       />
 
-      {/* Stats */}
-      {questions.length > 0 && (
-        <GlassCard className="p-4" bento>
-          <QuestionStats stats={stats} />
-        </GlassCard>
-      )}
-
-      {/* Chapter Chips */}
-      {chapters.length > 0 && (
-        <SmartFilterChips label="Filter by Chapter" chips={chapterChips} onSelect={(id) => setFilterChapter(id)} />
-      )}
-
-      {/* Search and Filters */}
-      <GlassCard className="relative p-5" bento>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Unified Toolbar - Single Row (Consistent with Class Levels) */}
+      <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800">
+        {/* Search Input */}
+        <div className="relative w-64">
           <QuestionSearchBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
-
-          <div className="flex items-center gap-2">
-            <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            <QuestionFilters
-              showFilters={showFilters}
-              activeFiltersCount={activeFiltersCount}
-              filterType={filterType}
-              filterDifficulty={filterDifficulty}
-              filterActive={filterActive}
-              onToggleFilters={() => setShowFilters(!showFilters)}
-              onClearFilters={clearFilters}
-              onFilterTypeChange={setFilterType}
-              onFilterDifficultyChange={setFilterDifficulty}
-              onFilterActiveChange={setFilterActive}
-            />
-          </div>
         </div>
-      </GlassCard>
+
+        {/* Divider */}
+        <div className="h-6 w-px bg-neutral-200 dark:bg-neutral-700 hidden sm:block" />
+
+        {/* Stats Pills - Clickable to open dialog */}
+        <button
+          onClick={() => setShowStatsDialog(true)}
+          className="hidden sm:flex items-center gap-2 group"
+          title="Click to view detailed statistics"
+        >
+          {/* Total Questions */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50 hover:border-warning-300 dark:hover:border-warning-600 transition-colors">
+            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-warning-500 text-white">
+              <FileQuestion className="h-2.5 w-2.5" />
+            </div>
+            <span className="text-sm font-bold text-neutral-900 dark:text-white">{stats.total}</span>
+            <span className="text-xs text-neutral-500">Questions</span>
+            <BarChart3 className="h-3 w-3 text-neutral-400 group-hover:text-warning-500 transition-colors ml-0.5" />
+          </div>
+        </button>
+
+        {/* Mobile: Compact stats button */}
+        <button
+          onClick={() => setShowStatsDialog(true)}
+          className="sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50"
+        >
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-warning-500 text-white">
+            <FileQuestion className="h-2.5 w-2.5" />
+          </div>
+          <span className="text-sm font-bold text-neutral-900 dark:text-white">{stats.total}</span>
+          <BarChart3 className="h-3 w-3 text-neutral-400" />
+        </button>
+
+        {/* Actions Group */}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Back to Subject - only for chapter view */}
+          {currentChapter && (
+            <Link
+              href={`/dashboard/questions/${subject}`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">All Chapters</span>
+            </Link>
+          )}
+
+          {/* View Mode Toggle */}
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+
+          {/* Filters */}
+          <QuestionFilters
+            showFilters={showFilters}
+            activeFiltersCount={activeFiltersCount}
+            filterType={filterType}
+            filterDifficulty={filterDifficulty}
+            filterActive={filterActive}
+            onToggleFilters={() => setShowFilters(!showFilters)}
+            onClearFilters={clearFilters}
+            onFilterTypeChange={setFilterType}
+            onFilterDifficultyChange={setFilterDifficulty}
+            onFilterActiveChange={setFilterActive}
+          />
+
+          {/* Export */}
+          <ExportDropdown 
+            onExport={handleExport} 
+            isLoading={isExporting} 
+            disabled={filteredQuestions.length === 0} 
+          />
+
+          {/* Add Question */}
+          <Link href={`/dashboard/questions/${subject}/new${currentChapter ? `?chapter=${currentChapter.id}` : ''}`}>
+            <Button variant="primary" size="sm" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Question</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Chapter Chips - Only show when not in chapter detail view */}
+      {chapters.length > 0 && !currentChapter && (
+        <SmartFilterChips label="Filter by Chapter" chips={chapterChips} onSelect={(id) => setFilterChapter(id)} />
+      )}
 
       {/* Questions List/Table */}
       <GlassCard bento padding="none" className="overflow-hidden">
-        <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Questions</h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{filteredQuestions.length} questions</p>
+        <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-neutral-900 dark:text-white">
+              Showing {paginatedQuestions.length} of {filteredQuestions.length}
+            </span>
+            {activeFiltersCount > 0 && (
+              <span className="text-xs text-neutral-500">
+                ({activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''} active)
+              </span>
+            )}
           </div>
           {filteredQuestions.length > 0 && (
             <button
@@ -616,12 +885,12 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
               {selectedIds.size === filteredQuestions.length ? (
                 <>
                   <CheckSquare className="h-4 w-4" />
-                  Deselect all
+                  <span className="hidden sm:inline">Deselect all</span>
                 </>
               ) : (
                 <>
                   <Square className="h-4 w-4" />
-                  Select all
+                  <span className="hidden sm:inline">Select all</span>
                 </>
               )}
             </button>

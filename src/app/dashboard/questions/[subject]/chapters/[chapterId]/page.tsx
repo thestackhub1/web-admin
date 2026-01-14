@@ -6,6 +6,11 @@ import { subjectDisplayMap } from "@/client/types/questions";
 import { getQuestionTableName } from "@/lib/services/questions.service";
 import { getChapterById, getQuestionsByChapter, getChaptersBySubject } from "@/client/services";
 
+interface PageProps {
+    params: Promise<{ subject: string; chapterId: string }>;
+    searchParams: Promise<{ classLevelId?: string }>;
+}
+
 export async function generateMetadata({
     params,
 }: {
@@ -21,12 +26,9 @@ export async function generateMetadata({
     };
 }
 
-export default async function ChapterQuestionsPage({
-    params,
-}: {
-    params: Promise<{ subject: string; chapterId: string }>;
-}) {
+export default async function ChapterQuestionsPage({ params, searchParams }: PageProps) {
     const { subject, chapterId } = await params;
+    const { classLevelId } = await searchParams;
     
     // Get chapter info first to find the actual subject
     const chapter = await getChapterById(chapterId);

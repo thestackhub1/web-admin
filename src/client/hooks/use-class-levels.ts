@@ -70,6 +70,11 @@ export function useClassLevelSubjects(slug: string) {
     name_en: string;
     name_mr: string | null;
     slug: string;
+    description_en?: string | null;
+    icon?: string | null;
+    is_category: boolean;
+    parent_subject_id: string | null;
+    order_index: number;
   }>>(async () => {
     return api.get(`/api/v1/class-levels/${slug}/subjects`);
   }, true);

@@ -60,8 +60,8 @@ const navGroups: NavGroup[] = [
   {
     title: "ACADEMIC",
     items: [
-      { label: "Subjects", href: "/dashboard/subjects", icon: BookOpen, color: "success" },
       { label: "Class Levels", href: "/dashboard/class-levels", icon: Layers, color: "primary" },
+      { label: "Subjects", href: "/dashboard/subjects", icon: BookOpen, color: "success" },
       { label: "Questions", href: "/dashboard/questions", icon: FileQuestion, color: "warning", highlight: true },
       { label: "Exam Structures", href: "/dashboard/exam-structures", icon: ClipboardList, color: "insight" },
     ],

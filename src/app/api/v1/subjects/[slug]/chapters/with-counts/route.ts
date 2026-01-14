@@ -26,57 +26,51 @@ export async function GET(request: NextRequest, context: Params) {
             return ApiErrors.badRequest('Subject slug is required');
         }
 
-        // Check if subject is supported
-        if (!isSubjectSupported(slug)) {
-            return ApiErrors.notFound(`Subject '${slug}' not found or not supported`);
-        }
-
-        // Get chapters
+        // Get chapters - this works for ANY subject, not just supported ones
         const chapters = await ChaptersService.getBySubjectSlug(slug);
 
         if (chapters.length === 0) {
             return successResponse([]);
         }
 
-        // Get question counts for each chapter
+        // Check if subject is supported for questions
+        const subjectHasQuestionTable = isSubjectSupported(slug);
+
+        // Get question counts for each chapter (only if subject has question table)
         const chaptersWithCounts = await Promise.all(
             chapters.map(async (chapter) => {
-                try {
-                    const questions = await QuestionsService.getBySubject(
-                        slug,
-                        {
-                            chapterId: chapter.id,
-                            isActive: true,
-                            limit: 1000,
-                        },
-                        {
-                            userId: authResult.user.id,
-                            role: authResult.profile.role,
-                            email: authResult.user.email,
-                        }
-                    );
-
-                    return {
-                        id: chapter.id,
-                        name_en: chapter.nameEn,
-                        name_mr: chapter.nameMr,
-                        description_en: chapter.descriptionEn,
-                        description_mr: chapter.descriptionMr,
-                        order_index: chapter.orderIndex,
-                        question_count: questions.length,
-                    };
-                } catch (error) {
-                    console.warn(`Could not get question count for chapter ${chapter.id}:`, error);
-                    return {
-                        id: chapter.id,
-                        name_en: chapter.nameEn,
-                        name_mr: chapter.nameMr,
-                        description_en: chapter.descriptionEn,
-                        description_mr: chapter.descriptionMr,
-                        order_index: chapter.orderIndex,
-                        question_count: 0,
-                    };
+                let questionCount = 0;
+                
+                if (subjectHasQuestionTable) {
+                    try {
+                        const questions = await QuestionsService.getBySubject(
+                            slug,
+                            {
+                                chapterId: chapter.id,
+                                isActive: true,
+                                limit: 1000,
+                            },
+                            {
+                                userId: authResult.user.id,
+                                role: authResult.profile.role,
+                                email: authResult.user.email,
+                            }
+                        );
+                        questionCount = questions.length;
+                    } catch (error) {
+                        console.warn(`Could not get question count for chapter ${chapter.id}:`, error);
+                    }
                 }
+
+                return {
+                    id: chapter.id,
+                    name_en: chapter.nameEn,
+                    name_mr: chapter.nameMr,
+                    description_en: chapter.descriptionEn,
+                    description_mr: chapter.descriptionMr,
+                    order_index: chapter.orderIndex,
+                    question_count: questionCount,
+                };
             })
         );
 

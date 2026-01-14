@@ -270,13 +270,13 @@ export function SubjectFormModal({
           {/* Icon */}
           <div>
             <label htmlFor="icon" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-              Icon <span className="text-neutral-400">(Emoji or icon code)</span>
+              Icon <span className="text-neutral-400">(Lucide icon name)</span>
             </label>
             <Input
               id="icon"
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              placeholder="e.g., trophy, laptop, book-open (Lucide icon name)"
+              placeholder="e.g., Trophy, Laptop, BookOpen"
             />
           </div>
 

@@ -1,8 +1,10 @@
 /**
  * GET /api/v1/subjects
  * 
- * Get all active subjects, optionally filtered by class_level_id.
- * Query params: class_level_id (optional) - UUID of the class level to filter by
+ * Get all active subjects, optionally filtered by class_level_id or parent_id.
+ * Query params: 
+ *   - class_level_id (optional) - UUID of the class level to filter by
+ *   - parent_id (optional) - UUID of the parent subject to get children
  */
 
 import { NextRequest } from 'next/server';
@@ -20,11 +22,7 @@ export async function GET(request: NextRequest) {
 
         const url = new URL(request.url);
         const classLevelId = url.searchParams.get('class_level_id');
-
-        // Use service layer
-        const subjects = await SubjectsService.getAll({
-            classLevelId: classLevelId || undefined,
-        });
+        const parentId = url.searchParams.get('parent_id');
 
         // Transform to snake_case for API response
         const transformSubject = (s: any): any => ({
@@ -44,6 +42,17 @@ export async function GET(request: NextRequest) {
             created_at: s.createdAt,
             updated_at: s.updatedAt,
             sub_subjects: s.sub_subjects?.map(transformSubject) || [],
+        });
+
+        // If parent_id is provided, get child subjects
+        if (parentId) {
+            const children = await SubjectsService.getChildSubjects(parentId);
+            return successResponse(children.map(transformSubject));
+        }
+
+        // Otherwise, get all subjects with optional class level filter
+        const subjects = await SubjectsService.getAll({
+            classLevelId: classLevelId || undefined,
         });
 
         const result = subjects.map(transformSubject);

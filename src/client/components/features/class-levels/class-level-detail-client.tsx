@@ -4,12 +4,31 @@
 
 import { useClassLevel, useClassLevelSubjects, useClassLevelScheduledExams } from '@/client/hooks/use-class-levels';
 import { GlassCard, Badge, PageHeader, EmptyState } from '@/client/components/ui/premium';
-import { Layers, BookOpen, ChevronRight, Users, CalendarCheck, ClipboardList, Calendar, Edit2 } from "lucide-react";
+import { Layers, BookOpen, ChevronRight, Users, CalendarCheck, ClipboardList, Calendar, Edit2, FolderOpen, FileText } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoaderSpinner } from '@/client/components/ui/loader';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Button } from '@/client/components/ui/button';
+
+// Type for class level subjects from API
+interface ClassLevelSubject {
+  id: string;
+  name_en: string;
+  name_mr: string | null;
+  slug: string;
+  description_en?: string | null;
+  icon?: string | null;
+  is_category: boolean;
+  parent_subject_id: string | null;
+  order_index: number;
+}
+
+// Extended type for categories with children
+interface CategoryWithChildren extends ClassLevelSubject {
+  children: ClassLevelSubject[];
+}
 
 interface ClassLevelDetailClientProps {
   slug: string;
@@ -56,15 +75,49 @@ export function ClassLevelDetailClient({ slug }: ClassLevelDetailClientProps) {
     ];
   }, [classLevel]);
 
-  // Assigned subjects
-  const assignedSubjects = useMemo(() => {
-    if (!classLevelSubjects) return [];
-    const map = new Map();
-    classLevelSubjects.forEach((s: any) => {
+  // Assigned subjects - organize hierarchically by category
+  const { categories, standaloneSubjects } = useMemo<{
+    categories: CategoryWithChildren[];
+    standaloneSubjects: ClassLevelSubject[];
+  }>(() => {
+    if (!classLevelSubjects) return { categories: [], standaloneSubjects: [] };
+    
+    // Create unique map to deduplicate subjects
+    const map = new Map<string, ClassLevelSubject>();
+    classLevelSubjects.forEach((s) => {
       if (!map.has(s.id)) map.set(s.id, s);
     });
-    return Array.from(map.values());
+    const allSubjects = Array.from(map.values());
+    
+    // Separate categories and regular subjects
+    const categoryItems = allSubjects.filter((s) => s.is_category);
+    const subjectItems = allSubjects.filter((s) => !s.is_category);
+    
+    // Group subjects under their parent categories
+    const categoriesWithChildren: CategoryWithChildren[] = categoryItems
+      .map((cat) => ({
+        ...cat,
+        children: subjectItems
+          .filter((s) => s.parent_subject_id === cat.id)
+          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+      }))
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    
+    // Find standalone subjects (no parent or parent not in this class level)
+    const parentIds = new Set(categoryItems.map((c) => c.id));
+    const standalone = subjectItems
+      .filter((s) => !s.parent_subject_id || !parentIds.has(s.parent_subject_id))
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    
+    return { categories: categoriesWithChildren, standaloneSubjects: standalone };
   }, [classLevelSubjects]);
+
+  // Helper to get dynamic icon - memoized for performance
+  const getSubjectIcon = useCallback((iconName?: string | null, fallback: React.ElementType = BookOpen) => {
+    if (!iconName) return fallback;
+    const Icon = (LucideIcons as Record<string, React.ElementType>)[iconName];
+    return Icon || fallback;
+  }, []);
 
   // Recent exams
   const recentExams = useMemo(() => (scheduledExams || []).slice(0, 4), [scheduledExams]);
@@ -136,7 +189,7 @@ export function ClassLevelDetailClient({ slug }: ClassLevelDetailClientProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Assigned Subjects */}
+        {/* Assigned Subjects - Hierarchical View */}
         <GlassCard>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
@@ -153,33 +206,106 @@ export function ClassLevelDetailClient({ slug }: ClassLevelDetailClientProps) {
 
           {isLoadingSubjects ? (
             <div className="flex justify-center py-8"><LoaderSpinner /></div>
-          ) : assignedSubjects.length > 0 ? (
-            <div className="space-y-2">
-              {assignedSubjects.slice(0, 5).map((subject: any) => (
-                <Link
-                  key={subject.id}
-                  href={`/dashboard/subjects/${subject.slug}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-insight-100 dark:bg-insight-900/30 p-2">
-                      <BookOpen className="h-4 w-4 text-insight-600 dark:text-insight-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-neutral-900 dark:text-white">{subject.name_en}</p>
-                      {subject.name_mr && (
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{subject.name_mr}</p>
-                      )}
-                    </div>
+          ) : (categories.length > 0 || standaloneSubjects.length > 0) ? (
+            <div className="space-y-3">
+              {/* Categories with children */}
+              {categories.map((category) => {
+                const CategoryIcon = getSubjectIcon(category.icon, FolderOpen);
+                return (
+                  <div key={category.id} className="rounded-xl border border-insight-200/50 dark:border-insight-800/30 overflow-hidden">
+                    {/* Category Header */}
+                    <Link
+                      href={`/dashboard/subjects/${category.id}?classLevelId=${classLevel.id}`}
+                      className="flex items-center justify-between p-3 bg-gradient-to-r from-insight-50 to-insight-100/50 dark:from-insight-900/20 dark:to-insight-800/10 hover:from-insight-100 hover:to-insight-100/70 dark:hover:from-insight-900/30 dark:hover:to-insight-800/20 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-insight-200/60 dark:bg-insight-800/40 p-2">
+                          <CategoryIcon className="h-4 w-4 text-insight-700 dark:text-insight-300" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-insight-900 dark:text-insight-100">{category.name_en}</p>
+                          {category.name_mr && (
+                            <p className="text-xs text-insight-600 dark:text-insight-400">{category.name_mr}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-insight-600 dark:text-insight-400 bg-insight-200/50 dark:bg-insight-800/30 px-2 py-0.5 rounded-full">
+                          {category.children.length} subject{category.children.length !== 1 ? 's' : ''}
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-insight-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
+                    
+                    {/* Child Subjects */}
+                    {category.children.length > 0 && (
+                      <div className="bg-white dark:bg-neutral-900/50">
+                        {category.children.map((subject, idx) => {
+                          const SubjectIcon = getSubjectIcon(subject.icon, FileText);
+                          const isLast = idx === category.children.length - 1;
+                          return (
+                            <Link
+                              key={subject.id}
+                              href={`/dashboard/subjects/${subject.id}?classLevelId=${classLevel.id}`}
+                              className={`flex items-center justify-between py-2.5 px-3 pl-6 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group ${!isLast ? 'border-b border-neutral-100 dark:border-neutral-800' : ''}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {/* Tree connector */}
+                                <div className="flex items-center">
+                                  <div className="w-4 h-px bg-neutral-300 dark:bg-neutral-700" />
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary-400 dark:bg-primary-500 ml-0.5" />
+                                </div>
+                                <div className="rounded-md bg-primary-50 dark:bg-primary-900/20 p-1.5">
+                                  <SubjectIcon className="h-3.5 w-3.5 text-primary-600 dark:text-primary-400" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{subject.name_en}</p>
+                                  {subject.name_mr && (
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{subject.name_mr}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              ))}
-              {assignedSubjects.length > 5 && (
-                <p className="text-sm text-neutral-500 text-center pt-2">
-                  +{assignedSubjects.length - 5} more subjects
-                </p>
+                );
+              })}
+
+              {/* Standalone Subjects */}
+              {standaloneSubjects.length > 0 && categories.length > 0 && (
+                <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
+                  <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider px-1 mb-2">
+                    Other Subjects
+                  </p>
+                </div>
               )}
+              {standaloneSubjects.map((subject) => {
+                const SubjectIcon = getSubjectIcon(subject.icon, BookOpen);
+                return (
+                  <Link
+                    key={subject.id}
+                    href={`/dashboard/subjects/${subject.id}?classLevelId=${classLevel.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-primary-100 dark:bg-primary-900/30 p-2">
+                        <SubjectIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-neutral-900 dark:text-white">{subject.name_en}</p>
+                        {subject.name_mr && (
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{subject.name_mr}</p>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <EmptyState

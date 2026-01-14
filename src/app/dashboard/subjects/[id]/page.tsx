@@ -1,6 +1,6 @@
 import { authServerApi, isAuthenticated } from "@/lib/api";
-import { PageHeader, EmptyState, GlassCard, Badge } from '@/client/components/ui/premium';
 import { BookOpen, FileQuestion, Layers, Plus, Folder, Edit2, ChevronRight } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from '@/client/components/ui/button';
@@ -10,6 +10,14 @@ import {
   type ChildSubject,
 } from "@/client/services";
 import { getChaptersWithCounts } from "@/client/services";
+import { ClassLevelSelectFilter } from "@/client/components/features/subjects/subject-detail-filter";
+
+// Helper to get icon component from string
+function getIconComponent(iconName?: string | null, fallback: LucideIcons.LucideIcon = BookOpen) {
+  if (!iconName) return fallback;
+  const IconComp = LucideIcons[iconName as keyof typeof LucideIcons] as LucideIcons.LucideIcon;
+  return IconComp || fallback;
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -142,8 +150,14 @@ async function getChildSubjectStats(childSubjects: ChildSubject[]) {
   return { chapterCounts, questionCounts };
 }
 
-export default async function SubjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ classLevelId?: string }>;
+}
+
+export default async function SubjectDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { classLevelId } = await searchParams;
   const subject = await getSubject(id);
 
   if (!subject) {
@@ -179,142 +193,168 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
       },
     ];
 
+    const CategoryIcon = getIconComponent(subject.icon, Folder);
+    
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title={subject.name_en}
-          description={subject.description_en || `Manage subjects within ${subject.name_en} category`}
-          breadcrumbs={breadcrumbs}
-          action={
-            <div className="flex items-center gap-3">
-              <Badge variant="purple" size="md" dot>
-                Category
-              </Badge>
-              <Link href={`/dashboard/subjects/${id}/edit`}>
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Edit2 className="h-3.5 w-3.5" />
-                  Edit Category
-                </Button>
-              </Link>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        {/* Compact Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-insight-500 text-white shadow-md">
+              <CategoryIcon className="h-6 w-6" />
             </div>
-          }
-        />
-
-        {/* Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categoryStats.map((stat, index) => {
-            const Icon = stat.icon;
-            const colorClasses: Record<string, string> = {
-              primary: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
-              success: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
-              warning: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
-              insight: "bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400",
-            };
-
-            return (
-              <GlassCard key={index} className="flex items-center gap-4 p-5">
-                <div className={`rounded-xl p-3 ${colorClasses[stat.color]}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</p>
-                </div>
-              </GlassCard>
-            );
-          })}
-
-          {/* Add Subject Action Card */}
-          <Link href={`/dashboard/subjects/new?parent=${id}`}>
-            <GlassCard className="group flex items-center gap-4 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer h-full border-transparent hover:border-success-200 dark:hover:border-success-800">
-              <div className="rounded-xl p-3 bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
-                <Plus className="h-5 w-5" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{subject.name_en}</h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-insight-100 text-insight-600 dark:bg-insight-900/40 dark:text-insight-400">
+                  Category
+                </span>
+                <div className={subject.is_active ? 'h-2 w-2 rounded-full bg-success-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]' : 'h-2 w-2 rounded-full bg-neutral-300'} />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-neutral-900 dark:text-white">Add Subject</p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">Create new subject</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </GlassCard>
-          </Link>
-        </div>
-
-        {/* Category Info Card */}
-        <GlassCard>
-          <div className="flex items-start gap-4 p-2">
-            <div className="h-14 w-14 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shrink-0">
-              {subject.icon ? (
-                <span className="text-2xl">{subject.icon}</span>
-              ) : (
-                <Folder className="h-7 w-7" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-1">
-                {subject.name_en}
-              </h2>
               {subject.name_mr && (
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
-                  {subject.name_mr}
-                </p>
-              )}
-              {subject.description_en && (
-                <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2">
-                  {subject.description_en}
-                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{subject.name_mr}</p>
               )}
             </div>
           </div>
-        </GlassCard>
-
-        {/* Child Subjects Section */}
-        <GlassCard>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary-500" />
-              Subjects
-            </h2>
-            <Link
-              href={`/dashboard/subjects/new?parent=${id}`}
-              className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 flex items-center gap-1 hover:underline"
-            >
-              <Plus className="h-4 w-4" />
-              Add Subject
+          <div className="flex items-center gap-2">
+            <ClassLevelSelectFilter />
+            <Link href={`/dashboard/subjects/${id}/edit`}>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Edit2 className="h-3.5 w-3.5" />
+                Edit
+              </Button>
             </Link>
           </div>
+        </div>
 
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-neutral-500">
+          {breadcrumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              {i > 0 && <ChevronRight className="h-3 w-3" />}
+              {crumb.href ? (
+                <Link href={crumb.href} className="hover:text-primary-600 transition-colors">{crumb.label}</Link>
+              ) : (
+                <span className="text-neutral-900 dark:text-white font-medium">{crumb.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
+
+        {/* Description if exists */}
+        {subject.description_en && (
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl">{subject.description_en}</p>
+        )}
+
+        {/* Compact Stats Strip */}
+        <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary-500 text-white">
+              <BookOpen className="h-3 w-3" />
+            </div>
+            <span className="text-lg font-bold text-neutral-900 dark:text-white">{childSubjects.length}</span>
+            <span className="text-xs text-neutral-500">Subjects</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-success-500 text-white">
+              <Layers className="h-3 w-3" />
+            </div>
+            <span className="text-lg font-bold text-neutral-900 dark:text-white">{Object.values(chapterCounts).reduce((sum, count) => sum + count, 0)}</span>
+            <span className="text-xs text-neutral-500">Chapters</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-warning-500 text-white">
+              <FileQuestion className="h-3 w-3" />
+            </div>
+            <span className="text-lg font-bold text-neutral-900 dark:text-white">{Object.values(questionCounts).reduce((sum, count) => sum + count, 0)}</span>
+            <span className="text-xs text-neutral-500">Questions</span>
+          </div>
+          <div className="ml-auto">
+            <Link href={`/dashboard/subjects/new?parent=${id}`}>
+              <Button size="sm" className="gap-1.5 h-8">
+                <Plus className="h-3.5 w-3.5" />
+                Add Subject
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Hierarchy Tree View */}
+        <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 overflow-hidden">
+          {/* Category Header Row */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-insight-50/50 dark:bg-insight-900/10 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-insight-500 text-white">
+              <Folder className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-neutral-900 dark:text-white">{subject.name_en}</span>
+              <span className="ml-2 text-xs text-neutral-400">(Category)</span>
+            </div>
+            <span className="text-xs text-neutral-500">{childSubjects.length} subjects</span>
+          </div>
+
+          {/* Child Subjects */}
           {childSubjects.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {childSubjects.map((child) => (
+            <div className="divide-y divide-neutral-50 dark:divide-neutral-800">
+              {childSubjects.map((child, index) => (
                 <Link
                   key={child.id}
                   href={`/dashboard/subjects/${child.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
+                  className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-linear-to-br from-insight-500 to-insight-600 text-white flex items-center justify-center shadow">
-                      <BookOpen className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-neutral-900 dark:text-white">{child.name_en}</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {chapterCounts[child.id] || 0} chapters · {questionCounts[child.id] || 0} questions
-                      </p>
+                  {/* Tree connector */}
+                  <div className="flex items-center gap-2 pl-4">
+                    <div className="relative">
+                      <div className="absolute -left-4 top-1/2 w-3 h-px bg-neutral-200 dark:bg-neutral-700" />
+                      {index < childSubjects.length - 1 && (
+                        <div className="absolute -left-4 top-1/2 w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
+                      )}
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-white">
+                        <BookOpen className="h-4 w-4" />
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  {/* Subject Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+                        {child.name_en}
+                      </span>
+                      <div className="h-1.5 w-1.5 rounded-full bg-success-500" />
+                    </div>
+                    {child.name_mr && (
+                      <span className="text-xs text-neutral-500 truncate">{child.name_mr}</span>
+                    )}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="hidden sm:flex items-center gap-3 text-xs text-neutral-500 shrink-0">
+                    <span className="flex items-center gap-1">
+                      <Layers className="h-3 w-3" />
+                      <strong className="text-neutral-700 dark:text-neutral-300">{chapterCounts[child.id] || 0}</strong>
+                    </span>
+                    <span className="text-neutral-200 dark:text-neutral-700">|</span>
+                    <span className="flex items-center gap-1">
+                      <FileQuestion className="h-3 w-3" />
+                      <strong className="text-neutral-700 dark:text-neutral-300">{questionCounts[child.id] || 0}</strong>
+                    </span>
+                  </div>
+
+                  <ChevronRight className="h-4 w-4 text-neutral-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all shrink-0" />
                 </Link>
               ))}
             </div>
           ) : (
-            <EmptyState
-              icon={BookOpen}
-              title="No Subjects Yet"
-              description="This category doesn't have any subjects yet. Add your first subject to get started."
-              size="sm"
-            />
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                <BookOpen className="h-6 w-6 text-neutral-400" />
+              </div>
+              <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No subjects in this category</p>
+              <p className="text-xs text-neutral-400 mt-1">Add your first subject to get started</p>
+            </div>
           )}
-        </GlassCard>
+        </div>
       </div>
     );
   }
@@ -339,173 +379,153 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
     },
   ];
 
+  const SubjectIcon = getIconComponent(subject.icon, BookOpen);
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={subject.name_en}
-        description={subject.description_en || `Manage chapters and questions for ${subject.name_en}`}
-        breadcrumbs={breadcrumbs}
-        action={
-          <div className="flex items-center gap-3">
-            <Badge variant={subject.is_active ? "success" : "warning"} size="md" dot>
-              {subject.is_active ? "Active" : "Inactive"}
-            </Badge>
-            <Link href={`/dashboard/subjects/${id}/edit`}>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Edit2 className="h-3.5 w-3.5" />
-                Edit Subject
-              </Button>
-            </Link>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Compact Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500 text-white shadow-md">
+            <SubjectIcon className="h-6 w-6" />
           </div>
-        }
-      />
-
-      {/* Stats Grid - Clickable Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {subjectStats.map((stat, index) => {
-          const Icon = stat.icon;
-          const colorClasses: Record<string, string> = {
-            primary: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
-            success: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
-            warning: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
-            insight: "bg-insight-100 text-insight-600 dark:bg-insight-900/30 dark:text-insight-400",
-          };
-
-          const cardContent = (
-            <GlassCard className={`group flex items-center gap-4 p-5 transition-all duration-200 h-full ${stat.href ? 'hover:-translate-y-1 hover:shadow-lg cursor-pointer border-transparent hover:border-primary-200 dark:hover:border-primary-800' : ''}`}>
-              <div className={`rounded-xl p-3 ${colorClasses[stat.color]}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</p>
-              </div>
-              {stat.href && (
-                <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              )}
-            </GlassCard>
-          );
-
-          if (stat.href) {
-            return (
-              <Link key={index} href={stat.href}>
-                {cardContent}
-              </Link>
-            );
-          }
-
-          return <div key={index}>{cardContent}</div>;
-        })}
-
-        {/* Quick Actions as Cards */}
-        <Link href={`/dashboard/questions?subject=${subject.slug.replace(/_/g, "-")}`}>
-          <GlassCard className="group flex items-center gap-4 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer h-full border-transparent hover:border-primary-200 dark:hover:border-primary-800">
-            <div className="rounded-xl p-3 bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400">
-              <FileQuestion className="h-5 w-5" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{subject.name_en}</h1>
+              <div className={subject.is_active ? 'h-2 w-2 rounded-full bg-success-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]' : 'h-2 w-2 rounded-full bg-neutral-300'} />
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-neutral-900 dark:text-white">View Questions</p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">Browse all questions</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </GlassCard>
-        </Link>
-
-        <Link href={`/dashboard/subjects/${id}/chapters/new`}>
-          <GlassCard className="group flex items-center gap-4 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer h-full border-transparent hover:border-success-200 dark:hover:border-success-800">
-            <div className="rounded-xl p-3 bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
-              <Plus className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-neutral-900 dark:text-white">Add Chapter</p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">Create new chapter</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </GlassCard>
-        </Link>
-      </div>
-
-      {/* Subject Info Card */}
-      <GlassCard>
-        <div className="flex items-start gap-4 p-2">
-          <div className="h-14 w-14 rounded-xl bg-linear-to-br from-insight-500 to-insight-600 text-white flex items-center justify-center shadow-lg shrink-0">
-            {subject.icon ? (
-              <span className="text-2xl">{subject.icon}</span>
-            ) : (
-              <BookOpen className="h-7 w-7" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-1">
-              {subject.name_en}
-            </h2>
             {subject.name_mr && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
-                {subject.name_mr}
-              </p>
-            )}
-            {subject.description_en && (
-              <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2">
-                {subject.description_en}
-              </p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{subject.name_mr}</p>
             )}
           </div>
         </div>
-      </GlassCard>
-
-      {/* Chapters Section */}
-      <GlassCard>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
-            <Layers className="h-5 w-5 text-primary-500" />
-            Chapters
-          </h2>
-          <Link
-            href={`/dashboard/subjects/${id}/chapters/new`}
-            className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 flex items-center gap-1 hover:underline"
-          >
-            <Plus className="h-4 w-4" />
-            Add Chapter
+        <div className="flex items-center gap-2">
+          <ClassLevelSelectFilter />
+          <Link href={`/dashboard/subjects/${id}/edit`}>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Edit2 className="h-3.5 w-3.5" />
+              Edit
+            </Button>
           </Link>
+        </div>
+      </div>
+
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-neutral-500">
+        {breadcrumbs.map((crumb, i) => (
+          <span key={i} className="flex items-center gap-1.5">
+            {i > 0 && <ChevronRight className="h-3 w-3" />}
+            {crumb.href ? (
+              <Link href={crumb.href} className="hover:text-primary-600 transition-colors">{crumb.label}</Link>
+            ) : (
+              <span className="text-neutral-900 dark:text-white font-medium">{crumb.label}</span>
+            )}
+          </span>
+        ))}
+      </nav>
+
+      {/* Description if exists */}
+      {subject.description_en && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl">{subject.description_en}</p>
+      )}
+
+      {/* Compact Stats & Actions Strip */}
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-success-500 text-white">
+            <Layers className="h-3 w-3" />
+          </div>
+          <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.totalChapters}</span>
+          <span className="text-xs text-neutral-500">Chapters</span>
+        </div>
+        <Link href={`/dashboard/questions/${subject.slug.replace(/_/g, "-")}${classLevelId ? `?classLevelId=${classLevelId}` : ''}`} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700/50 hover:border-warning-300 transition-colors group">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-warning-500 text-white">
+            <FileQuestion className="h-3 w-3" />
+          </div>
+          <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.totalQuestions}</span>
+          <span className="text-xs text-neutral-500">Questions</span>
+          <ChevronRight className="h-3 w-3 text-neutral-300 group-hover:text-warning-500 transition-colors" />
+        </Link>
+        <div className="ml-auto flex items-center gap-2">
+          <Link href={`/dashboard/questions/${subject.slug.replace(/_/g, "-")}${classLevelId ? `?classLevelId=${classLevelId}` : ''}`}>
+            <Button variant="outline" size="sm" className="gap-1.5 h-8">
+              <FileQuestion className="h-3.5 w-3.5" />
+              Questions
+            </Button>
+          </Link>
+          <Link href={`/dashboard/subjects/${id}/chapters/new${classLevelId ? `?classLevelId=${classLevelId}` : ''}`}>
+            <Button size="sm" className="gap-1.5 h-8">
+              <Plus className="h-3.5 w-3.5" />
+              Add Chapter
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Chapters List */}
+      <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-neutral-50/50 dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-success-500 text-white">
+              <Layers className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-sm font-semibold text-neutral-900 dark:text-white">Chapters</span>
+            <span className="text-xs text-neutral-400">({chapters.length})</span>
+          </div>
         </div>
 
         {chapters.length > 0 ? (
-          <div className="space-y-2">
-            {chapters.map((chapter) => (
-              <Link
-                key={chapter.id}
-                href={`/dashboard/subjects/${id}/chapters/${chapter.id}`}
-                className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary-100 dark:bg-primary-900/30 p-2">
-                    <BookOpen className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+          <div className="divide-y divide-neutral-50 dark:divide-neutral-800">
+            {chapters.map((chapter, index) => {
+              // Build URL to questions page with chapter filter
+              const subjectSlug = subject.slug.replace(/_/g, "-");
+              const baseUrl = `/dashboard/questions/${subjectSlug}/chapters/${chapter.id}`;
+              const chapterUrl = classLevelId ? `${baseUrl}?classLevelId=${classLevelId}` : baseUrl;
+              
+              return (
+                <Link
+                  key={chapter.id}
+                  href={chapterUrl}
+                  className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                >
+                  {/* Index */}
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-400">
+                    {String(index + 1).padStart(2, '0')}
                   </div>
-                  <div>
-                    <p className="font-medium text-neutral-900 dark:text-white">{chapter.name_en}</p>
+                  
+                  {/* Chapter Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+                        {chapter.name_en}
+                      </span>
+                    </div>
                     {chapter.name_mr && (
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{chapter.name_mr}</p>
+                      <span className="text-xs text-neutral-500 truncate">{chapter.name_mr}</span>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default" size="sm">
-                    {chapter.question_count || 0} questions
-                  </Badge>
-                  <ChevronRight className="h-4 w-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </Link>
-            ))}
+
+                  {/* Question count */}
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-600 dark:text-neutral-400 shrink-0">
+                    <FileQuestion className="h-3 w-3" />
+                    <span className="font-medium">{chapter.question_count || 0}</span>
+                  </div>
+
+                  <ChevronRight className="h-4 w-4 text-neutral-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </Link>
+              );
+            })}
           </div>
         ) : (
-          <EmptyState
-            icon={BookOpen}
-            title="No Chapters Yet"
-            description="This subject doesn't have any chapters yet. Add your first chapter to get started."
-            size="sm"
-          />
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <Layers className="h-6 w-6 text-neutral-400" />
+            </div>
+            <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No chapters yet</p>
+            <p className="text-xs text-neutral-400 mt-1">Add your first chapter to organize content</p>
+          </div>
         )}
-      </GlassCard>
+      </div>
     </div>
   );
 }

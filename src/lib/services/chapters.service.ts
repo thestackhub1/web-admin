@@ -6,7 +6,7 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, asc, inArray } from 'drizzle-orm';
+import { eq, and, asc, inArray, or } from 'drizzle-orm';
 import { chapters, subjects } from '@/db/schema';
 
 export class ChaptersService {
@@ -34,15 +34,26 @@ export class ChaptersService {
 
   /**
    * Get chapters for a subject by slug
+   * Handles both hyphen and underscore variants for slug matching
    */
   static async getBySubjectSlug(subjectSlug: string) {
     const db = await dbService.getDb();
 
-    // First get subject
+    // Normalize slug variants (try both hyphen and underscore)
+    const hyphenSlug = subjectSlug.replace(/_/g, "-");
+    const underscoreSlug = subjectSlug.replace(/-/g, "_");
+
+    // First get subject - try both variants
     const [subject] = await db
       .select({ id: subjects.id })
       .from(subjects)
-      .where(and(eq(subjects.slug, subjectSlug), eq(subjects.isActive, true)))
+      .where(and(
+        or(
+          eq(subjects.slug, hyphenSlug),
+          eq(subjects.slug, underscoreSlug)
+        ),
+        eq(subjects.isActive, true)
+      ))
       .limit(1);
 
     if (!subject) {
