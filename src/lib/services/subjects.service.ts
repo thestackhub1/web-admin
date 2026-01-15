@@ -95,15 +95,30 @@ export class SubjectsService {
   /**
    * Get subject by slug
    * Includes sub-subjects if it's a category
+   * Handles both hyphen and underscore formats (e.g., "information-technology" or "information_technology")
    */
   static async getBySlug(slug: string) {
     const db = await dbService.getDb();
 
-    const [subject] = await db
+    // Try exact match first
+    let [subject] = await db
       .select()
       .from(subjects)
       .where(and(eq(subjects.slug, slug), eq(subjects.isActive, true)))
       .limit(1);
+
+    // If not found, try alternate format (hyphen <-> underscore)
+    if (!subject) {
+      const alternateSlug = slug.includes('-') 
+        ? slug.replace(/-/g, '_') 
+        : slug.replace(/_/g, '-');
+      
+      [subject] = await db
+        .select()
+        .from(subjects)
+        .where(and(eq(subjects.slug, alternateSlug), eq(subjects.isActive, true)))
+        .limit(1);
+    }
 
     if (!subject) {
       return null;
