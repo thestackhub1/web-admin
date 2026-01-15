@@ -277,6 +277,7 @@ type ViewMode = "list" | "table";
 
 export function QuestionsClientPage({ subject, initialQuestions, chapters, currentChapter, showAllQuestions }: QuestionsClientPageProps) {
   const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
   const [questions, setQuestions] = useState(initialQuestions);
   const [filteredQuestions, setFilteredQuestions] = useState(initialQuestions);
   const [showFilters, setShowFilters] = useState(false);
@@ -817,7 +818,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
           {/* Back to Subject - only for chapter view */}
           {currentChapter && (
             <Link
-              href={`/dashboard/questions/${subject}`}
+              href={`/dashboard/questions/${subject}${classLevelId ? `?classLevelId=${classLevelId}` : ''}`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -850,7 +851,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
           />
 
           {/* Add Question */}
-          <Link href={`/dashboard/questions/${subject}/new${currentChapter ? `?chapter=${currentChapter.id}` : ''}`}>
+          <Link href={`/dashboard/questions/${subject}/new${currentChapter || classLevelId ? '?' : ''}${currentChapter ? `chapter=${currentChapter.id}` : ''}${currentChapter && classLevelId ? '&' : ''}${classLevelId ? `classLevelId=${classLevelId}` : ''}`}>
             <Button variant="primary" size="sm" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add Question</span>
@@ -905,7 +906,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
             description={questions.length === 0 ? "Add your first question" : "Adjust your filters"}
             action={
               questions.length === 0 ? (
-                <Link href={`/dashboard/questions/${subject}/new`}>
+                <Link href={`/dashboard/questions/${subject}/new${classLevelId ? `?classLevelId=${classLevelId}` : ''}`}>
                   <Button variant="primary">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Question

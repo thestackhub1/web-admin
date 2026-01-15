@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, FileQuestion, ArrowRight, Edit, Trash2, PlusCircle } from "lucide-react";
 import { GlassCard } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
@@ -25,6 +26,8 @@ interface ChapterAccordionProps {
 }
 
 export function ChapterAccordion({ chapters, subjectId, subjectSlug }: ChapterAccordionProps) {
+  const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -132,7 +135,7 @@ export function ChapterAccordion({ chapters, subjectId, subjectSlug }: ChapterAc
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         Chapter {chapter.order_index}
                       </p>
-                      <Link href={`/dashboard/questions/${subjectSlug.replace(/_/g, "-")}/chapters/${chapter.id}`}>
+                      <Link href={`/dashboard/questions/${subjectSlug.replace(/_/g, "-")}/chapters/${chapter.id}${classLevelId ? `?classLevelId=${classLevelId}` : ''}`}>
                         <Button variant="primary" size="sm" className="gap-2">
                           <FileQuestion className="h-3.5 w-3.5" />
                           View Questions

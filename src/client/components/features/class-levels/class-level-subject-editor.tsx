@@ -213,7 +213,7 @@ export function ClassLevelSubjectEditor({
                   isRemoving && "opacity-50"
                 )}
               >
-                <Link href={`/dashboard/subjects/${subject.id}`} className="flex items-center gap-2">
+                <Link href={`/dashboard/subjects/${subject.id}?classLevelId=${classLevelId}`} className="flex items-center gap-2">
                   <Icon className={clsx("h-4 w-4", style.text)} />
                   <span className={clsx("text-sm font-medium", style.text)}>{subject.name_en}</span>
                 </Link>
