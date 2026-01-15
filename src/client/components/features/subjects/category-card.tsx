@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Folder, ChevronRight, BookOpen } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { clsx } from "clsx";
@@ -20,6 +21,9 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ subject, childSubjectCount }: CategoryCardProps) {
+  const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
+
   // Dynamically resolve icon component
   const IconComponent = subject.icon
     ? (LucideIcons[subject.icon as keyof typeof LucideIcons] as LucideIcons.LucideIcon)
@@ -28,8 +32,13 @@ export function CategoryCard({ subject, childSubjectCount }: CategoryCardProps) 
   // Fallback if the icon name doesn't exist in Lucide
   const DisplayIcon = IconComponent || Folder;
 
+  // Build href with classLevelId if present
+  const href = classLevelId 
+    ? `/dashboard/subjects/${subject.id}?classLevelId=${classLevelId}`
+    : `/dashboard/subjects/${subject.id}`;
+
   return (
-    <Link href={`/dashboard/subjects/${subject.id}`} className="block group">
+    <Link href={href} className="block group">
       <div className="relative flex items-center gap-3 rounded-xl bg-white dark:bg-neutral-800/80 border border-neutral-100 dark:border-neutral-700/50 px-4 py-3 hover:border-insight-300 dark:hover:border-insight-700 hover:shadow-md hover:shadow-insight-500/10 transition-all duration-200">
         {/* Gradient accent line */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-gradient-to-b from-insight-400 to-insight-600" />

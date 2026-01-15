@@ -43,6 +43,7 @@ import { useExamStructures } from '@/client/hooks/use-exam-structures';
 import { useSubjects } from '@/client/hooks/use-subjects';
 import { usePagination } from '@/client/hooks/use-pagination';
 import { PageLoader } from '@/client/components/ui/loader';
+import { ClassLevelFilterBadge, useClassLevelFilter } from '@/client/components/ui/class-level-filter-badge';
 
 // ============================================
 // Constants
@@ -200,7 +201,10 @@ export function ExamStructuresClient() {
   const { data: structures, loading: isLoadingStructures } = useExamStructures();
   const { data: subjects, loading: isLoadingSubjects } = useSubjects();
 
-  // Build URL with params helper
+  // Get class level filter info for dynamic title
+  const { classLevel: activeClassLevel, hasFilter: hasClassLevelFilter } = useClassLevelFilter();
+
+  // Build URL with params helper (preserve classLevelId)
   const buildUrl = useCallback((params: { subject?: string | null; status?: string | null }) => {
     const newParams = new URLSearchParams();
     
@@ -209,9 +213,13 @@ export function ExamStructuresClient() {
     
     if (newSubject && newSubject !== 'all') newParams.set('subject', newSubject);
     if (newStatus && newStatus !== 'all') newParams.set('status', newStatus);
+    // Preserve classLevelId when navigating
+    if (hasClassLevelFilter && activeClassLevel?.id) {
+      newParams.set('classLevelId', activeClassLevel.id);
+    }
     
     return newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
-  }, [pathname, subjectFilter, statusFilter]);
+  }, [pathname, subjectFilter, statusFilter, hasClassLevelFilter, activeClassLevel]);
 
   // Enhance structures with subject information
   const structuresWithSubjects = useMemo(() => {
@@ -229,6 +237,14 @@ export function ExamStructuresClient() {
   // Filter structures
   const filteredStructures = useMemo(() => {
     let filtered = structuresWithSubjects;
+
+    // Class level filter - filter by class_level_id
+    if (hasClassLevelFilter && activeClassLevel?.id) {
+      filtered = filtered.filter((s) => 
+        // Include structures that either match the class level or have no class level set
+        !s.class_level_id || s.class_level_id === activeClassLevel.id
+      );
+    }
 
     // Search filter
     if (searchQuery) {
@@ -305,18 +321,42 @@ export function ExamStructuresClient() {
   // Active filter count
   const activeFilterCount = [subjectFilter, statusFilter].filter(Boolean).length;
 
-  // Clear all filters and reset pagination
+  // Clear all filters and reset pagination (preserve classLevelId)
   const clearAllFilters = useCallback(() => {
     setSearchQuery("");
     resetPage();
-    router.push(pathname);
-  }, [router, pathname, resetPage]);
+    // Preserve classLevelId when clearing filters
+    if (hasClassLevelFilter && activeClassLevel?.id) {
+      router.push(`${pathname}?classLevelId=${activeClassLevel.id}`);
+    } else {
+      router.push(pathname);
+    }
+  }, [router, pathname, resetPage, hasClassLevelFilter, activeClassLevel]);
 
   // Handle search change with pagination reset
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
     resetPage();
   }, [resetPage]);
+
+  // Dynamic page title and description based on filter
+  const pageTitle = hasClassLevelFilter && activeClassLevel 
+    ? `Exam Structures - ${activeClassLevel.name_en}` 
+    : "Exam Structures";
+  const pageDescription = hasClassLevelFilter && activeClassLevel
+    ? `Define exam blueprints with sections and rules for ${activeClassLevel.name_en}`
+    : "Define exam blueprints with sections and rules";
+
+  // Build breadcrumbs based on filter
+  const breadcrumbs = useMemo(() => {
+    const crumbs: { label: string; href?: string }[] = [{ label: "Dashboard", href: "/dashboard" }];
+    if (hasClassLevelFilter && activeClassLevel) {
+      crumbs.push({ label: "Class Levels", href: "/dashboard/class-levels" });
+      crumbs.push({ label: activeClassLevel.name_en, href: `/dashboard/class-levels/${activeClassLevel.slug}` });
+    }
+    crumbs.push({ label: "Exam Structures" });
+    return crumbs;
+  }, [hasClassLevelFilter, activeClassLevel]);
 
   // Loading state
   if (isLoadingStructures || isLoadingSubjects) {
@@ -325,14 +365,11 @@ export function ExamStructuresClient() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Page Header with dynamic content */}
       <PageHeader
-        title="Exam Structures"
-        description="Define exam blueprints with sections and rules"
-        breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Exam Structures" }
-        ]}
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
         action={
           <Link href="/dashboard/exam-structures/new">
             <Button className="flex items-center gap-2">
@@ -342,6 +379,11 @@ export function ExamStructuresClient() {
           </Link>
         }
       />
+
+      {/* Active Filter Badge */}
+      {hasClassLevelFilter && (
+        <ClassLevelFilterBadge />
+      )}
 
       {/* Compact Stats Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { BookOpen, FileQuestion, Layers, ChevronRight } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { clsx } from "clsx";
@@ -65,11 +66,18 @@ const colorSchemes = [
 ];
 
 export function SubjectCard({ subject, chapterCount, questionCount, colorIndex = 0 }: SubjectCardProps) {
+  const searchParams = useSearchParams();
+  const classLevelId = searchParams.get('classLevelId');
   const colors = colorSchemes[colorIndex % colorSchemes.length];
   const IconComponent = getIconComponent(subject.icon) || BookOpen;
   
+  // Build href with classLevelId if present
+  const href = classLevelId 
+    ? `/dashboard/subjects/${subject.id}?classLevelId=${classLevelId}`
+    : `/dashboard/subjects/${subject.id}`;
+
   return (
-    <Link href={`/dashboard/subjects/${subject.id}`} className="block group">
+    <Link href={href} className="block group">
       <div className={clsx(
         "relative flex items-center gap-3 rounded-xl bg-white dark:bg-neutral-800/80 border border-neutral-100 dark:border-neutral-700/50 px-4 py-3 hover:shadow-md transition-all duration-200",
         colors.hover
