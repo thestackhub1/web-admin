@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, User, BookOpen, Award, CheckCircle2, XCircle, Timer, FileText, Layers, TrendingUp, AlertTriangle, ChevronRight } from "lucide-react";
+import { Calendar, Clock, User, BookOpen, Award, CheckCircle2, XCircle, Timer, FileText, Layers, TrendingUp, AlertTriangle } from "lucide-react";
 import { authServerApi, isAuthenticated } from "@/lib/api";
 import { GlassCard, PageHeader, Badge } from '@/client/components/ui/premium';
 import { ExamAttemptDetailsClient } from "@/client/components/features/exams";

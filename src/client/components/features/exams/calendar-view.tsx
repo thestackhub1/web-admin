@@ -8,7 +8,7 @@ import { startOfWeek } from "date-fns";
 import { getDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { clsx } from "clsx";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 

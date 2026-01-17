@@ -46,7 +46,7 @@ export function QuestionTableView({
   subject,
   editingCell,
   editValue,
-  isSaving,
+  isSaving: _isSaving,
   onToggleSelect,
   onSelectAll,
   onClearSelection,

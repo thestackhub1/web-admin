@@ -80,7 +80,7 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
   const router = useRouter();
   const createMutation = useCreateQuestion(subjectSlug);
   const updateMutation = useUpdateQuestion(subjectSlug);
-  const [isSaving, setIsSaving] = useState(false);
+  const isSaving = createMutation.isLoading || updateMutation.isLoading;
   const [showPreview, _setShowPreview] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showTranslation, setShowTranslation] = useState(
@@ -229,8 +229,6 @@ export function QuestionEditor({ subjectSlug, subjectName, subjectDisplaySlug, c
       toast.error("Please select a chapter");
       return;
     }
-
-    const isSaving = createMutation.isLoading || updateMutation.isLoading;
 
     const finalLanguage = questionLanguage || defaultLanguage;
     const finalSecondaryLanguage =

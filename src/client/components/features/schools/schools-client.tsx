@@ -63,7 +63,7 @@ export function SchoolsClient() {
         toast.success(`School ${verified ? 'verified' : 'unverified'}`);
         refetchSchools();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update verification status");
     }
   };
@@ -82,7 +82,7 @@ export function SchoolsClient() {
         toast.success("School deleted successfully");
         refetchSchools();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete school");
     }
   };

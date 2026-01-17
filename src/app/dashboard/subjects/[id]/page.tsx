@@ -172,7 +172,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
     const childSubjects = await getChildSubjects(id);
     const { chapterCounts, questionCounts } = await getChildSubjectStats(childSubjects);
 
-    const categoryStats = [
+    const _categoryStats = [
       {
         label: "Subjects",
         value: childSubjects.length,
@@ -363,7 +363,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
   const chapters = await getChaptersWithQuestionCounts(id, subject.slug);
 
   // Stats for this subject
-  const subjectStats = [
+  const _subjectStats = [
     {
       label: "Chapters",
       value: stats.totalChapters,

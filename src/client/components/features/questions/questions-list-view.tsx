@@ -4,8 +4,6 @@ import { useRouter } from "next/navigation";
 import {
     MoreHorizontal,
     ExternalLink,
-    Target,
-    Zap,
     BookOpen,
     GraduationCap,
     Monitor,

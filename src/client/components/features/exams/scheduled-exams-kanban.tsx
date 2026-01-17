@@ -302,7 +302,7 @@ export function ScheduledExamsKanban({ exams: initialExams }: ScheduledExamsKanb
         setIsClient(true);
     }, []);
 
-    const { mutate: updateStatus, loading: isUpdating } = useUpdateScheduledExamStatus();
+    const { mutate: updateStatus, loading: _isUpdating } = useUpdateScheduledExamStatus();
 
     // Group exams by status
     const groupedExams = useMemo(() => {

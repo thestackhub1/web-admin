@@ -11,7 +11,7 @@ import { authenticateRequest, isAuthContext } from '@/lib/auth';
 import { QuestionImportService } from '@/lib/services';
 import { isSubjectSupported } from '@/lib/services/questions.service';
 import { extractQuestionsFromPdf, convertToParsedQuestions } from '@/lib/services/ai';
-import { getDefaultModel, getModelConfig, isModelAvailable } from '@/lib/services/ai/providers';
+import { getDefaultModel, isModelAvailable } from '@/lib/services/ai/providers';
 import type { AIModel } from '@/lib/services/ai/types';
 import { parsePdfQuestions } from '@/lib/pdf/pdf-parser';
 

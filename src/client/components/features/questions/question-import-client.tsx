@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, CheckCircle, AlertCircle, Download, X } from "lucide-react";
+import { Upload, FileText, CheckCircle, Download, X } from "lucide-react";
 import { Loader, LoadingComponent } from "@/client/components/ui/loader";
 import { toast } from "sonner";
 import { PageHeader, GlassCard, Badge } from '@/client/components/ui/premium';
@@ -55,7 +55,7 @@ export function QuestionImportClient() {
   const { saveDraft, loading: isSaving } = useSaveImportDraft();
   const { commit, loading: isCommitting } = useCommitImport();
 
-  const isProcessing = isPdfLoading || isCsvLoading;
+  const _isProcessing = isPdfLoading || isCsvLoading;
 
   const subjectOptions: SelectOption[] = [
     { value: "scholarship", label: subjectDisplayMap.scholarship || "Scholarship" },

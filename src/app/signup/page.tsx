@@ -7,12 +7,11 @@ import { Button } from "@/client/components/ui/button";
 import { Input } from "@/client/components/ui/input";
 import { Card } from "@/client/components/ui/card";
 import { useSignup } from "@/client/hooks";
-import { UserPlus, Mail, Lock, User, Phone, CheckCircle2, Building2, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, User, Phone, Building2, ChevronDown, ArrowRight } from "lucide-react";
 import { AuthLayout } from "@/client/components/layout/auth-layout";
 import { SchoolSearchModal } from "@/client/components/features/schools";
 import type { School } from "@/client/api/schools";
 import Link from "next/link";
-import { z } from "zod";
 
 export default function SignupPage() {
   const router = useRouter();

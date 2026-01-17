@@ -188,7 +188,7 @@ export function QuestionsFilterDialog({
         localFilters.status && localFilters.status !== 'all',
     ].filter(Boolean).length;
 
-    const hasChanges = JSON.stringify(localFilters) !== JSON.stringify(filters);
+    const _hasChanges = JSON.stringify(localFilters) !== JSON.stringify(filters);
 
     return (
         <AnimatePresence>

@@ -7,7 +7,7 @@
 
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc } from 'drizzle-orm';
-import { classLevels, subjectClassMappings, subjects, scheduledExams, profiles, examStructures, exams, type ClassLevel } from '@/db/schema';
+import { classLevels, subjectClassMappings, subjects, scheduledExams, profiles, examStructures, exams } from '@/db/schema';
 import { count, or, sql } from 'drizzle-orm';
 import { generateId } from '@/db/utils/id';
 
@@ -283,7 +283,7 @@ export class ClassLevelsService {
     // Default order index: last + 1
     let orderIndex = data.orderIndex;
     if (orderIndex === undefined) {
-      const last = await db
+      const _last = await db
         .select({ orderIndex: classLevels.orderIndex })
         .from(classLevels)
         .orderBy(asc(classLevels.orderIndex)) // Actually we want desc to find last, but let's query max

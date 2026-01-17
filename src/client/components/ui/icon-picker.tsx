@@ -3,10 +3,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Search, ChevronDown, X } from "lucide-react";
+import { Search, ChevronDown, X } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { clsx } from "clsx";
-import { Button } from '@/client/components/ui/button';
 
 // Curated list of icons suitable for education/admin context
 const ICON_NAMES = [

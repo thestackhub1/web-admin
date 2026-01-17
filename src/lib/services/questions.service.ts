@@ -7,13 +7,11 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, or, inArray, asc, desc, sql, count } from 'drizzle-orm';
+import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import {
   questionsScholarship,
   questionsEnglish,
   questionsInformationTechnology,
-  chapters,
-  subjects,
 } from '@/db/schema';
 import { generateId } from '@/db/utils/id';
 

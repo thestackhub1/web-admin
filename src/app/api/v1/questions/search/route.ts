@@ -13,7 +13,7 @@ import {
     questionsEnglish,
     questionsInformationTechnology,
 } from "@/db/schema";
-import { ilike, or, and, eq } from "drizzle-orm";
+import { ilike, and, eq } from "drizzle-orm";
 
 // Question tables with their subject info
 const QUESTION_TABLES = [

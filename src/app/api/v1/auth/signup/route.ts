@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       school_id,
       new_school,
       class_level,
-      preferred_language,
+      preferred_language: _preferred_language,
     } = parsed.data;
 
     // Handle school selection/creation first

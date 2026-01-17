@@ -63,7 +63,7 @@ export function SectionEditor({
     examStructureId,
     examStructureName,
     subjectId,
-    subjectName,
+    subjectName: _subjectName,
     classLevelId: _classLevelId,
     section,
     sectionIndex,

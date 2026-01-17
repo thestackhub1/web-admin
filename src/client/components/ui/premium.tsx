@@ -391,7 +391,7 @@ export function QuickActionCard({
   title,
   description,
   href,
-  gradient = "none",
+  gradient: _gradient = "none",
   iconBg,
   iconColor,
   semantic = "primary",

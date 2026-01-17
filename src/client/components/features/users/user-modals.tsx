@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, type FormEvent } from "react";
+import React, { useState, type FormEvent } from "react";
 import { Button } from '@/client/components/ui/button';
 import { X, Eye, EyeOff } from "lucide-react";
-import { User, useCreateUser, useUpdateUser } from "@/client/hooks/use-users";
+import { useCreateUser } from "@/client/hooks/use-users";
 import { SchoolSearch } from "@/client/components/features/schools/school-search";
 
 // Roles for selection

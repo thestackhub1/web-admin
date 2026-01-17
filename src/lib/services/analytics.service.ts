@@ -3,12 +3,10 @@ import { dbService } from "./dbService";
 import { count, eq, sql, desc, and, gte, lt } from "drizzle-orm";
 import {
     profiles,
-    schools,
     scheduledExams,
     exams,
     questionsScholarship,
     subjects,
-    classLevels,
     chapters
 } from "@/db/schema";
 
@@ -145,8 +143,8 @@ export class AnalyticsService {
                 totalUsers,
                 totalStudents,
                 totalExamsThisMonth,
-                completedExamsThisMonth,
-                avgScoreThisMonth
+                _completedExamsThisMonth,
+                _avgScoreThisMonth
             ] = await Promise.all([
                 db.select({ count: count() }).from(profiles).where(gte(profiles.createdAt, lastMonthISO)),
                 db.select({ count: count() }).from(profiles),

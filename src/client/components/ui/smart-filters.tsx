@@ -385,9 +385,9 @@ export function SmartFilterBar({
   onRefresh,
   isLoading = false,
   className,
-  searchQuery,
-  onSearchChange,
-  placeholder,
+  searchQuery: _searchQuery,
+  onSearchChange: _onSearchChange,
+  placeholder: _placeholder,
   hideFilters = false,
 }: SmartFilterBarProps) {
   const activeFilterCount = [

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { cn } from "@/client/utils";
 import { Logo } from "@/client/components/shared/Logo";
 import { GlobalSearchDialog } from "@/client/components/shared/global-search-dialog";
-import { Bell, Search, Menu, Moon, Sun, User, LogOut, Settings, Command } from "lucide-react";
+import { Bell, Search, Menu, Moon, Sun, LogOut, Settings, Command } from "lucide-react";
 
 /**
  * Admin Dashboard Header - Floating Glass Navbar

@@ -8,7 +8,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import { api } from '@/client/api';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 

@@ -6,7 +6,7 @@
  * Generic selection hook for list components with bulk actions.
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 
 export interface UseBulkSelectionResult<T extends { id: string }> {
     /** Set of selected item IDs */

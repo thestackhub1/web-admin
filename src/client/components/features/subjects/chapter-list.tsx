@@ -14,7 +14,7 @@ interface ChapterListProps {
     onRefresh: () => void;
 }
 
-export function ChapterList({ subjectId, subjectSlug, chapters, onRefresh }: ChapterListProps) {
+export function ChapterList({ subjectId: _subjectId, subjectSlug, chapters, onRefresh }: ChapterListProps) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
     const [deletingChapterId, setDeletingChapterId] = useState<string | null>(null);

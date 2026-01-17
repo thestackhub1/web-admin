@@ -5,7 +5,7 @@
 import { useRef, useEffect } from "react";
 import { X, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { clsx } from "clsx";
-import { questionTypeLabels, type QuestionType } from "@/client/types/questions";
+import { questionTypeLabels } from "@/client/types/questions";
 
 interface QuestionFiltersProps {
   showFilters: boolean;

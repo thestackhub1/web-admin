@@ -31,7 +31,7 @@ export function UserContactInfo({ user }: UserContactInfoProps) {
                 setIsEditing(false);
                 router.refresh();
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error("Failed to update contact info");
         }
     };

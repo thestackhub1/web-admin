@@ -6,7 +6,7 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, or, ilike, asc, desc, sql } from 'drizzle-orm';
+import { eq, and, or, ilike, asc, sql } from 'drizzle-orm';
 import { schools, profiles } from '@/db/schema';
 import { generateId } from '@/db/utils/id';
 

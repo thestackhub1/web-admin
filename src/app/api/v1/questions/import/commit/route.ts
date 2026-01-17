@@ -11,6 +11,7 @@ import { QuestionImportService, QuestionsService } from '@/lib/services';
 import { getQuestionTableName } from '@/lib/services/questions.service';
 import { getDefaultLanguageForSubject } from '@/client/types/questions';
 import { z } from 'zod';
+// Note: getModelConfig was previously imported but is not used in this file
 
 const commitBatchSchema = z.object({
   batchId: z.string().uuid(),
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get default language for subject
-    const defaultLanguage = getDefaultLanguageForSubject(batch.subject_slug);
+    const _defaultLanguage = getDefaultLanguageForSubject(batch.subject_slug);
 
     // Prepare questions for insertion
     const questionsToInsert = batch.parsed_questions.map((q: any) => {

@@ -10,14 +10,13 @@
 
 import { useState, useEffect } from "react";
 import { Search, UserCircle, Mail, Calendar, ToggleLeft, ToggleRight, ChevronRight, Crown, BookOpen, GraduationCap, Trash2, PlusCircle, Users } from "lucide-react";
-import { GlassCard, Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell, PageHeader, StatCardPremium } from '@/client/components/ui/premium';
+import { Badge, EmptyState, DataTableContainer, DataTable, DataTableHead, DataTableHeadCell, DataTableBody, DataTableRow, DataTableCell, PageHeader, StatCardPremium } from '@/client/components/ui/premium';
 import { SmartFilterChips } from '@/client/components/ui/question-components';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
 import { LoadingComponent, PageLoader } from '@/client/components/ui/loader';
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { cn } from "@/client/utils";
 import { AddUserModal } from "./user-modals";
 import { useDeleteUser, useUsers } from "@/client/hooks/use-users";
 
@@ -112,7 +111,7 @@ export function UsersClient({ users: initialUsers = [] }: { users: User[] }) {
     }
   }, [roleFilter, debouncedSearch, pathname, router, searchParams]);
 
-  const { mutate: deleteUser, loading: deleting } = useDeleteUser();
+  const { mutate: deleteUser, loading: _deleting } = useDeleteUser();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (userId: string) => {

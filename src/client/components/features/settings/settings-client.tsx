@@ -8,11 +8,11 @@
 "use client";
 
 import { useState } from "react";
-import { GlassCard, SectionHeader } from '@/client/components/ui/premium';
+import { GlassCard } from '@/client/components/ui/premium';
 import { TextInput } from '@/client/components/ui/input';
 import { Button } from '@/client/components/ui/button';
 import { toast } from "sonner";
-import { User, Globe, Palette, Save, Settings } from "lucide-react";
+import { User, Globe, Palette, Settings } from "lucide-react";
 import { useUpdateProfile, useChangePassword } from "@/client/hooks/use-profile";
 
 interface SettingsClientProps {
@@ -34,7 +34,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const { mutate: changePassword, loading: changingPassword } = useChangePassword();
 
   // Password State
-  const [currentPassword, setCurrentPassword] = useState("");
+  const [_currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 

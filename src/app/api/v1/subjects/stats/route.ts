@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         const stats = await SubjectsService.getStats(rlsContext);
 
         // Get total questions from all question tables
-        const questionCounts = await Promise.all([
+        const _questionCounts = await Promise.all([
             QuestionsService.getBySubject('scholarship', { isActive: true, limit: 1 }),
             QuestionsService.getBySubject('english', { isActive: true, limit: 1 }),
             QuestionsService.getBySubject('information-technology', { isActive: true, limit: 1 }),

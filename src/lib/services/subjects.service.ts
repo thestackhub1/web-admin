@@ -7,7 +7,7 @@
 
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc, desc, sql, isNull } from 'drizzle-orm';
-import { subjects, subjectClassMappings, chapters, type Subject } from '@/db/schema';
+import { subjects, subjectClassMappings, chapters } from '@/db/schema';
 import { generateId } from '@/db/utils/id';
 
 export class SubjectsService {

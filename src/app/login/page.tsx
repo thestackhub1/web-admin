@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button, Input, Card, PasscodeInput, LoadingComponent } from "@/client/components/ui";
 import { AuthLayout } from "@/client/components/layout/auth-layout";
 import { useSignin, useLogout } from "@/client/hooks";
-import { Phone, ArrowRight, Sparkles, Lock, Mail, User, AlertCircle } from "lucide-react";
+import { ArrowRight, Sparkles, Lock, Mail, User, AlertCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 
@@ -47,7 +47,7 @@ function LoginForm() {
   const [password, setPassword] = React.useState("");
   const [passcode, setPasscode] = React.useState("");
   const [authMethod, setAuthMethod] = React.useState<"passcode" | "password">("password"); // Default to password for admins
-  const [isAutoDetected, setIsAutoDetected] = React.useState(false);
+  const [_isAutoDetected, setIsAutoDetected] = React.useState(false);
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 

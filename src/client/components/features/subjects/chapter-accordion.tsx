@@ -6,8 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, FileQuestion, ArrowRight, Edit, Trash2, PlusCircle } from "lucide-react";
 import { GlassCard } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
-import { clsx } from "clsx";
-import { useDeleteChapter, useUpdateChapter, useCreateChapter } from '@/client/hooks/use-chapters';
+import { useDeleteChapter } from '@/client/hooks/use-chapters';
 import { AddChapterModal, EditChapterModal } from './chapter-modals';
 
 interface Chapter {
@@ -25,13 +24,13 @@ interface ChapterAccordionProps {
   subjectSlug: string;
 }
 
-export function ChapterAccordion({ chapters, subjectId, subjectSlug }: ChapterAccordionProps) {
+export function ChapterAccordion({ chapters, subjectId: _subjectId, subjectSlug }: ChapterAccordionProps) {
   const searchParams = useSearchParams();
   const classLevelId = searchParams.get('classLevelId');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { mutate: deleteChapter, loading: deleting } = useDeleteChapter();
+  const { mutate: deleteChapter, loading: _deleting } = useDeleteChapter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const toggleChapter = (chapterId: string) => {

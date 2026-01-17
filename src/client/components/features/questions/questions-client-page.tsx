@@ -25,11 +25,10 @@ import {
   Target,
 } from "lucide-react";
 import { toast } from "sonner";
-import { GlassCard, PageHeader, Badge, EmptyState, SectionHeader } from '@/client/components/ui/premium';
-import { ExportDropdown, SmartFilterChips, QuestionTypeBadge, DifficultyBadge, QuestionStats } from '@/client/components/ui/question-components';
+import { GlassCard, PageHeader, EmptyState } from '@/client/components/ui/premium';
+import { ExportDropdown, SmartFilterChips } from '@/client/components/ui/question-components';
 import { BulkActionBar } from '@/client/components/ui/bulk-action-bar';
 import { Button } from '@/client/components/ui/button';
-import { TextInput } from '@/client/components/ui/input';
 import { useUpdateQuestion, useBulkUpdateQuestionStatus, useBulkDeleteQuestions } from "@/client/hooks";
 import { questionTypeLabels, subjectDisplayMap, type QuestionType, type Difficulty } from "@/client/types/questions";
 import { jsonToString, stringToJson, jsonToPlainText, plainTextToJson } from '@/client/utils/editor-utils';
@@ -655,7 +654,7 @@ export function QuestionsClientPage({ subject, initialQuestions, chapters, curre
       ];
 
   // Render editable cell
-  const renderEditableCell = (question: Question, field: string, value: string, displayValue?: string) => {
+  const _renderEditableCell = (question: Question, field: string, value: string, displayValue?: string) => {
     const isEditing = editingCell?.questionId === question.id && editingCell?.field === field;
 
     if (isEditing) {

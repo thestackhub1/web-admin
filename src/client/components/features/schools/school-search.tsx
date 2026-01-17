@@ -66,9 +66,9 @@ export function SchoolSearch({
     loadSuggestions();
   }, []);
 
-  const { data: suggestions, loading: suggestionsLoading } = useSchoolSuggest("", 5);
+  const { data: suggestions, loading: _suggestionsLoading } = useSchoolSuggest("", 5);
   const [searchQueryForHook, setSearchQueryForHook] = useState("");
-  const { data: searchResults, loading: searchLoading } = useSchoolSearch(searchQueryForHook);
+  const { data: searchResults, loading: _searchLoading } = useSchoolSearch(searchQueryForHook);
   const createSchoolMutation = useCreateSchool();
 
   useEffect(() => {

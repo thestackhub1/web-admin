@@ -28,7 +28,7 @@ export async function generateMetadata({
 
 export default async function ChapterQuestionsPage({ params, searchParams }: PageProps) {
     const { subject, chapterId } = await params;
-    const { classLevelId } = await searchParams;
+    const { classLevelId: _classLevelId } = await searchParams;
     
     // Get chapter info first to find the actual subject
     const chapter = await getChapterById(chapterId);

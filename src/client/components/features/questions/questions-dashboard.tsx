@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAllQuestions, Question } from "@/client/hooks/use-questions";
+import { useAllQuestions } from "@/client/hooks/use-questions";
 import { useSubjects } from "@/client/hooks/use-subjects";
 import {
     FilterState,

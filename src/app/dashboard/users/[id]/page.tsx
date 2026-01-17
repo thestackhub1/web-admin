@@ -1,13 +1,8 @@
 import { getCurrentUser, getUserById } from "@/client/services";
 import { PageHeader, GlassCard, EmptyState } from '@/client/components/ui/premium';
 import {
-  Mail,
-  Phone,
-  School,
-  GraduationCap,
   Calendar,
   Clock,
-  Shield,
   BookOpen,
   CheckCircle2,
   XCircle,
@@ -15,7 +10,6 @@ import {
   Award,
   TrendingUp,
   ClipboardList,
-  Globe,
   ArrowLeft,
 } from "lucide-react";
 import type { Metadata } from "next";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, BookOpen, GraduationCap, CheckCircle2, XCircle, Edit2, Check, X, User as UserIcon } from "lucide-react";
+import { Shield, BookOpen, GraduationCap, CheckCircle2, XCircle, Edit2, Check, X } from "lucide-react";
 import { GlassCard } from "@/client/components/ui/premium";
 import { Button } from "@/client/components/ui/button";
 import { useUpdateUser, type User } from "@/client/hooks/use-users";
@@ -40,7 +40,7 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
                 setIsEditing(false);
                 router.refresh();
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error("Failed to update profile");
         }
     };

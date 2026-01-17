@@ -7,7 +7,7 @@
 
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc } from 'drizzle-orm';
-import { examStructures, subjects, type ExamStructure } from '@/db/schema';
+import { examStructures, subjects } from '@/db/schema';
 import { generateId } from '@/db/utils/id';
 
 export class ExamStructuresService {

@@ -103,7 +103,7 @@ const statusConfig: Record<string, {
   },
 };
 
-const defaultStatus = {
+const _defaultStatus = {
   label: "Unknown",
   icon: ClipboardList,
   color: "text-neutral-500",
@@ -207,7 +207,7 @@ export function ExamAttemptsClient({ exams, subjects, isStudent }: ExamAttemptsC
 
   // Use hooks for delete operations
   const { mutate: deleteExamAttempt, loading: isDeleting } = useDeleteExamAttempt();
-  const { mutate: bulkDelete, loading: isBulkDeleting } = useBulkDeleteExamAttempts();
+  const { mutate: bulkDelete, loading: _isBulkDeleting } = useBulkDeleteExamAttempts();
 
   // Selection handlers
   const toggleSelect = (id: string) => {

@@ -14,14 +14,13 @@ import {
 import {
   SmartFilterBar,
   FilterState,
-  FilterOption,
 } from '@/client/components/ui/smart-filters';
 import {
   KpiCard,
   ProgressRing,
   InsightPanel,
 } from '@/client/components/ui/kpi-cards';
-import { LoaderSpinner, PageLoader } from '@/client/components/ui/loader';
+import { PageLoader } from '@/client/components/ui/loader';
 import {
   useDashboardStats,
   useKpiMetrics,
@@ -165,7 +164,7 @@ export function AnalyticsClient() {
   );
 
   const questionTypePerformance: Array<{ type: string; total: number; correct: number; accuracy: number }> = [];
-  const chapterPerformance: Array<{ chapterName: string; subjectName: string; accuracy: number }> = [];
+  const _chapterPerformance: Array<{ chapterName: string; subjectName: string; accuracy: number }> = [];
 
   if (isLoading) {
     return <PageLoader message="Loading analytics and performance metrics..." />;

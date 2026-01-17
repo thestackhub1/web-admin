@@ -22,18 +22,11 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
-  Users,
-  MapPin,
   Calendar,
   Shield,
-  ArrowLeft,
-  ExternalLink,
-  Sparkles,
   GraduationCap,
   Globe,
-  Clock,
   AlertTriangle,
-  TrendingUp,
   ChevronRight,
 } from "lucide-react";
 import { Loader } from "@/client/components/ui/loader";

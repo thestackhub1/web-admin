@@ -4,10 +4,10 @@
 
 import Link from "next/link";
 import { clsx } from "clsx";
-import { Pencil, Check, Square, BookOpen } from "lucide-react";
+import { Pencil, Check, BookOpen } from "lucide-react";
 import { Badge } from '@/client/components/ui/premium';
 import { QuestionTypeBadge, DifficultyBadge } from '@/client/components/ui/question-components';
-import type { QuestionType, Difficulty } from "@/client/types/questions";
+import type { Difficulty, QuestionType } from "@/client/types/questions";
 
 interface Question {
   id: string;

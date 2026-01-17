@@ -8,20 +8,15 @@ import { toast } from "sonner";
 import {
   Calendar,
   Clock,
-  Target,
   Save,
-  X,
   Edit2,
   FileText,
   ExternalLink,
-  Repeat,
-  CheckCircle,
-  AlertCircle
 } from "lucide-react";
 import { LoaderSpinner } from '@/client/components/ui/loader';
 import { TextInput } from '@/client/components/ui/input';
 import { Select } from '@/client/components/ui/select';
-import { GlassCard, Badge } from '@/client/components/ui/premium';
+import { GlassCard } from '@/client/components/ui/premium';
 import { Button } from '@/client/components/ui/button';
 import type { ScheduledExamStatus } from "@/client/types/class-levels";
 import { useUpdateScheduledExam } from "@/client/hooks";
