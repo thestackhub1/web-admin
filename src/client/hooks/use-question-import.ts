@@ -9,7 +9,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { getAccessToken } from '@/lib/supabase/client';
+import { getAccessToken } from '@/lib/auth/client';
 import type { ParsedQuestion } from '@/lib/pdf/pdf-parser';
 
 // ============================================================

@@ -1,4 +1,5 @@
 import { db, schema, client } from "./db";
+import { randomUUID } from "crypto";
 
 export async function seedSubjectClassMappings() {
   console.log("🔗 Seeding subject-class mappings...");
@@ -24,7 +25,8 @@ export async function seedSubjectClassMappings() {
   const class11 = allClassLevels.find((c) => c.slug === "class-11");
   const class12 = allClassLevels.find((c) => c.slug === "class-12");
 
-  const mappings: { subjectId: string; classLevelId: string }[] = [];
+  const now = new Date().toISOString();
+  const mappings: { id: string; subjectId: string; classLevelId: string; createdAt: string; isActive: boolean }[] = [];
 
   // ============================================
   // Scholarship -> Class 4, 5, 7, 8
@@ -36,11 +38,11 @@ export async function seedSubjectClassMappings() {
     for (const cls of scholarshipClasses) {
       if (cls) {
         // Map the category itself
-        mappings.push({ subjectId: scholarshipCategory.id, classLevelId: cls.id });
+        mappings.push({ id: randomUUID(), subjectId: scholarshipCategory.id, classLevelId: cls.id, createdAt: now, isActive: true });
 
         // Map all sub-subjects (Marathi, Math, Intelligence, GK)
         for (const subSubject of scholarshipSubSubjects) {
-          mappings.push({ subjectId: subSubject.id, classLevelId: cls.id });
+          mappings.push({ id: randomUUID(), subjectId: subSubject.id, classLevelId: cls.id, createdAt: now, isActive: true });
         }
       }
     }
@@ -50,10 +52,10 @@ export async function seedSubjectClassMappings() {
   // IT -> Class 11, 12
   // ============================================
   if (itSubject && class11) {
-    mappings.push({ subjectId: itSubject.id, classLevelId: class11.id });
+    mappings.push({ id: randomUUID(), subjectId: itSubject.id, classLevelId: class11.id, createdAt: now, isActive: true });
   }
   if (itSubject && class12) {
-    mappings.push({ subjectId: itSubject.id, classLevelId: class12.id });
+    mappings.push({ id: randomUUID(), subjectId: itSubject.id, classLevelId: class12.id, createdAt: now, isActive: true });
   }
 
   // Insert all mappings
@@ -80,5 +82,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/seed/subje
       console.error("❌ Error seeding subject-class mappings:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

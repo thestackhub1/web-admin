@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, desc } from 'drizzle-orm';
 import { questionImportBatches } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export interface QuestionImportBatchCreateData {
   subjectSlug: string;
@@ -34,6 +35,7 @@ export class QuestionImportService {
     const [batch] = await db
       .insert(questionImportBatches)
       .values({
+        id: generateId(),
         subjectSlug: data.subjectSlug,
         batchName: data.batchName,
         parsedQuestions: data.parsedQuestions,
@@ -51,8 +53,8 @@ export class QuestionImportService {
       parsed_questions: batch.parsedQuestions,
       metadata: batch.metadata,
       created_by: batch.createdBy,
-      created_at: batch.createdAt?.toISOString(),
-      updated_at: batch.updatedAt?.toISOString(),
+      created_at: batch.createdAt || null,
+      updated_at: batch.updatedAt || null,
     };
   }
 
@@ -80,9 +82,9 @@ export class QuestionImportService {
       parsed_questions: batch.parsedQuestions,
       metadata: batch.metadata,
       created_by: batch.createdBy,
-      created_at: batch.createdAt?.toISOString(),
-      updated_at: batch.updatedAt?.toISOString(),
-      imported_at: batch.importedAt?.toISOString(),
+      created_at: batch.createdAt || null,
+      updated_at: batch.updatedAt || null,
+      imported_at: batch.importedAt || null,
     };
   }
 
@@ -97,7 +99,7 @@ export class QuestionImportService {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const updateData: any = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (data.batchName !== undefined) updateData.batchName = data.batchName;
@@ -106,7 +108,7 @@ export class QuestionImportService {
     if (data.metadata !== undefined) updateData.metadata = data.metadata;
 
     if (data.status === 'imported') {
-      updateData.importedAt = new Date();
+      updateData.importedAt = new Date().toISOString();
     }
 
     const [batch] = await db
@@ -127,9 +129,9 @@ export class QuestionImportService {
       parsed_questions: batch.parsedQuestions,
       metadata: batch.metadata,
       created_by: batch.createdBy,
-      created_at: batch.createdAt?.toISOString(),
-      updated_at: batch.updatedAt?.toISOString(),
-      imported_at: batch.importedAt?.toISOString(),
+      created_at: batch.createdAt || null,
+      updated_at: batch.updatedAt || null,
+      imported_at: batch.importedAt || null,
     };
   }
 
@@ -159,9 +161,9 @@ export class QuestionImportService {
       parsed_questions: batch.parsedQuestions,
       metadata: batch.metadata,
       created_by: batch.createdBy,
-      created_at: batch.createdAt?.toISOString(),
-      updated_at: batch.updatedAt?.toISOString(),
-      imported_at: batch.importedAt?.toISOString(),
+      created_at: batch.createdAt || null,
+      updated_at: batch.updatedAt || null,
+      imported_at: batch.importedAt || null,
     }));
   }
 }

@@ -1,4 +1,5 @@
 import { db, schema, client } from "./db";
+import { randomUUID } from "crypto";
 
 /**
  * Seed Information Technology questions (English primary language)
@@ -6,19 +7,22 @@ import { db, schema, client } from "./db";
  */
 
 interface QuestionData {
+  id?: string;
   questionText: string;
   questionLanguage: "en" | "mr";
   questionTextSecondary?: string;
   secondaryLanguage?: "en" | "mr";
   questionType: string;
   difficulty: "easy" | "medium" | "hard";
-  answerData: any;
+  answerData: Record<string, unknown>;
   chapterId?: string;
   marks: number;
   explanationEn?: string;
   explanationMr?: string;
   tags?: string[];
-  classLevel?: string;
+  classLevel: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -766,7 +770,9 @@ export async function seedITQuestions() {
     await db.delete(schema.questionsInformationTechnology);
     console.log("   ✓ Cleared existing IT questions");
 
-    // Get all questions
+    const now = new Date().toISOString();
+
+    // Get all questions and add id + timestamps
     const allQuestions = [
       ...getFillBlankQuestions(chapters),
       ...getTrueFalseQuestions(chapters),
@@ -774,7 +780,12 @@ export async function seedITQuestions() {
       ...getMCQTwoQuestions(chapters),
       ...getShortAnswerQuestions(chapters),
       ...getMatchQuestions(chapters),
-    ];
+    ].map((q) => ({
+      ...q,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    }));
 
     // Insert questions
     const questions = await db
@@ -808,6 +819,6 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("/seed/quest
       console.error("❌ Error seeding IT questions:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }
 

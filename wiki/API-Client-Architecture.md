@@ -191,7 +191,7 @@ export function useImportPdf() {
 
 The API client automatically handles authentication:
 
-1. **Token Retrieval:** Uses `getAccessToken()` from `@/lib/supabase/client`
+1. **Token Retrieval:** Uses `getAccessToken()` from `@/lib/auth/client`
 2. **Header Injection:** Adds `Authorization: Bearer <token>` header
 3. **Cookie Support:** Uses `credentials: 'include'` for session cookies
 4. **Session Expiry:** Handles 401/403 responses with redirect to login

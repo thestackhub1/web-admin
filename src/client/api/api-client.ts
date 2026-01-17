@@ -14,7 +14,7 @@
  */
 
 import type { ApiSuccessResponse, ApiErrorResponse } from "@/client/types/api";
-import { getAccessToken } from "@/lib/supabase/client";
+import { getAccessToken } from "@/lib/auth/client";
 
 // ============================================================
 // Types

@@ -49,7 +49,7 @@ export class AnalyticsService {
             ]);
 
             // Calculate Pass Rate (>= 35% is pass)
-            const passedExamsResult = await db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.percentage, '35')));
+            const passedExamsResult = await db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.percentage, 35)));
             const passedCount = passedExamsResult[0].count;
             const completedCount = completedExamsResult[0].count;
             const passRate = completedCount > 0 ? (passedCount / completedCount) * 100 : 0;
@@ -135,6 +135,10 @@ export class AnalyticsService {
             const twoMonthsAgo = new Date();
             twoMonthsAgo.setMonth(currentDate.getMonth() - 2);
 
+            // Convert to ISO strings for SQLite comparison
+            const lastMonthISO = lastMonth.toISOString();
+            const twoMonthsAgoISO = twoMonthsAgo.toISOString();
+
             // Current period: last month to now
             const [
                 newUsersThisMonth,
@@ -144,12 +148,12 @@ export class AnalyticsService {
                 completedExamsThisMonth,
                 avgScoreThisMonth
             ] = await Promise.all([
-                db.select({ count: count() }).from(profiles).where(gte(profiles.createdAt, lastMonth)),
+                db.select({ count: count() }).from(profiles).where(gte(profiles.createdAt, lastMonthISO)),
                 db.select({ count: count() }).from(profiles),
                 db.select({ count: count() }).from(profiles).where(eq(profiles.role, 'student')),
-                db.select({ count: count() }).from(exams).where(gte(exams.createdAt, lastMonth)),
-                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonth))),
-                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonth)))
+                db.select({ count: count() }).from(exams).where(gte(exams.createdAt, lastMonthISO)),
+                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonthISO))),
+                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, lastMonthISO)))
             ]);
 
             // Previous period: two months ago to last month
@@ -159,10 +163,10 @@ export class AnalyticsService {
                 completedExamsLastPeriod,
                 avgScoreLastPeriod
             ] = await Promise.all([
-                db.select({ count: count() }).from(profiles).where(and(gte(profiles.createdAt, twoMonthsAgo), lt(profiles.createdAt, lastMonth))),
-                db.select({ count: count() }).from(exams).where(and(gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth))),
-                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth))),
-                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgo), lt(exams.createdAt, lastMonth)))
+                db.select({ count: count() }).from(profiles).where(and(gte(profiles.createdAt, twoMonthsAgoISO), lt(profiles.createdAt, lastMonthISO))),
+                db.select({ count: count() }).from(exams).where(and(gte(exams.createdAt, twoMonthsAgoISO), lt(exams.createdAt, lastMonthISO))),
+                db.select({ count: count() }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgoISO), lt(exams.createdAt, lastMonthISO))),
+                db.select({ avg: sql<number>`avg(${exams.percentage})` }).from(exams).where(and(eq(exams.status, 'completed'), gte(exams.createdAt, twoMonthsAgoISO), lt(exams.createdAt, lastMonthISO)))
             ]);
 
             const previousTotalUsers = totalUsers[0].count - newUsersThisMonth[0].count;
@@ -220,8 +224,8 @@ export class AnalyticsService {
                 score: exam.score,
                 total_marks: exam.totalMarks,
                 percentage: Number(exam.percentage),
-                started_at: exam.startedAt?.toISOString(),
-                completed_at: exam.completedAt?.toISOString(),
+                started_at: exam.startedAt || null,
+                completed_at: exam.completedAt || null,
                 subject_id: exam.subjectId,
                 exam_structure_id: exam.examStructureId,
                 scheduled_exam_id: exam.scheduledExamId,
@@ -354,35 +358,40 @@ export class AnalyticsService {
      */
     async getMonthlyTrends() {
         return dbService.executeQuery(async (db) => {
-            // Use SQL for Date Truncation (Postgres)
+            // Calculate date 6 months ago for SQLite
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+            sixMonthsAgo.setDate(1); // First day of that month
+            sixMonthsAgo.setHours(0, 0, 0, 0);
+            const sixMonthsAgoISO = sixMonthsAgo.toISOString();
 
-            // 1. Enrollments by Month (Last 6 months)
-            const enrollmentTrends = await db.execute(
+            // 1. Enrollments by Month (Last 6 months) - SQLite compatible
+            const enrollmentTrends = await db.all(
                 sql`
                 SELECT 
-                    to_char(created_at, 'Mon') as month,
-                    date_trunc('month', created_at) as month_date,
+                    strftime('%m', created_at) as month_num,
+                    strftime('%Y-%m', created_at) as month_key,
                     count(*) as count
                 FROM profiles
                 WHERE role = 'student'
-                AND created_at >= date_trunc('month', current_date - interval '5 months')
-                GROUP BY 1, 2
-                ORDER BY 2 ASC
+                AND created_at >= ${sixMonthsAgoISO}
+                GROUP BY month_key
+                ORDER BY month_key ASC
                 `
             );
 
-            // 2. Exams by Month
-            const examTrends = await db.execute(
+            // 2. Exams by Month - SQLite compatible
+            const examTrends = await db.all(
                 sql`
                 SELECT 
-                    to_char(created_at, 'Mon') as month,
-                    date_trunc('month', created_at) as month_date,
+                    strftime('%m', created_at) as month_num,
+                    strftime('%Y-%m', created_at) as month_key,
                     count(*) as total,
                     sum(case when status = 'completed' then 1 else 0 end) as completed
                 FROM exams
-                WHERE created_at >= date_trunc('month', current_date - interval '5 months')
-                GROUP BY 1, 2
-                ORDER BY 2 ASC
+                WHERE created_at >= ${sixMonthsAgoISO}
+                GROUP BY month_key
+                ORDER BY month_key ASC
                 `
             );
 
@@ -391,11 +400,16 @@ export class AnalyticsService {
             const trendMap = new Map<string, any>();
 
             // Initialize last 6 months buckets relative to current date
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthKeyToLabel = new Map<string, string>();
+            
             for (let i = 5; i >= 0; i--) {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
-                const monthLabel = d.toLocaleString('default', { month: 'short' });
-                trendMap.set(monthLabel, {
+                const monthLabel = monthNames[d.getMonth()];
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                monthKeyToLabel.set(monthKey, monthLabel);
+                trendMap.set(monthKey, {
                     month: monthLabel,
                     enrollments: 0,
                     exams: 0,
@@ -404,19 +418,19 @@ export class AnalyticsService {
             }
 
             // Fill Enrollments
-            enrollmentTrends.forEach((row: any) => {
-                const m = row.month;
-                if (trendMap.has(m)) {
-                    const item = trendMap.get(m);
+            (enrollmentTrends as any[]).forEach((row: any) => {
+                const key = row.month_key;
+                if (trendMap.has(key)) {
+                    const item = trendMap.get(key);
                     item.enrollments = Number(row.count);
                 }
             });
 
             // Fill Exams
-            examTrends.forEach((row: any) => {
-                const m = row.month;
-                if (trendMap.has(m)) {
-                    const item = trendMap.get(m);
+            (examTrends as any[]).forEach((row: any) => {
+                const key = row.month_key;
+                if (trendMap.has(key)) {
+                    const item = trendMap.get(key);
                     item.exams = Number(row.total);
                     item.completions = Number(row.completed);
                 }

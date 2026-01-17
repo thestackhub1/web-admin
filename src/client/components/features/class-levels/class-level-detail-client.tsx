@@ -115,7 +115,7 @@ export function ClassLevelDetailClient({ slug }: ClassLevelDetailClientProps) {
   // Helper to get dynamic icon - memoized for performance
   const getSubjectIcon = useCallback((iconName?: string | null, fallback: React.ElementType = BookOpen) => {
     if (!iconName) return fallback;
-    const Icon = (LucideIcons as Record<string, React.ElementType>)[iconName];
+    const Icon = (LucideIcons as unknown as Record<string, React.ElementType>)[iconName];
     return Icon || fallback;
   }, []);
 

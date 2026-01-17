@@ -5,18 +5,17 @@
  * Used by server components to authenticate API calls.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
+import { extractBearerToken } from "./jwt";
 
 /**
- * Get the access token from the current session
+ * Get the access token from the current request
  * @returns The access token or null if not authenticated
  */
 export async function getSessionToken(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.access_token || null;
+  const headersList = await headers();
+  const authHeader = headersList.get("authorization");
+  return extractBearerToken(authHeader);
 }
 
 

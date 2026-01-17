@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc, desc, sql, isNull } from 'drizzle-orm';
 import { subjects, subjectClassMappings, chapters, type Subject } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export class SubjectsService {
   /**
@@ -314,6 +315,7 @@ export class SubjectsService {
     const [newSubject] = await db
       .insert(subjects)
       .values({
+        id: generateId(),
         parentSubjectId: parentSubjectId,
         nameEn: data.nameEn,
         nameMr: data.nameMr,
@@ -368,7 +370,7 @@ export class SubjectsService {
     if (data.icon !== undefined) updateData.icon = data.icon;
     if (data.orderIndex !== undefined) updateData.orderIndex = data.orderIndex;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
-    updateData.updatedAt = new Date();
+    updateData.updatedAt = new Date().toISOString();
 
     const [updated] = await db
       .update(subjects)

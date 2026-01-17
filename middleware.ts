@@ -1,48 +1,61 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+
+/**
+ * Get JWT secret for verification
+ */
+function getJWTSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return new TextEncoder().encode(secret);
+}
+
+/**
+ * Verify access token and extract payload
+ */
+async function verifyToken(token: string): Promise<{
+  sub: string;
+  email: string;
+  role: string;
+} | null> {
+  try {
+    const { payload } = await jwtVerify(token, getJWTSecret(), {
+      issuer: "abhedya-admin",
+      audience: "abhedya-users",
+    });
+    return {
+      sub: payload.sub as string,
+      email: payload.email as string,
+      role: payload.role as string,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Refresh session if it exists
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
 
-  // API routes use their own authentication (Bearer token)
-  // Don't apply session-based auth middleware to them
+  // API routes use their own authentication (Bearer token in Authorization header)
+  // Don't apply cookie-based auth middleware to them
   if (pathname.startsWith("/api/")) {
-    return supabaseResponse;
+    return response;
   }
 
   // Public routes that don't require auth
   const publicRoutes = ["/login", "/signup", "/auth/callback"];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+
+  // Get token from cookie (for server-side session management)
+  const accessToken = request.cookies.get("abhedya_access_token")?.value;
+
+  let user: { sub: string; email: string; role: string } | null = null;
+  if (accessToken) {
+    user = await verifyToken(accessToken);
+  }
 
   // If not authenticated and trying to access protected route
   if (!user && !isPublicRoute && pathname !== "/") {
@@ -51,24 +64,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If authenticated, fetch user role for role-based routing
-  let userRole: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    userRole = profile?.role || null;
-  }
-
   // STRICT RBAC: Only admin and teacher roles are allowed
-  const allowedRoles = ["admin", "teacher", "school_admin"]; // Add other admin variants if needed
-  const isAllowed = userRole && allowedRoles.includes(userRole);
+  const allowedRoles = ["admin", "teacher", "school_admin"];
+  const isAllowed = user && allowedRoles.includes(user.role);
 
-  // If authenticated but not an allowed role (e.g. student), force logout or show 403
+  // If authenticated but not an allowed role (e.g. student), redirect to login
   if (user && !isAllowed && !isPublicRoute) {
-    // Redirect to login with error message
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("error", "access_denied");
@@ -83,7 +84,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {

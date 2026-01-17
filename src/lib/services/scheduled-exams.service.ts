@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, or, inArray, asc, desc, ilike } from 'drizzle-orm';
 import { scheduledExams, classLevels, subjects, examStructures, exams } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export interface ScheduledExamListOptions {
   subjectId?: string;
@@ -384,6 +385,7 @@ export class ScheduledExamsService {
     const [exam] = await db
       .insert(scheduledExams)
       .values({
+        id: generateId(),
         nameEn: data.nameEn,
         nameMr: data.nameMr,
         descriptionEn: data.descriptionEn || null,
@@ -450,7 +452,7 @@ export class ScheduledExamsService {
     if (data.isActive !== undefined) updateValues.isActive = data.isActive;
     if (data.publishResults !== undefined) updateValues.publishResults = data.publishResults;
     if (data.maxAttempts !== undefined) updateValues.maxAttempts = data.maxAttempts;
-    updateValues.updatedAt = new Date();
+    updateValues.updatedAt = new Date().toISOString();
 
     const [updated] = await db
       .update(scheduledExams)
@@ -473,7 +475,7 @@ export class ScheduledExamsService {
 
     const [deleted] = await db
       .update(scheduledExams)
-      .set({ isActive: false, updatedAt: new Date() })
+      .set({ isActive: false, updatedAt: new Date().toISOString() })
       .where(eq(scheduledExams.id, examId))
       .returning();
 

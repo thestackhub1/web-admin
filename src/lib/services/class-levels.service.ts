@@ -9,6 +9,7 @@ import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc } from 'drizzle-orm';
 import { classLevels, subjectClassMappings, subjects, scheduledExams, profiles, examStructures, exams, type ClassLevel } from '@/db/schema';
 import { count, or, sql } from 'drizzle-orm';
+import { generateId } from '@/db/utils/id';
 
 export class ClassLevelsService {
   /**
@@ -235,6 +236,7 @@ export class ClassLevelsService {
 
     // Create new mapping
     await db.insert(subjectClassMappings).values({
+      id: generateId(),
       classLevelId,
       subjectId,
       isActive: true,
@@ -296,6 +298,7 @@ export class ClassLevelsService {
     const [newClassLevel] = await db
       .insert(classLevels)
       .values({
+        id: generateId(),
         nameEn: data.nameEn,
         nameMr: data.nameMr || data.nameEn, // Default to English name if Marathi not provided
         slug,
@@ -324,7 +327,7 @@ export class ClassLevelsService {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const updates: any = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (data.nameEn !== undefined) updates.nameEn = data.nameEn;
@@ -361,7 +364,7 @@ export class ClassLevelsService {
       .update(classLevels)
       .set({
         isActive: false,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
       })
       .where(eq(classLevels.id, id))
       .returning();

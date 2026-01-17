@@ -6,8 +6,10 @@
  */
 
 import { dbService, type RLSContext } from './dbService';
-import { eq, and, or, ilike, asc, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, ilike, desc, inArray, sql } from 'drizzle-orm';
 import { profiles, schools, classLevels } from '@/db/schema';
+import { hashPassword } from '@/lib/auth/password';
+import { generateId } from '@/db/utils/id';
 
 export interface UserListOptions {
   page?: number;
@@ -146,8 +148,8 @@ export class UsersService {
       is_active: user.isActive,
       school_id: user.schoolId,
       class_level: null, // Would need to resolve from classLevel text
-      created_at: user.createdAt?.toISOString(),
-      updated_at: user.updatedAt?.toISOString(),
+      created_at: user.createdAt || null,
+      updated_at: user.updatedAt || null,
       schools: user.schoolId && schoolsMap.has(user.schoolId) ? {
         id: schoolsMap.get(user.schoolId).id,
         name: schoolsMap.get(user.schoolId).name,
@@ -205,42 +207,30 @@ export class UsersService {
     classLevel?: string;
     isActive?: boolean;
   }) {
-    // 1. Create user in Supabase Auth
-    const { getSupabaseAdmin } = await import('@/lib/api/supabase-admin');
-    const supabase = getSupabaseAdmin();
-
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: data.email,
-      password: data.password || undefined, // If not provided, user needs to set it (invite)
-      email_confirm: true, // Auto-confirm for admin-created users
-      user_metadata: {
-        name: data.name,
-      },
-    });
-
-    if (authError) {
-      throw new Error(`Auth creation failed: ${authError.message}`);
-    }
-
-    if (!authUser.user) {
-      throw new Error('Auth creation failed: No user returned');
-    }
-
-    // 2. Create/Update profile
-    // Use upsert in case a trigger already created the profile
     const db = await dbService.getDb();
 
+    // Generate a new user ID
+    const userId = generateId();
+
+    // Hash password if provided
+    let passwordHash: string | null = null;
+    if (data.password) {
+      passwordHash = await hashPassword(data.password);
+    }
+
+    // Create profile directly in database
     const [profile] = await db
       .insert(profiles)
       .values({
-        id: authUser.user.id,
+        id: userId,
         email: data.email,
         name: data.name,
         role: data.role,
         schoolId: data.schoolId,
         classLevel: data.classLevel,
         isActive: data.isActive ?? true,
-        permissions: {}, // Default permissions
+        passwordHash: passwordHash,
+        permissions: {},
       })
       .onConflictDoUpdate({
         target: profiles.id,
@@ -250,7 +240,8 @@ export class UsersService {
           schoolId: data.schoolId,
           classLevel: data.classLevel,
           isActive: data.isActive ?? true,
-          updatedAt: new Date(),
+          passwordHash: passwordHash,
+          updatedAt: new Date().toISOString(),
         },
       })
       .returning();
@@ -274,8 +265,8 @@ export class UsersService {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     // 1. Update Profile
-    const updateData: any = {
-      updatedAt: new Date(),
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date().toISOString(),
     };
 
     if (data.name !== undefined) updateData.name = data.name;
@@ -286,28 +277,16 @@ export class UsersService {
     if (data.permissions !== undefined) updateData.permissions = data.permissions;
     if (data.email !== undefined) updateData.email = data.email;
 
+    // 2. Hash and update password if provided
+    if (data.password) {
+      updateData.passwordHash = await hashPassword(data.password);
+    }
+
     const [updatedProfile] = await db
       .update(profiles)
       .set(updateData)
       .where(eq(profiles.id, userId))
       .returning();
-
-    // 2. Update Auth (if email/password provided)
-    if (data.email || data.password) {
-      const { getSupabaseAdmin } = await import('@/lib/api/supabase-admin');
-      const supabase = getSupabaseAdmin();
-
-      const authUpdates: any = {};
-      if (data.email) authUpdates.email = data.email;
-      if (data.password) authUpdates.password = data.password;
-
-      const { error: authError } = await supabase.auth.admin.updateUserById(userId, authUpdates);
-
-      if (authError) {
-        // Log warning but don't fail the profile update
-        console.warn(`Auth update failed for user ${userId}:`, authError);
-      }
-    }
 
     return updatedProfile;
   }
@@ -316,27 +295,19 @@ export class UsersService {
    * Delete user (Soft delete by default)
    */
   static async delete(userId: string, hardDelete = false) {
+    const db = await dbService.getDb();
+
     if (hardDelete) {
-      // Hard delete from Auth (cascades to profile usually)
-      const { getSupabaseAdmin } = await import('@/lib/api/supabase-admin');
-      const supabase = getSupabaseAdmin();
-
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
-
-      // Also delete from profiles manually just in case cascade is missing
-      const db = await dbService.getDb();
+      // Hard delete from profiles table
       await db.delete(profiles).where(eq(profiles.id, userId));
-
       return true;
     } else {
       // Soft delete (deactivate)
-      const db = await dbService.getDb();
       await db
         .update(profiles)
         .set({
           isActive: false,
-          updatedAt: new Date()
+          updatedAt: new Date().toISOString()
         })
         .where(eq(profiles.id, userId));
 

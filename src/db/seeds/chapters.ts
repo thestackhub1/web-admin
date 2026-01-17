@@ -1,4 +1,5 @@
 import { db, schema, client } from "./db";
+import { randomUUID } from "crypto";
 
 export async function seedChapters() {
   console.log("📖 Seeding chapters...");
@@ -19,7 +20,8 @@ export async function seedChapters() {
   const intelligenceSubject = allSubjects.find((s) => s.slug === "scholarship-intelligence-test");
   const gkSubject = allSubjects.find((s) => s.slug === "scholarship-general-knowledge");
 
-  const chaptersData: any[] = [];
+  const now = new Date().toISOString();
+  const chaptersData: (typeof schema.chapters.$inferInsert)[] = [];
 
   // ============================================
   // IT Chapters (Class 11 & 12)
@@ -28,6 +30,7 @@ export async function seedChapters() {
     chaptersData.push(
       // Class 11 chapters
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Computer Basics",
         nameMr: "संगणक मूलभूत",
@@ -35,8 +38,11 @@ export async function seedChapters() {
         descriptionMr: "संगणक आणि संगणकीय मूलभूत गोष्टींचा परिचय",
         orderIndex: 1,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Hardware Components",
         nameMr: "हार्डवेअर घटक",
@@ -44,8 +50,11 @@ export async function seedChapters() {
         descriptionMr: "CPU, मेमरी, स्टोरेज, इनपुट/आउटपुट उपकरणे",
         orderIndex: 2,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Software & Applications",
         nameMr: "सॉफ्टवेअर आणि ऍप्लिकेशन्स",
@@ -53,8 +62,11 @@ export async function seedChapters() {
         descriptionMr: "ऑपरेटिंग सिस्टम, अॅप्लिकेशन्स आणि सॉफ्टवेअर प्रकार",
         orderIndex: 3,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Web Technologies",
         nameMr: "वेब तंत्रज्ञान",
@@ -62,9 +74,12 @@ export async function seedChapters() {
         descriptionMr: "वेब डेव्हलपमेंटसाठी HTML, CSS मूलभूत",
         orderIndex: 4,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       // Class 12 chapters
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Web Publishing",
         nameMr: "वेब प्रकाशन",
@@ -72,8 +87,11 @@ export async function seedChapters() {
         descriptionMr: "वेबसाइट तयार करणे आणि प्रकाशित करणे, HTML/CSS प्रगत संकल्पना",
         orderIndex: 5,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Introduction to SEO",
         nameMr: "SEO चा परिचय",
@@ -81,8 +99,11 @@ export async function seedChapters() {
         descriptionMr: "सर्च इंजिन ऑप्टिमायझेशन मूलभूत",
         orderIndex: 6,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Advanced JavaScript",
         nameMr: "प्रगत JavaScript",
@@ -90,8 +111,11 @@ export async function seedChapters() {
         descriptionMr: "DOM हाताळणी, इव्हेंट्स, AJAX, ES6+ वैशिष्ट्ये",
         orderIndex: 7,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         nameEn: "Server Side Scripting (PHP)",
         nameMr: "सर्व्हर साइड स्क्रिप्टिंग (PHP)",
@@ -99,6 +123,8 @@ export async function seedChapters() {
         descriptionMr: "PHP मूलभूत, फॉर्म हाताळणी, डेटाबेस कनेक्टिव्हिटी",
         orderIndex: 8,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
     console.log("   ✓ IT chapters added");
@@ -112,6 +138,7 @@ export async function seedChapters() {
   if (marathiSubject) {
     chaptersData.push(
       {
+        id: randomUUID(),
         subjectId: marathiSubject.id,
         nameEn: "Vocabulary & Word Meanings",
         nameMr: "शब्दसंग्रह आणि शब्दार्थ",
@@ -119,8 +146,11 @@ export async function seedChapters() {
         descriptionMr: "समानार्थी, विरुद्धार्थी, शब्दार्थ",
         orderIndex: 1,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: marathiSubject.id,
         nameEn: "Grammar & Sentence Structure",
         nameMr: "व्याकरण आणि वाक्यरचना",
@@ -128,8 +158,11 @@ export async function seedChapters() {
         descriptionMr: "शब्दांचे प्रकार, वाक्ये, काळ",
         orderIndex: 2,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: marathiSubject.id,
         nameEn: "Proverbs & Idioms",
         nameMr: "म्हणी आणि वाक्प्रचार",
@@ -137,8 +170,11 @@ export async function seedChapters() {
         descriptionMr: "सामान्य मराठी म्हणी आणि वाक्प्रचार",
         orderIndex: 3,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: marathiSubject.id,
         nameEn: "Reading Comprehension",
         nameMr: "आकलन उतारा",
@@ -146,6 +182,8 @@ export async function seedChapters() {
         descriptionMr: "उतारा वाचन आणि समजून घेणे",
         orderIndex: 4,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
     console.log("   ✓ Marathi chapters added");
@@ -157,6 +195,7 @@ export async function seedChapters() {
   if (mathSubject) {
     chaptersData.push(
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Number System",
         nameMr: "संख्या पद्धती",
@@ -164,8 +203,11 @@ export async function seedChapters() {
         descriptionMr: "नैसर्गिक संख्या, पूर्णांक, अपूर्णांक, दशांश",
         orderIndex: 1,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Arithmetic Operations",
         nameMr: "गणितीय क्रिया",
@@ -173,8 +215,11 @@ export async function seedChapters() {
         descriptionMr: "बेरीज, वजाबाकी, गुणाकार, भागाकार",
         orderIndex: 2,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Fractions & Decimals",
         nameMr: "अपूर्णांक आणि दशांश",
@@ -182,8 +227,11 @@ export async function seedChapters() {
         descriptionMr: "अपूर्णांक आणि दशांश संख्यांसह गणितीय क्रिया",
         orderIndex: 3,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Geometry",
         nameMr: "भूमिती",
@@ -191,8 +239,11 @@ export async function seedChapters() {
         descriptionMr: "आकार, कोन, क्षेत्रफळ, परिमिती",
         orderIndex: 4,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Algebra Basics",
         nameMr: "बीजगणित मूलभूत",
@@ -200,8 +251,11 @@ export async function seedChapters() {
         descriptionMr: "चल, राशी, साधी समीकरणे",
         orderIndex: 5,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: mathSubject.id,
         nameEn: "Mensuration",
         nameMr: "क्षेत्रमिती",
@@ -209,6 +263,8 @@ export async function seedChapters() {
         descriptionMr: "क्षेत्रफळ, घनफळ, पृष्ठभाग क्षेत्रफळ गणना",
         orderIndex: 6,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
     console.log("   ✓ Mathematics chapters added");
@@ -220,6 +276,7 @@ export async function seedChapters() {
   if (intelligenceSubject) {
     chaptersData.push(
       {
+        id: randomUUID(),
         subjectId: intelligenceSubject.id,
         nameEn: "Pattern Recognition",
         nameMr: "नमुना ओळख",
@@ -227,8 +284,11 @@ export async function seedChapters() {
         descriptionMr: "मालिका, श्रेणी आणि नमुना पूर्णता",
         orderIndex: 1,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: intelligenceSubject.id,
         nameEn: "Logical Reasoning",
         nameMr: "तार्किक विचार",
@@ -236,8 +296,11 @@ export async function seedChapters() {
         descriptionMr: "निगमनात्मक आणि आगमनात्मक तर्क",
         orderIndex: 2,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: intelligenceSubject.id,
         nameEn: "Coding & Decoding",
         nameMr: "सांकेतिक भाषा",
@@ -245,8 +308,11 @@ export async function seedChapters() {
         descriptionMr: "अक्षर, संख्या आणि चिन्ह सांकेतीकरण",
         orderIndex: 3,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: intelligenceSubject.id,
         nameEn: "Analogy & Classification",
         nameMr: "सादृश्यता आणि वर्गीकरण",
@@ -254,8 +320,11 @@ export async function seedChapters() {
         descriptionMr: "संबंध शोधणे आणि गटबद्ध करणे",
         orderIndex: 4,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: intelligenceSubject.id,
         nameEn: "Figure & Mirror Images",
         nameMr: "आकृती आणि प्रतिमा",
@@ -263,6 +332,8 @@ export async function seedChapters() {
         descriptionMr: "अवकाशीय तर्क आणि दृश्यीकरण",
         orderIndex: 5,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
     console.log("   ✓ Intelligence Test chapters added");
@@ -274,6 +345,7 @@ export async function seedChapters() {
   if (gkSubject) {
     chaptersData.push(
       {
+        id: randomUUID(),
         subjectId: gkSubject.id,
         nameEn: "Science & Nature",
         nameMr: "विज्ञान आणि निसर्ग",
@@ -281,8 +353,11 @@ export async function seedChapters() {
         descriptionMr: "मूलभूत विज्ञान, वनस्पती, प्राणी, पर्यावरण",
         orderIndex: 1,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: gkSubject.id,
         nameEn: "History",
         nameMr: "इतिहास",
@@ -290,8 +365,11 @@ export async function seedChapters() {
         descriptionMr: "भारतीय इतिहास, स्वातंत्र्य लढा, महत्त्वाच्या घटना",
         orderIndex: 2,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: gkSubject.id,
         nameEn: "Geography",
         nameMr: "भूगोल",
@@ -299,8 +377,11 @@ export async function seedChapters() {
         descriptionMr: "भारत भूगोल, राज्ये, राजधान्या, नद्या",
         orderIndex: 3,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: gkSubject.id,
         nameEn: "Civics & Constitution",
         nameMr: "नागरिकशास्त्र आणि संविधान",
@@ -308,8 +389,11 @@ export async function seedChapters() {
         descriptionMr: "भारतीय संविधान, हक्क, कर्तव्ये, सरकार",
         orderIndex: 4,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: gkSubject.id,
         nameEn: "Current Affairs",
         nameMr: "चालू घडामोडी",
@@ -317,6 +401,8 @@ export async function seedChapters() {
         descriptionMr: "अलीकडील घटना, पुरस्कार, क्रीडा, तंत्रज्ञान",
         orderIndex: 5,
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
     console.log("   ✓ General Knowledge chapters added");
@@ -347,5 +433,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/seed/chapt
       console.error("❌ Error seeding chapters:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

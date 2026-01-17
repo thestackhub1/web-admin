@@ -1,4 +1,5 @@
 import { db, schema, client } from "./db";
+import { randomUUID } from "crypto";
 
 /**
  * Seed Scholarship questions (Marathi primary language)
@@ -12,13 +13,13 @@ interface QuestionData {
   secondaryLanguage?: "en" | "mr";
   questionType: string;
   difficulty: "easy" | "medium" | "hard";
-  answerData: any;
+  answerData: Record<string, unknown>;
   chapterId?: string;
   marks: number;
   explanationEn?: string;
   explanationMr?: string;
   tags?: string[];
-  classLevel?: string;
+  classLevel: string;
 }
 
 /**
@@ -807,7 +808,9 @@ export async function seedScholarshipQuestions() {
     await db.delete(schema.questionsScholarship);
     console.log("   ✓ Cleared existing Scholarship questions");
 
-    // Get all questions
+    const now = new Date().toISOString();
+
+    // Get all questions and add id + timestamps
     const allQuestions = [
       ...getFillBlankQuestions(chapters),
       ...getTrueFalseQuestions(chapters),
@@ -815,7 +818,12 @@ export async function seedScholarshipQuestions() {
       ...getMCQTwoQuestions(chapters),
       ...getShortAnswerQuestions(chapters),
       ...getMatchQuestions(chapters),
-    ];
+    ].map((q) => ({
+      ...q,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    }));
 
     // Insert questions
     const questions = await db
@@ -849,6 +857,6 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("/seed/quest
       console.error("❌ Error seeding Scholarship questions:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }
 

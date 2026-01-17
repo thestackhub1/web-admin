@@ -1,16 +1,25 @@
 import { db, schema, client } from "./db";
-import { getSupabaseAdmin } from "@/lib/api/supabase-admin";
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
+
+// Salt rounds for bcrypt
+const SALT_ROUNDS = 12;
+
+/**
+ * Hash a password using bcrypt
+ */
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
 
 /**
  * Seed test users: admin, teacher, and student
- * Creates both Supabase Auth users and profile records
- * Properly links users with schools for testing
+ * Creates profile records with hashed passwords
+ * Now uses custom JWT auth (no more Supabase Auth)
  */
 export async function seedUsers() {
   console.log("👥 Seeding test users...");
-
-  const supabase = getSupabaseAdmin();
 
   // Get a school for linking (if schools exist)
   const schools = await db.select().from(schema.schools).limit(1);
@@ -63,16 +72,19 @@ export async function seedUsers() {
   for (const userData of testUsers) {
     try {
       // Check if profile already exists
-      const existingProfiles = await db.select().from(schema.profiles);
-      const existingProfile = existingProfiles.find((p) => p.email === userData.email);
-
-      let userId: string;
-      let isNewUser = false;
+      const existingProfiles = await db
+        .select()
+        .from(schema.profiles)
+        .where(eq(schema.profiles.email, userData.email));
+      
+      const existingProfile = existingProfiles[0];
 
       if (existingProfile) {
-        // Profile exists, use existing ID
-        userId = existingProfile.id;
+        // Profile exists, update it
         console.log(`   ℹ User ${userData.email} already exists, updating profile...`);
+        
+        // Hash the password
+        const passwordHash = await hashPassword(userData.password);
         
         // Update profile to ensure it has correct data
         const [updatedProfile] = await db
@@ -84,10 +96,11 @@ export async function seedUsers() {
             classLevel: userData.classLevel || null,
             schoolId: userData.schoolId || null,
             permissions: userData.permissions,
+            passwordHash: passwordHash,
             isActive: true,
-            updatedAt: new Date(),
+            updatedAt: new Date().toISOString(),
           })
-          .where(eq(schema.profiles.id, userId))
+          .where(eq(schema.profiles.id, existingProfile.id))
           .returning();
         
         createdProfiles.push(updatedProfile);
@@ -95,52 +108,13 @@ export async function seedUsers() {
         continue;
       }
 
-      // Check if auth user exists
-      const { data: existingAuthUsers } = await supabase.auth.admin.listUsers();
-      const existingAuthUser = existingAuthUsers?.users.find((u) => u.email === userData.email);
+      // Generate new UUID for the user
+      const userId = randomUUID();
+      
+      // Hash the password
+      const passwordHash = await hashPassword(userData.password);
 
-      if (existingAuthUser) {
-        // Auth user exists but no profile, create profile
-        userId = existingAuthUser.id;
-        console.log(`   ℹ Auth user ${userData.email} exists, creating profile...`);
-      } else {
-        // Create new Supabase Auth user
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: userData.email,
-          password: userData.password,
-          email_confirm: true, // Auto-confirm for testing
-          user_metadata: {
-            name: userData.name,
-            role: userData.role,
-          },
-        });
-
-        if (authError) {
-          // If user already exists in auth, try to get it
-          if (authError.message.includes("already been registered")) {
-            const { data: authUsers } = await supabase.auth.admin.listUsers();
-            const foundUser = authUsers?.users.find((u) => u.email === userData.email);
-            if (foundUser) {
-              userId = foundUser.id;
-              console.log(`   ℹ Auth user ${userData.email} already exists, using existing ID`);
-            } else {
-              console.error(`   ❌ Error creating auth user ${userData.email}:`, authError.message);
-              continue;
-            }
-          } else {
-            console.error(`   ❌ Error creating auth user ${userData.email}:`, authError.message);
-            continue;
-          }
-        } else if (authData?.user) {
-          userId = authData.user.id;
-          isNewUser = true;
-        } else {
-          console.error(`   ❌ No user data returned for ${userData.email}`);
-          continue;
-        }
-      }
-
-      // Create profile record with proper relations
+      // Create profile record with hashed password
       const [profile] = await db
         .insert(schema.profiles)
         .values({
@@ -152,23 +126,30 @@ export async function seedUsers() {
           classLevel: userData.classLevel || null,
           schoolId: userData.schoolId || null,
           permissions: userData.permissions,
+          passwordHash: passwordHash,
           isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .returning();
 
       createdProfiles.push(profile);
-      console.log(`   ✓ ${isNewUser ? "Created" : "Linked"} ${userData.role}: ${userData.email} (ID: ${userId})`);
-    } catch (error: any) {
+      console.log(`   ✓ Created ${userData.role}: ${userData.email} (ID: ${userId})`);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : { message: String(error), cause: undefined as unknown };
       // Handle duplicate key error (profile already exists)
-      if (error?.cause?.code === "23505" || error?.message?.includes("duplicate key")) {
+      const causeCode = (err.cause as { code?: string })?.code;
+      if (causeCode === "23505" || err.message?.includes("duplicate key") || err.message?.includes("UNIQUE constraint")) {
         console.log(`   ⚠ Profile for ${userData.email} already exists, skipping...`);
-        const existingProfiles = await db.select().from(schema.profiles);
-        const existingProfile = existingProfiles.find((p) => p.email === userData.email);
-        if (existingProfile) {
-          createdProfiles.push(existingProfile);
+        const existingProfiles = await db
+          .select()
+          .from(schema.profiles)
+          .where(eq(schema.profiles.email, userData.email));
+        if (existingProfiles[0]) {
+          createdProfiles.push(existingProfiles[0]);
         }
       } else {
-        console.error(`   ❌ Error creating user ${userData.email}:`, error.message || error);
+        console.error(`   ❌ Error creating user ${userData.email}:`, err.message || error);
       }
     }
   }
@@ -195,5 +176,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("/seed/users
       console.error("❌ Error seeding users:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

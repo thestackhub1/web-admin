@@ -151,8 +151,8 @@ All seeds properly handle foreign key relations:
 
 ## Notes
 
-- Seed scripts use Supabase Admin API for creating auth users
-- Profile records are linked to auth user IDs
+- Seed scripts use bcrypt for password hashing (custom JWT auth)
+- Profile records include hashed passwords in the database
 - Questions use the language-aware schema (`question_text`, `question_language`)
 - All seed data is marked as active (`is_active: true`)
 - Scripts can be run multiple times safely (idempotent)

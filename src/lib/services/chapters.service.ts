@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc, inArray, or } from 'drizzle-orm';
 import { chapters, subjects } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export class ChaptersService {
   /**
@@ -117,6 +118,7 @@ export class ChaptersService {
     const [chapter] = await db
       .insert(chapters)
       .values({
+        id: generateId(),
         subjectId: data.subjectId,
         nameEn: data.nameEn,
         nameMr: data.nameMr,
@@ -151,7 +153,7 @@ export class ChaptersService {
       .update(chapters)
       .set({
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(chapters.id, chapterId))
       .returning();
@@ -169,7 +171,7 @@ export class ChaptersService {
       .update(chapters)
       .set({
         isActive: false,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(chapters.id, chapterId))
       .returning();

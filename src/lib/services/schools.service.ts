@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, or, ilike, asc, desc, sql } from 'drizzle-orm';
 import { schools, profiles } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export interface SchoolCreateData {
   name: string;
@@ -120,8 +121,8 @@ export class SchoolsService {
         is_user_added: school.isUserAdded,
         created_by: school.createdBy,
         student_count: school.studentCount,
-        created_at: school.createdAt?.toISOString(),
-        updated_at: school.updatedAt?.toISOString(),
+        created_at: school.createdAt || null,
+        updated_at: school.updatedAt || null,
       })),
       pagination: {
         page,
@@ -167,8 +168,8 @@ export class SchoolsService {
       is_user_added: school.isUserAdded,
       created_by: school.createdBy,
       student_count: school.studentCount,
-      created_at: school.createdAt?.toISOString(),
-      updated_at: school.updatedAt?.toISOString(),
+      created_at: school.createdAt || null,
+      updated_at: school.updatedAt || null,
     };
   }
 
@@ -210,8 +211,8 @@ export class SchoolsService {
       is_user_added: school.isUserAdded,
       created_by: school.createdBy,
       student_count: studentCount,
-      created_at: school.createdAt?.toISOString(),
-      updated_at: school.updatedAt?.toISOString(),
+      created_at: school.createdAt || null,
+      updated_at: school.updatedAt || null,
     };
   }
 
@@ -278,6 +279,7 @@ export class SchoolsService {
     const [school] = await db
       .insert(schools)
       .values({
+        id: generateId(),
         name: data.name,
         nameSearch: nameSearch,
         locationCity: data.locationCity,
@@ -300,8 +302,8 @@ export class SchoolsService {
       is_user_added: school.isUserAdded,
       created_by: school.createdBy,
       student_count: school.studentCount,
-      created_at: school.createdAt?.toISOString(),
-      updated_at: school.updatedAt?.toISOString(),
+      created_at: school.createdAt || null,
+      updated_at: school.updatedAt || null,
     };
   }
 
@@ -312,7 +314,7 @@ export class SchoolsService {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const updateData: any = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (data.name !== undefined) {
@@ -346,8 +348,8 @@ export class SchoolsService {
       is_user_added: school.isUserAdded,
       created_by: school.createdBy,
       student_count: school.studentCount,
-      created_at: school.createdAt?.toISOString(),
-      updated_at: school.updatedAt?.toISOString(),
+      created_at: school.createdAt || null,
+      updated_at: school.updatedAt || null,
     };
   }
 

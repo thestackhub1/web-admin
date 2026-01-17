@@ -1,5 +1,5 @@
 import { db, schema, client } from "./db";
-import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 /**
  * Seed Scheduled Exams
@@ -13,7 +13,7 @@ export async function seedScheduledExams() {
     // Clear existing scheduled exams
     await db.delete(schema.scheduledExams);
     console.log("   ✓ Cleared existing scheduled exams");
-  } catch (error: any) {
+  } catch (_error: unknown) {
     console.warn("   ⚠️  Could not clear scheduled exams, continuing...");
   }
 
@@ -38,12 +38,14 @@ export async function seedScheduledExams() {
     es.subjectId === scholarshipCategory?.id && es.classLevelId === class8?.id
   );
 
-  const scheduledExamsData: any[] = [];
+  const now = new Date().toISOString();
+  const scheduledExamsData: (typeof schema.scheduledExams.$inferInsert)[] = [];
 
   // IT Exams (Class 12) - Link to exam structures
   if (itSubject && class12) {
     scheduledExamsData.push(
       {
+        id: randomUUID(),
         classLevelId: class12.id,
         subjectId: itSubject.id,
         examStructureId: itExamStructure?.id || null,
@@ -56,8 +58,11 @@ export async function seedScheduledExams() {
         orderIndex: 1,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class12.id,
         subjectId: itSubject.id,
         examStructureId: itExamStructure?.id || null,
@@ -70,8 +75,11 @@ export async function seedScheduledExams() {
         orderIndex: 2,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class12.id,
         subjectId: itSubject.id,
         examStructureId: itExamStructure?.id || null,
@@ -86,8 +94,11 @@ export async function seedScheduledExams() {
         scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
         scheduledTime: "10:00:00",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class12.id,
         subjectId: itSubject.id,
         examStructureId: itExamStructure?.id || null,
@@ -100,8 +111,11 @@ export async function seedScheduledExams() {
         orderIndex: 4,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class12.id,
         subjectId: itSubject.id,
         examStructureId: itExamStructure?.id || null,
@@ -114,6 +128,8 @@ export async function seedScheduledExams() {
         orderIndex: 5,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
   }
@@ -122,6 +138,7 @@ export async function seedScheduledExams() {
   if (scholarshipCategory && class8) {
     scheduledExamsData.push(
       {
+        id: randomUUID(),
         classLevelId: class8.id,
         subjectId: scholarshipCategory.id,
         examStructureId: scholarshipExamStructure?.id || null,
@@ -134,8 +151,11 @@ export async function seedScheduledExams() {
         orderIndex: 1,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class8.id,
         subjectId: scholarshipCategory.id,
         examStructureId: scholarshipExamStructure?.id || null,
@@ -150,8 +170,11 @@ export async function seedScheduledExams() {
         scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
         scheduledTime: "09:00:00",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         classLevelId: class8.id,
         subjectId: scholarshipCategory.id,
         examStructureId: scholarshipExamStructure?.id || null,
@@ -164,6 +187,8 @@ export async function seedScheduledExams() {
         orderIndex: 3,
         status: "draft",
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
   }
@@ -181,8 +206,9 @@ export async function seedScheduledExams() {
       });
       console.log();
       return scheduledExams;
-    } catch (error: any) {
-      console.error(`   ❌ Error inserting scheduled exams: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Error inserting scheduled exams: ${message}`);
       throw error;
     }
   } else {
@@ -203,5 +229,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/seed/sched
       console.error("❌ Error seeding scheduled exams:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

@@ -1,4 +1,5 @@
 import { db, schema, client } from "./db";
+import { randomUUID } from "crypto";
 
 export async function seedExamStructures() {
   console.log("📋 Seeding exam structures...");
@@ -18,12 +19,14 @@ export async function seedExamStructures() {
   const class8 = allClassLevels.find((c) => c.slug === "class-8");
   const class12 = allClassLevels.find((c) => c.slug === "class-12");
 
-  const examStructuresData: any[] = [];
+  const now = new Date().toISOString();
+  const examStructuresData: (typeof schema.examStructures.$inferInsert)[] = [];
 
   // IT Exam Structures (Class 12)
   if (itSubject && class12) {
     examStructuresData.push(
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         classLevelId: class12.id,
         nameEn: "Class 12 IT Board Exam Pattern",
@@ -38,53 +41,60 @@ export async function seedExamStructures() {
         isTemplate: true,
         sections: [
           {
+            name: "Fill in the Blanks",
+            questionCount: 10,
+            marks: 10,
             id: "q1",
             code: "q1",
             name_en: "Fill in the Blanks",
             name_mr: "रिकाम्या जागा भरा",
             question_type: "fill_blank",
-            question_count: 10,
             marks_per_question: 1,
-            total_marks: 10,
             order_index: 1,
           },
           {
+            name: "True or False",
+            questionCount: 10,
+            marks: 10,
             id: "q2",
             code: "q2",
             name_en: "True or False",
             name_mr: "खरे की खोटे",
             question_type: "true_false",
-            question_count: 10,
             marks_per_question: 1,
-            total_marks: 10,
             order_index: 2,
           },
           {
+            name: "MCQ (Single Correct)",
+            questionCount: 10,
+            marks: 10,
             id: "q3",
             code: "q3",
             name_en: "MCQ (Single Correct)",
             name_mr: "बहुपर्यायी (एक योग्य)",
             question_type: "mcq_single",
-            question_count: 10,
             marks_per_question: 1,
-            total_marks: 10,
             order_index: 3,
           },
           {
+            name: "MCQ (Two Correct)",
+            questionCount: 10,
+            marks: 20,
             id: "q4",
             code: "q4",
             name_en: "MCQ (Two Correct)",
             name_mr: "बहुपर्यायी (दोन योग्य)",
             question_type: "mcq_two",
-            question_count: 10,
             marks_per_question: 2,
-            total_marks: 20,
             order_index: 4,
           },
         ],
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         subjectId: itSubject.id,
         classLevelId: class12.id,
         nameEn: "Unit Test Pattern (25 marks)",
@@ -99,40 +109,45 @@ export async function seedExamStructures() {
         isTemplate: true,
         sections: [
           {
+            name: "Fill in the Blanks",
+            questionCount: 5,
+            marks: 5,
             id: "s1",
             code: "s1",
             name_en: "Fill in the Blanks",
             name_mr: "रिकाम्या जागा भरा",
             question_type: "fill_blank",
-            question_count: 5,
             marks_per_question: 1,
-            total_marks: 5,
             order_index: 1,
           },
           {
+            name: "MCQ",
+            questionCount: 10,
+            marks: 10,
             id: "s2",
             code: "s2",
             name_en: "MCQ",
             name_mr: "बहुपर्यायी",
             question_type: "mcq_single",
-            question_count: 10,
             marks_per_question: 1,
-            total_marks: 10,
             order_index: 2,
           },
           {
+            name: "Short Answer",
+            questionCount: 5,
+            marks: 10,
             id: "s3",
             code: "s3",
             name_en: "Short Answer",
             name_mr: "लघु उत्तर",
             question_type: "short_answer",
-            question_count: 5,
             marks_per_question: 2,
-            total_marks: 10,
             order_index: 3,
           },
         ],
         isActive: true,
+        createdAt: now,
+        updatedAt: now,
       }
     );
   } else {
@@ -142,6 +157,7 @@ export async function seedExamStructures() {
   // Scholarship Paper I (Class 8)
   if (scholarshipPaper1 && class8) {
     examStructuresData.push({
+      id: randomUUID(),
       subjectId: scholarshipPaper1.id,
       classLevelId: class8.id,
       nameEn: "Scholarship Class 8: Paper I",
@@ -156,35 +172,40 @@ export async function seedExamStructures() {
       isTemplate: true,
       sections: [
         {
+          name: "First Language (Marathi)",
+          questionCount: 25,
+          marks: 50,
           id: "s1",
           code: "lang",
           name_en: "First Language (Marathi)",
           name_mr: "प्रथम भाषा (मराठी)",
           question_type: "mcq_single",
-          question_count: 25,
           marks_per_question: 2,
-          total_marks: 50,
           order_index: 1,
         },
         {
+          name: "Mathematics",
+          questionCount: 50,
+          marks: 100,
           id: "s2",
           code: "math",
           name_en: "Mathematics",
           name_mr: "गणित",
           question_type: "mcq_single",
-          question_count: 50,
           marks_per_question: 2,
-          total_marks: 100,
           order_index: 2,
         }
       ],
       isActive: true,
+      createdAt: now,
+      updatedAt: now,
     });
   }
 
   // Scholarship Paper II (Class 8)
   if (scholarshipPaper2 && class8) {
     examStructuresData.push({
+      id: randomUUID(),
       subjectId: scholarshipPaper2.id,
       classLevelId: class8.id,
       nameEn: "Scholarship Class 8: Paper II",
@@ -199,29 +220,33 @@ export async function seedExamStructures() {
       isTemplate: true,
       sections: [
         {
+          name: "Third Language (English)",
+          questionCount: 25,
+          marks: 50,
           id: "s1",
           code: "lang3",
           name_en: "Third Language (English)",
           name_mr: "तृतीय भाषा (इंग्रजी)",
           question_type: "mcq_single",
-          question_count: 25,
           marks_per_question: 2,
-          total_marks: 50,
           order_index: 1,
         },
         {
+          name: "Intelligence Test",
+          questionCount: 50,
+          marks: 100,
           id: "s2",
           code: "iq",
           name_en: "Intelligence Test",
           name_mr: "बुद्धिमत्ता चाचणी",
           question_type: "mcq_single",
-          question_count: 50,
           marks_per_question: 2,
-          total_marks: 100,
           order_index: 2,
         }
       ],
       isActive: true,
+      createdAt: now,
+      updatedAt: now,
     });
   }
 
@@ -249,5 +274,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/seed/exam-
       console.error("❌ Error seeding exam structures:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

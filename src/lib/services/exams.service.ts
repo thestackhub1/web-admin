@@ -138,8 +138,8 @@ export class ExamsService {
       score: exam.score,
       total_marks: exam.totalMarks,
       percentage: exam.percentage ? Number(exam.percentage) : null,
-      started_at: exam.startedAt?.toISOString() || null,
-      completed_at: exam.completedAt?.toISOString() || null,
+      started_at: exam.startedAt || null,
+      completed_at: exam.completedAt || null,
       subject_id: exam.subjectId,
       exam_structure_id: exam.examStructureId,
       scheduled_exam_id: exam.scheduledExamId,
@@ -325,8 +325,8 @@ export class ExamsService {
         score: exam.score,
         totalMarks: exam.totalMarks,
         percentage: exam.percentage ? Number(exam.percentage) : null,
-        startedAt: exam.startedAt?.toISOString(),
-        completedAt: exam.completedAt?.toISOString(),
+        startedAt: exam.startedAt,
+        completedAt: exam.completedAt,
       })),
     };
   }

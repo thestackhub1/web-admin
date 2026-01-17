@@ -6,7 +6,6 @@
  */
 
 export * from './response';
-export * from './supabase-admin';
 export * from './validators';
 export { serverApi } from './api-client';
 export { authServerApi, isAuthenticated } from './auth-server-api';

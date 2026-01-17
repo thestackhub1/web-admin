@@ -62,7 +62,7 @@ async function seedAll() {
     console.error("❌ Error seeding database:", error);
     throw error;
   } finally {
-    await client.end();
+    await client.close();
   }
 }
 

@@ -5,6 +5,7 @@ import { api } from '@/client/api';
 
 export interface Question {
   id: string;
+  subject?: string;
   question_text: string;
   question_text_en: string;
   question_text_mr?: string | null;

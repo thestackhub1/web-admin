@@ -75,7 +75,7 @@ export function QuestionsListView({
     const questionsList = Array.isArray(questions) ? questions : [];
 
     const handleRowClick = (question: Question) => {
-        router.push(`/dashboard/questions/${question.subject?.slug || 'english'}/${question.id}`);
+        router.push(`/dashboard/questions/${question.subject || 'english'}/${question.id}`);
     };
 
     if (isLoading) {
@@ -110,7 +110,7 @@ export function QuestionsListView({
                         </DataTableRow>
                     ) : (
                         questionsList.map((question) => {
-                            const SubjectIcon = SubjectIconMap[question.subject?.slug || 'english'] || BookOpen;
+                            const SubjectIcon = SubjectIconMap[question.subject || 'english'] || BookOpen;
 
                             return (
                                 <DataTableRow
@@ -139,8 +139,8 @@ export function QuestionsListView({
 
                                     {/* Subject */}
                                     <DataTableCell>
-                                        <span className="text-neutral-700 dark:text-neutral-300">
-                                            {question.subject?.name || "—"}
+                                        <span className="text-neutral-700 dark:text-neutral-300 capitalize">
+                                            {question.subject?.replace(/_/g, ' ') || "—"}
                                         </span>
                                     </DataTableCell>
 

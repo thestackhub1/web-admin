@@ -1,7 +1,7 @@
 import { client, db, schema } from "./db";
-import { eq } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
+import { randomUUID } from "crypto";
 
 interface SchoolCSVRow {
   villageCity: string;
@@ -211,7 +211,9 @@ export async function seedSchools() {
           }
 
           // Insert school
+          const now = new Date().toISOString();
           await db.insert(schema.schools).values({
+            id: randomUUID(),
             name: schoolData.schoolName,
             nameSearch: nameSearch,
             locationCity: schoolData.villageCity || null,
@@ -224,6 +226,8 @@ export async function seedSchools() {
             isVerified: true, // CSV data is pre-verified
             isUserAdded: false,
             createdBy: null, // System-seeded
+            createdAt: now,
+            updatedAt: now,
           });
 
           // Add to existing set to avoid duplicates in same batch
@@ -234,12 +238,13 @@ export async function seedSchools() {
           if (inserted % 50 === 0) {
             console.log(`   ✓ Inserted ${inserted}/${schoolsData.length} schools...`);
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           errors++;
-          const errorMsg = `${schoolData.schoolName}: ${error.message}`;
+          const message = error instanceof Error ? error.message : String(error);
+          const errorMsg = `${schoolData.schoolName}: ${message}`;
           if (errors <= 10) {
             errorDetails.push(errorMsg);
-            console.error(`   ✗ Error inserting "${schoolData.schoolName}": ${error.message}`);
+            console.error(`   ✗ Error inserting "${schoolData.schoolName}": ${message}`);
           } else if (errors === 11) {
             console.error(`   ✗ ... (suppressing further error details)`);
           }
@@ -271,10 +276,11 @@ export async function seedSchools() {
     console.log();
 
     return { inserted, skipped, errors, total: schoolsData.length };
-  } catch (error: any) {
-    console.error("❌ Error seeding schools:", error.message);
-    if (error.stack) {
-      console.error("Stack trace:", error.stack);
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("❌ Error seeding schools:", err.message);
+    if (err.stack) {
+      console.error("Stack trace:", err.stack);
     }
     throw error;
   }
@@ -292,6 +298,6 @@ if (require.main === module) {
       process.exit(1);
     })
     .finally(() => {
-      client.end();
+      client.close();
     });
 }

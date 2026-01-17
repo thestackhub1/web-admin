@@ -8,6 +8,7 @@
 import { dbService, type RLSContext } from './dbService';
 import { eq, and, asc } from 'drizzle-orm';
 import { examStructures, subjects, type ExamStructure } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 export class ExamStructuresService {
   /**
@@ -128,6 +129,7 @@ export class ExamStructuresService {
     const [examStructure] = await db
       .insert(examStructures)
       .values({
+        id: generateId(),
         subjectId: data.subjectId,
         classLevelId: data.classLevelId || null,
         nameEn: data.nameEn,
@@ -193,7 +195,7 @@ export class ExamStructuresService {
         ...(data.isTemplate !== undefined && { isTemplate: data.isTemplate }),
         ...(data.orderIndex !== undefined && { orderIndex: data.orderIndex }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(examStructures.id, examStructureId))
       .returning();
@@ -213,7 +215,7 @@ export class ExamStructuresService {
 
     const [deleted] = await db
       .update(examStructures)
-      .set({ isActive: false, updatedAt: new Date() })
+      .set({ isActive: false, updatedAt: new Date().toISOString() })
       .where(eq(examStructures.id, examStructureId))
       .returning();
 

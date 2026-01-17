@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, context: Params) {
             const matchingSection = examStructure.sections.find(
                 (s: any) => (s.code || '').toLowerCase() === sectionLower
             );
-            if (matchingSection?.question_type) {
+            if (matchingSection?.question_type && typeof matchingSection.question_type === 'string') {
                 questionType = matchingSection.question_type;
             }
         }

@@ -60,10 +60,7 @@ export async function GET(request: NextRequest) {
                 .where(
                     and(
                         eq(table.isActive, true),
-                        or(
-                            ilike(table.questionText, searchPattern),
-                            ilike(table.questionTextSecondary, searchPattern)
-                        )
+                        ilike(table.questionText, searchPattern)
                     )
                 )
                 .limit(perTableLimit);

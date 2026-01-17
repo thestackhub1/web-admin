@@ -135,15 +135,15 @@ export class ProfileService {
       is_active: profile.isActive,
       class_level: profile.classLevel,
       school_id: profile.schoolId,
-      created_at: profile.createdAt?.toISOString(),
-      updated_at: profile.updatedAt?.toISOString(),
+      created_at: profile.createdAt,
+      updated_at: profile.updatedAt,
       class_level_id: classLevelId,
       class_level_details: classLevelDetails,
       total_exams_taken: totalExamsTaken,
       average_score: averageScore,
       total_time_spent_seconds: totalTimeSpentSeconds,
       streak_days: streakDays,
-      last_activity_at: lastActivityAt?.toISOString(),
+      last_activity_at: lastActivityAt,
     };
   }
 
@@ -154,7 +154,7 @@ export class ProfileService {
     const db = await dbService.getDb(rlsContext ? { rlsContext } : {});
 
     const updateData: any = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (updates.name !== undefined) updateData.name = updates.name;
@@ -190,15 +190,15 @@ export class ProfileService {
       preferred_language: updated.preferredLanguage,
       avatar_url: updated.avatarUrl,
       is_active: updated.isActive,
-      created_at: updated.createdAt?.toISOString(),
-      updated_at: updated.updatedAt?.toISOString(),
+      created_at: updated.createdAt,
+      updated_at: updated.updatedAt,
     };
   }
 
   /**
    * Calculate streak days from exam history
    */
-  private static calculateStreakDays(exams: Array<{ completedAt: Date | null }>): number {
+  private static calculateStreakDays(exams: Array<{ completedAt: string | null }>): number {
     if (!exams || exams.length === 0) return 0;
 
     const completedExams = exams
@@ -238,16 +238,18 @@ export class ProfileService {
    * Change user password
    */
   static async changePassword(userId: string, password: string) {
-    const { getSupabaseAdmin } = await import('@/lib/api/supabase-admin');
-    const supabase = getSupabaseAdmin();
+    const { hashPassword } = await import('@/lib/auth/password');
+    const passwordHash = await hashPassword(password);
 
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      password: password,
-    });
+    const db = await dbService.getDb();
 
-    if (error) {
-      throw error;
-    }
+    await db
+      .update(profiles)
+      .set({
+        passwordHash: passwordHash,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(profiles.id, userId));
 
     return true;
   }

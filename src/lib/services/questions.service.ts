@@ -15,6 +15,7 @@ import {
   chapters,
   subjects,
 } from '@/db/schema';
+import { generateId } from '@/db/utils/id';
 
 type QuestionTable = typeof questionsScholarship | typeof questionsEnglish | typeof questionsInformationTechnology;
 
@@ -126,21 +127,21 @@ export class QuestionsService {
       id: q.id,
       question_text: q.questionText,
       question_text_en: q.questionText,
-      question_text_mr: q.questionTextSecondary || q.questionText,
+      question_text_mr: q.questionText, // Using same text as schema has single field
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation_en: q.explanationEn,
-      explanation_mr: q.explanationMr,
+      explanation_en: q.explanation,
+      explanation_mr: q.explanation,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
       chapter_id: q.chapterId,
       is_active: q.isActive,
       created_by: q.createdBy,
-      created_at: q.createdAt?.toISOString(),
-      updated_at: q.updatedAt?.toISOString(),
+      created_at: q.createdAt || null,
+      updated_at: q.updatedAt || null,
     }));
   }
 
@@ -185,10 +186,7 @@ export class QuestionsService {
 
       if (options.search) {
         conditions.push(
-          or(
-            sql`${table.questionText} ILIKE ${'%' + options.search + '%'}`,
-            sql`${table.questionTextSecondary} ILIKE ${'%' + options.search + '%'}`
-          )
+          sql`${table.questionText} ILIKE ${'%' + options.search + '%'}`
         );
       }
 
@@ -206,21 +204,21 @@ export class QuestionsService {
         subject: subject,
         question_text: q.questionText,
         question_text_en: q.questionText,
-        question_text_mr: q.questionTextSecondary || q.questionText,
+        question_text_mr: q.questionText,
         question_language: q.questionLanguage,
         question_type: q.questionType,
         difficulty: q.difficulty,
         answer_data: q.answerData,
-        explanation_en: q.explanationEn,
-        explanation_mr: q.explanationMr,
+        explanation_en: q.explanation,
+        explanation_mr: q.explanation,
         tags: q.tags,
         class_level: q.classLevel,
         marks: q.marks,
         chapter_id: q.chapterId,
         is_active: q.isActive,
         created_by: q.createdBy,
-        created_at: q.createdAt?.toISOString(),
-        updated_at: q.updatedAt?.toISOString(),
+        created_at: q.createdAt || null,
+        updated_at: q.updatedAt || null,
       }));
 
       allQuestions.push(...transformed);
@@ -267,21 +265,21 @@ export class QuestionsService {
       id: q.id,
       question_text: q.questionText,
       question_text_en: q.questionText,
-      question_text_mr: q.questionTextSecondary || q.questionText,
+      question_text_mr: q.questionText,
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation_en: q.explanationEn,
-      explanation_mr: q.explanationMr,
+      explanation_en: q.explanation,
+      explanation_mr: q.explanation,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
       chapter_id: q.chapterId,
       is_active: q.isActive,
       created_by: q.createdBy,
-      created_at: q.createdAt?.toISOString(),
-      updated_at: q.updatedAt?.toISOString(),
+      created_at: q.createdAt || null,
+      updated_at: q.updatedAt || null,
     }));
   }
 
@@ -314,21 +312,21 @@ export class QuestionsService {
       id: question.id,
       question_text: question.questionText,
       question_text_en: question.questionText,
-      question_text_mr: question.questionTextSecondary || question.questionText,
+      question_text_mr: question.questionText,
       question_language: question.questionLanguage,
       question_type: question.questionType,
       difficulty: question.difficulty,
       answer_data: question.answerData,
-      explanation_en: question.explanationEn,
-      explanation_mr: question.explanationMr,
+      explanation_en: question.explanation,
+      explanation_mr: question.explanation,
       tags: question.tags,
       class_level: question.classLevel,
       marks: question.marks,
       chapter_id: question.chapterId,
       is_active: question.isActive,
       created_by: question.createdBy,
-      created_at: question.createdAt?.toISOString(),
-      updated_at: question.updatedAt?.toISOString(),
+      created_at: question.createdAt || null,
+      updated_at: question.updatedAt || null,
     };
   }
 
@@ -402,21 +400,21 @@ export class QuestionsService {
       id: q.id,
       question_text: q.questionText,
       question_text_en: q.questionText,
-      question_text_mr: q.questionTextSecondary || q.questionText,
+      question_text_mr: q.questionText,
       question_language: q.questionLanguage,
       question_type: q.questionType,
       difficulty: q.difficulty,
       answer_data: q.answerData,
-      explanation_en: q.explanationEn,
-      explanation_mr: q.explanationMr,
+      explanation_en: q.explanation,
+      explanation_mr: q.explanation,
       tags: q.tags,
       class_level: q.classLevel,
       marks: q.marks,
       chapter_id: q.chapterId,
       is_active: q.isActive,
       created_by: q.createdBy,
-      created_at: q.createdAt?.toISOString(),
-      updated_at: q.updatedAt?.toISOString(),
+      created_at: q.createdAt || null,
+      updated_at: q.updatedAt || null,
     }));
   }
 
@@ -454,18 +452,16 @@ export class QuestionsService {
     questions: Array<{
       questionText: string;
       questionLanguage: "en" | "mr";
-      questionTextSecondary?: string | null;
-      secondaryLanguage?: "en" | "mr" | null;
       questionType: string;
       difficulty: string;
       answerData: any;
-      explanationEn?: string | null;
-      explanationMr?: string | null;
+      explanation?: string | null;
       chapterId?: string | null;
-      classLevel?: string | null;
+      classLevel: string;
       marks: number;
       isActive: boolean;
       createdBy: string;
+      tags?: string[];
     }>,
     rlsContext?: RLSContext
   ) {
@@ -478,7 +474,7 @@ export class QuestionsService {
 
     const insertedQuestions = await db
       .insert(table)
-      .values(questions)
+      .values(questions.map(q => ({ ...q, id: generateId() })))
       .returning({ id: table.id });
 
     return insertedQuestions;
@@ -492,16 +488,13 @@ export class QuestionsService {
     data: {
       questionText: string;
       questionLanguage: 'en' | 'mr';
-      questionTextSecondary?: string | null;
-      secondaryLanguage?: 'en' | 'mr' | null;
       questionType: string;
       difficulty: string;
       chapterId?: string | null;
       answerData: any;
-      explanationEn?: string | null;
-      explanationMr?: string | null;
+      explanation?: string | null;
       tags?: string[];
-      classLevel?: string | null;
+      classLevel: string;
       marks?: number;
       isActive?: boolean;
       createdBy?: string;
@@ -518,18 +511,16 @@ export class QuestionsService {
     const [question] = await db
       .insert(table)
       .values({
+        id: generateId(),
         questionText: data.questionText,
         questionLanguage: data.questionLanguage,
-        questionTextSecondary: data.questionTextSecondary || null,
-        secondaryLanguage: data.secondaryLanguage || null,
         questionType: data.questionType,
         difficulty: data.difficulty,
         chapterId: data.chapterId || null,
         answerData: data.answerData,
-        explanationEn: data.explanationEn || null,
-        explanationMr: data.explanationMr || null,
+        explanation: data.explanation || null,
         tags: data.tags || [],
-        classLevel: data.classLevel || null,
+        classLevel: data.classLevel,
         marks: data.marks || 1,
         isActive: data.isActive ?? true,
         createdBy: data.createdBy || rlsContext?.userId,
@@ -548,16 +539,13 @@ export class QuestionsService {
     data: Partial<{
       questionText: string;
       questionLanguage: 'en' | 'mr';
-      questionTextSecondary?: string | null;
-      secondaryLanguage?: 'en' | 'mr' | null;
       questionType: string;
       difficulty: string;
       chapterId?: string | null;
       answerData: any;
-      explanationEn?: string | null;
-      explanationMr?: string | null;
+      explanation?: string | null;
       tags?: string[];
-      classLevel?: string | null;
+      classLevel?: string;
       marks?: number;
       isActive?: boolean;
     }>,
@@ -573,19 +561,16 @@ export class QuestionsService {
     const updateValues: any = {};
     if (data.questionText !== undefined) updateValues.questionText = data.questionText;
     if (data.questionLanguage !== undefined) updateValues.questionLanguage = data.questionLanguage;
-    if (data.questionTextSecondary !== undefined) updateValues.questionTextSecondary = data.questionTextSecondary;
-    if (data.secondaryLanguage !== undefined) updateValues.secondaryLanguage = data.secondaryLanguage;
     if (data.questionType !== undefined) updateValues.questionType = data.questionType;
     if (data.difficulty !== undefined) updateValues.difficulty = data.difficulty;
     if (data.chapterId !== undefined) updateValues.chapterId = data.chapterId;
     if (data.answerData !== undefined) updateValues.answerData = data.answerData;
-    if (data.explanationEn !== undefined) updateValues.explanationEn = data.explanationEn;
-    if (data.explanationMr !== undefined) updateValues.explanationMr = data.explanationMr;
+    if (data.explanation !== undefined) updateValues.explanation = data.explanation;
     if (data.tags !== undefined) updateValues.tags = data.tags;
     if (data.classLevel !== undefined) updateValues.classLevel = data.classLevel;
     if (data.marks !== undefined) updateValues.marks = data.marks;
     if (data.isActive !== undefined) updateValues.isActive = data.isActive;
-    updateValues.updatedAt = new Date();
+    updateValues.updatedAt = new Date().toISOString();
 
     const [updated] = await db
       .update(table)
@@ -613,7 +598,7 @@ export class QuestionsService {
 
     const [deleted] = await db
       .update(table)
-      .set({ isActive: false, updatedAt: new Date() })
+      .set({ isActive: false, updatedAt: new Date().toISOString() })
       .where(eq(table.id, questionId))
       .returning();
 

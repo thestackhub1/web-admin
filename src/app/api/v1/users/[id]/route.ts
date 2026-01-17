@@ -71,8 +71,8 @@ export async function GET(request: NextRequest, context: Params) {
             role: user.role,
             preferred_language: user.preferredLanguage,
             is_active: user.isActive,
-            created_at: user.createdAt?.toISOString(),
-            updated_at: user.updatedAt?.toISOString(),
+            created_at: user.createdAt || null,
+            updated_at: user.updatedAt || null,
             schools: schoolDetails, // Include school info
         };
 

@@ -9,7 +9,6 @@ This directory contains all frontend/client-side code that runs in the browser.
 - **`components/`** - All React UI components (client components)
 - **`hooks/`** - Custom React hooks
 - **`api/`** - Client-side API client for making HTTP requests from browser
-- **`supabase/`** - Client-side Supabase client (browser-only)
 - **`utils/`** - Client-side utility functions (browser-only helpers)
 - **`icons/`** - Icon components
 - **`constants/`** - Client-side constants
@@ -26,7 +25,6 @@ This directory contains all frontend/client-side code that runs in the browser.
 ❌ **DON'T:**
 - Never import server-side code (services, database, server auth)
 - Never use Drizzle ORM here
-- Never use Supabase server client here
 - Never access environment secrets here
 - Never perform database queries here
 
@@ -45,7 +43,7 @@ Use these import paths:
 Server-side code lives in:
 - `src/lib/services/` - Business logic services
 - `src/db/` - Database schema and access
-- `src/lib/supabase/server.ts` - Server-side Supabase
+- `src/lib/auth/` - Authentication (JWT-based)
 - `src/app/api/` - API route handlers
 - `src/actions/` - Server actions
 

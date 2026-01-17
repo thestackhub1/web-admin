@@ -112,7 +112,7 @@ export async function GET(request: NextRequest, context: Params) {
             user_answer: answer.userAnswer,
             is_correct: answer.isCorrect,
             marks_obtained: answer.marksObtained,
-            created_at: answer.createdAt?.toISOString() || null,
+            created_at: answer.createdAt || null,
             question: questionsMap[answer.questionId] || null,
         }));
 

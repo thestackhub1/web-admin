@@ -1,5 +1,6 @@
 import { db, schema, client } from "./db";
 import { isNotNull } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export async function seedSubjects() {
   console.log("📚 Seeding subjects (fresh start)...");
@@ -18,6 +19,8 @@ export async function seedSubjects() {
 
   console.log("   ✓ Cleared existing subjects");
 
+  const now = new Date().toISOString();
+
   // ============================================
   // 1. Create Top-Level Subjects
   // ============================================
@@ -26,6 +29,7 @@ export async function seedSubjects() {
   const scholarshipCategory = await db
     .insert(schema.subjects)
     .values({
+      id: randomUUID(),
       nameEn: "Scholarship",
       nameMr: "शिष्यवृत्ती",
       slug: "scholarship",
@@ -36,6 +40,8 @@ export async function seedSubjects() {
       isActive: true,
       isCategory: true, // This is a CATEGORY containing sub-subjects
       isPaper: false,
+      createdAt: now,
+      updatedAt: now,
     })
     .returning();
 
@@ -43,6 +49,7 @@ export async function seedSubjects() {
   const itSubject = await db
     .insert(schema.subjects)
     .values({
+      id: randomUUID(),
       nameEn: "Information Technology",
       nameMr: "माहिती तंत्रज्ञान",
       slug: "information_technology",
@@ -53,6 +60,8 @@ export async function seedSubjects() {
       isActive: true,
       isCategory: false, // Standalone subject
       isPaper: false,
+      createdAt: now,
+      updatedAt: now,
     })
     .returning();
 
@@ -69,6 +78,7 @@ export async function seedSubjects() {
     .insert(schema.subjects)
     .values([
       {
+        id: randomUUID(),
         parentSubjectId: scholarshipId,
         nameEn: "Marathi / First Language",
         nameMr: "मराठी / प्रथम भाषा",
@@ -80,8 +90,11 @@ export async function seedSubjects() {
         isActive: true,
         isCategory: false,
         isPaper: false,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         parentSubjectId: scholarshipId,
         nameEn: "Mathematics",
         nameMr: "गणित",
@@ -93,8 +106,11 @@ export async function seedSubjects() {
         isActive: true,
         isCategory: false,
         isPaper: false,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         parentSubjectId: scholarshipId,
         nameEn: "Intelligence Test",
         nameMr: "बुद्धिमत्ता चाचणी",
@@ -106,8 +122,11 @@ export async function seedSubjects() {
         isActive: true,
         isCategory: false,
         isPaper: false,
+        createdAt: now,
+        updatedAt: now,
       },
       {
+        id: randomUUID(),
         parentSubjectId: scholarshipId,
         nameEn: "General Knowledge",
         nameMr: "सामान्य ज्ञान",
@@ -119,6 +138,8 @@ export async function seedSubjects() {
         isActive: true,
         isCategory: false,
         isPaper: false,
+        createdAt: now,
+        updatedAt: now,
       },
     ])
     .returning();
@@ -148,5 +169,5 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/seed/subje
       console.error("❌ Error seeding subjects:", error);
       process.exit(1);
     })
-    .finally(() => client.end());
+    .finally(() => client.close());
 }

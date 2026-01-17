@@ -6,7 +6,7 @@
  * Client-side functions for uploading files through the API layer.
  */
 
-import { getAccessToken } from '@/lib/supabase/client';
+import { getAccessToken } from '@/lib/auth/client';
 
 export interface UploadResult {
     url: string;
